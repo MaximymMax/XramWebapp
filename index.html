@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Xram Shop</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div id="testModeBanner"
+        style="display:none; background:#ff6b6b; color:#fff; text-align:center; padding:6px; font-size:12px; font-weight:800; letter-spacing:1px; z-index:9999; position:relative; box-shadow: 0 2px 10px rgba(255,107,107,0.3);">
+        ⚙️ ТЕСТОВЫЙ РЕЖИМ (ДЕНЬГИ НЕ СПИСЫВАЮТСЯ)</div>
+
+    <header>
+        <div class="header-logo">
+            <span class="logo-text">Xram</span>
+            <span class="logo-dot">·</span>
+            <span class="logo-sub">shop</span>
+        </div>
+        <div class="header-right">
+            <button class="hdr-ton-connect" id="tonConnectBtn" onclick="onTonConnect()">
+                <svg width="14" height="14" viewBox="0 0 56 56" fill="none">
+                    <path d="M28 4L4 18V38L28 52L52 38V18L28 4Z" fill="#0098EA" opacity="0.2" />
+                    <path d="M28 4L4 18L28 32L52 18L28 4Z" fill="#0098EA" opacity="0.7" />
+                    <path d="M28 32V52L52 38V18L28 32Z" fill="#0098EA" opacity="0.5" />
+                    <path d="M4 18V38L28 52V32L4 18Z" fill="#0098EA" opacity="0.6" />
+                </svg>
+                <span id="tonConnectLabel">TON Connect</span>
+            </button>
+            <div class="currency-dd-wrap" id="currencyDropdownWrap">
+                <div class="currency-pill" id="currencyTrigger" onclick="toggleDropdown('currencyDropdownWrap')">
+                    <span id="currencyLabel">USD</span>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                        <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                </div>
+                <div class="currency-dropdown-menu">
+                    <div class="currency-dd-item" onclick="selectCurrency('USD')">USD</div>
+                    <div class="currency-dd-item" onclick="selectCurrency('RUB')">RUB</div>
+                    <div class="currency-dd-item" onclick="selectCurrency('TON')">TON</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div id="pageBanner" class="page-banner" style="display:none"></div>
+
+    <div id="page-home" class="page active">
+
+        <div class="home-hero">
+            <div class="home-hero-glow home-hero-glow-1"></div>
+            <div class="home-hero-glow home-hero-glow-2"></div>
+            <div class="home-hero-glow home-hero-glow-3"></div>
+
+            <div class="home-hero-inner">
+                <div class="home-hero-toprow">
+                    <span class="home-hero-label">Ваши балансы</span>
+                    <span class="home-hero-badge">Xram Shop</span>
+                </div>
+
+                <div class="home-balances-row">
+                    <div class="home-balance-card hbc-ton" id="homeTonCard" onclick="switchTab('wallet')">
+                        <div class="hbc-icon-wrap">
+                            <svg viewBox="0 0 56 56" fill="none">
+                                <path d="M28 4L4 18V38L28 52L52 38V18L28 4Z" fill="currentColor" opacity="0.15" />
+                                <path d="M28 4L4 18L28 32L52 18L28 4Z" fill="currentColor" opacity="0.7" />
+                                <path d="M28 32V52L52 38V18L28 32Z" fill="currentColor" opacity="0.4" />
+                                <path d="M4 18V38L28 52V32L4 18Z" fill="currentColor" opacity="0.55" />
+                            </svg>
+                        </div>
+                        <div class="hbc-info">
+                            <span class="hbc-label">TON Кошелёк</span>
+                            <span class="hbc-value" id="homeTonBalance">0.00</span>
+                        </div>
+                        <svg class="hbc-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                    </div>
+
+                    <div class="home-balance-card hbc-frozen" id="homeFrozenCard" onclick="switchTab('profile')">
+                        <div class="hbc-icon-wrap">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                            </svg>
+                        </div>
+                        <div class="hbc-info">
+                            <span class="hbc-label">Заморожено (Чеки)</span>
+                            <span class="hbc-value" id="homeFrozenBalance">0.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="home-section-title">Сервисы</div>
+        <div class="home-services">
+            <div class="svc-row stars-svc" onclick="switchTab('stars')">
+                <div class="svc-icon-wrap stars-wrap">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <polygon
+                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                    </svg>
+                </div>
+                <div class="svc-body">
+                    <span class="svc-title">Telegram Stars</span>
+                    <span class="svc-sub">от $0.015 за штуку</span>
+                </div>
+                <div class="svc-price-tag stars-price-tag">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+                        <polygon
+                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                    </svg>
+                    Stars
+                </div>
+            </div>
+
+            <div class="svc-row premium-svc" onclick="switchTab('premium')">
+                <div class="svc-icon-wrap premium-wrap">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    </svg>
+                </div>
+                <div class="svc-body">
+                    <span class="svc-title">Telegram Premium</span>
+                    <span class="svc-sub">3, 6 или 12 месяцев</span>
+                </div>
+                <div class="svc-price-tag premium-price-tag">Premium</div>
+            </div>
+
+            <div class="svc-row rent-svc" onclick="switchTab('rent')">
+                <div class="svc-icon-wrap rent-wrap">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                        <circle cx="8.5" cy="8.5" r="1.5" />
+                        <polyline points="21 15 16 10 5 21" />
+                    </svg>
+                </div>
+                <div class="svc-body">
+                    <span class="svc-title">Аренда NFT-подарков</span>
+                    <span class="svc-sub">Цифровые коллекции</span>
+                </div>
+                <div class="svc-price-tag rent-price-tag">NFT</div>
+            </div>
+        </div>
+
+        <div class="home-section-title" style="margin-top:6px">Аккаунт</div>
+        <div class="home-services" style="margin-bottom: 24px">
+            <div class="svc-row profile-svc" onclick="switchTab('profile')">
+                <div class="svc-icon-wrap profile-wrap">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                        <circle cx="12" cy="7" r="4" />
+                    </svg>
+                </div>
+                <div class="svc-body">
+                    <span class="svc-title">Профиль и история</span>
+                    <span class="svc-sub">Мои чеки, транзакции</span>
+                </div>
+                <div class="svc-arrow">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5">
+                        <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="page-stars" class="page page-stars-theme">
+        <div class="form-card">
+            <label class="form-label">Получатель</label>
+            <div class="recipient-tabs" id="starsRecipientTabs">
+                <button class="rtab active" data-mode="self"
+                    onclick="setRecipientMode('stars', 'self', this)">Себе</button>
+                <button class="rtab" data-mode="other"
+                    onclick="setRecipientMode('stars', 'other', this)">Другому</button>
+                <button class="rtab" data-mode="cheque" onclick="setRecipientMode('stars', 'cheque', this)">Чек</button>
+            </div>
+
+            <div id="starsRecipientSelf" class="recipient-self-card">
+                <div class="self-card-ava" id="starsAvatarSelf">X</div>
+                <div class="self-card-info">
+                    <span class="self-card-name" id="starsNameSelf">Вы</span>
+                    <span class="self-card-sub" id="starsUsernameSelf">@username</span>
+                </div>
+                <div class="self-card-badge">Я</div>
+            </div>
+
+            <div id="starsRecipientOther" class="recipient-extra" style="display:none">
+                <div class="username-input-wrap">
+                    <input type="text" id="starsTarget" placeholder="@username получателя" class="form-input"
+                        style="margin-bottom:0;" oninput="onUsernameInput('stars', this)">
+                </div>
+                <div class="username-status-text" id="starsUsernameMsg"></div>
+                <span id="starsUsernameStatus" style="display:none"></span>
+            </div>
+
+            <div id="starsRecipientCheque" class="recipient-extra" style="display:none">
+                <label class="form-label" style="margin-top:4px">Срок действия чека</label>
+                <div class="cheque-options">
+                    <div class="cheque-opt selected" data-val="1" onclick="selectChequeOpt('stars', this)">1 ч</div>
+                    <div class="cheque-opt" data-val="24" onclick="selectChequeOpt('stars', this)">24 ч</div>
+                    <div class="cheque-opt" data-val="168" onclick="selectChequeOpt('stars', this)">7 дн</div>
+                    <div class="cheque-opt cheque-opt-custom" data-val="custom"
+                        onclick="selectChequeOpt('stars', this)">Своё</div>
+                </div>
+                <div id="starsChequeCustomWrap" class="custom-input-wrapper" style="display:none; padding: 10px 0 0">
+                    <input type="number" id="starsChequeCustomHours" placeholder="Количество часов" class="form-input"
+                        min="1" style="margin-bottom:0">
+                </div>
+            </div>
+        </div>
+
+        <div class="packages-list" id="starsOptions">
+            <div class="pkg-btn selected" onclick="selectPackage('stars', 50, this)" data-value="50">
+                <div class="pkg-left">
+                    <div class="pkg-icon stars-pkg-icon">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <polygon
+                                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                        </svg>
+                    </div>
+                    <div class="pkg-info">
+                        <span class="pkg-name">50 Stars</span>
+                        <span class="pkg-desc">Мини-пакет</span>
+                    </div>
+                </div>
+                <div class="pkg-price" id="price-stars-50">$0.75</div>
+            </div>
+            <div class="pkg-btn" onclick="selectPackage('stars', 100, this)" data-value="100">
+                <div class="pkg-left">
+                    <div class="pkg-icon stars-pkg-icon">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <polygon
+                                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                        </svg>
+                    </div>
+                    <div class="pkg-info">
+                        <span class="pkg-name">100 Stars</span>
+                        <span class="pkg-desc">Базовый</span>
+                    </div>
+                </div>
+                <div class="pkg-price" id="price-stars-100">$1.50</div>
+            </div>
+            <div class="pkg-btn" onclick="selectPackage('stars', 250, this)" data-value="250">
+                <div class="pkg-left">
+                    <div class="pkg-icon stars-pkg-icon">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <polygon
+                                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                        </svg>
+                    </div>
+                    <div class="pkg-info">
+                        <span class="pkg-name">250 Stars</span>
+                        <span class="pkg-desc">Популярный</span>
+                    </div>
+                </div>
+                <span class="pkg-tag">Хит</span>
+                <div class="pkg-price" id="price-stars-250">$3.75</div>
+            </div>
+            <div class="pkg-btn" onclick="selectPackage('stars', 500, this)" data-value="500">
+                <div class="pkg-left">
+                    <div class="pkg-icon stars-pkg-icon">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <polygon
+                                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                        </svg>
+                    </div>
+                    <div class="pkg-info">
+                        <span class="pkg-name">500 Stars</span>
+                        <span class="pkg-desc">Большой</span>
+                    </div>
+                </div>
+                <div class="pkg-price" id="price-stars-500">$7.50</div>
+            </div>
+            <div class="pkg-btn" onclick="selectPackage('stars', 1000, this)" data-value="1000">
+                <div class="pkg-left">
+                    <div class="pkg-icon stars-pkg-icon">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <polygon
+                                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                        </svg>
+                    </div>
+                    <div class="pkg-info">
+                        <span class="pkg-name">1000 Stars</span>
+                        <span class="pkg-desc">Профи</span>
+                    </div>
+                </div>
+                <span class="pkg-tag">Выгода</span>
+                <div class="pkg-price" id="price-stars-1000">$15.00</div>
+            </div>
+            <div class="pkg-btn" onclick="selectPackage('stars', 2500, this)" data-value="2500">
+                <div class="pkg-left">
+                    <div class="pkg-icon stars-pkg-icon">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <polygon
+                                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                        </svg>
+                    </div>
+                    <div class="pkg-info">
+                        <span class="pkg-name">2500 Stars</span>
+                        <span class="pkg-desc">Максимум</span>
+                    </div>
+                </div>
+                <div class="pkg-price" id="price-stars-2500">$37.50</div>
+            </div>
+            <div class="pkg-btn pkg-custom-toggle" onclick="toggleCustomStars(this)">
+                <div class="pkg-left">
+                    <div class="pkg-icon stars-pkg-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                    </div>
+                    <div class="pkg-info">
+                        <span class="pkg-name">Своё количество</span>
+                        <span class="pkg-desc">Введите вручную</span>
+                    </div>
+                </div>
+                <div class="pkg-price" id="price-stars-custom">—</div>
+            </div>
+        </div>
+
+        <div id="customStarsWrapper" class="custom-input-wrapper" style="display:none">
+            <input type="number" id="starsCustomAmount" placeholder="Количество звёзд (мин. 50)" class="form-input"
+                min="50" step="1">
+        </div>
+
+        <button class="action-btn stars-action-btn" onclick="openPaymentModal('stars')" id="starsBuyBtn"
+            style="margin-top: 14px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <polygon
+                    points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+            Купить 50 Stars
+        </button>
+    </div>
+
+    <div id="page-premium" class="page page-premium-theme">
+        <div class="form-card">
+            <label class="form-label">Получатель</label>
+            <div class="recipient-tabs" id="premiumRecipientTabs">
+                <button class="rtab active" data-mode="self"
+                    onclick="setRecipientMode('premium', 'self', this)">Себе</button>
+                <button class="rtab" data-mode="other"
+                    onclick="setRecipientMode('premium', 'other', this)">Другому</button>
+                <button class="rtab" data-mode="cheque"
+                    onclick="setRecipientMode('premium', 'cheque', this)">Чек</button>
+            </div>
+
+            <div id="premiumRecipientSelf" class="recipient-self-card">
+                <div class="self-card-ava" id="premiumAvatarSelf">X</div>
+                <div class="self-card-info">
+                    <span class="self-card-name" id="premiumNameSelf">Вы</span>
+                    <span class="self-card-sub" id="premiumUsernameSelf">@username</span>
+                </div>
+                <div class="self-card-badge">Я</div>
+            </div>
+
+            <div id="premiumRecipientOther" class="recipient-extra" style="display:none">
+                <div class="username-input-wrap">
+                    <input type="text" id="premiumTarget" placeholder="@username получателя" class="form-input"
+                        style="margin-bottom:0;" oninput="onUsernameInput('premium', this)">
+                </div>
+                <div class="username-status-text" id="premiumUsernameMsg"></div>
+                <span id="premiumUsernameStatus" style="display:none"></span>
+            </div>
+
+            <div id="premiumRecipientCheque" class="recipient-extra" style="display:none">
+                <label class="form-label" style="margin-top:4px">Срок действия чека</label>
+                <div class="cheque-options">
+                    <div class="cheque-opt selected" data-val="1" onclick="selectChequeOpt('premium', this)">1 ч</div>
+                    <div class="cheque-opt" data-val="24" onclick="selectChequeOpt('premium', this)">24 ч</div>
+                    <div class="cheque-opt" data-val="168" onclick="selectChequeOpt('premium', this)">7 дн</div>
+                    <div class="cheque-opt cheque-opt-custom" data-val="custom"
+                        onclick="selectChequeOpt('premium', this)">Своё</div>
+                </div>
+                <div id="premiumChequeCustomWrap" class="custom-input-wrapper" style="display:none; padding: 10px 0 0">
+                    <input type="number" id="premiumChequeCustomHours" placeholder="Количество часов" class="form-input"
+                        min="1" style="margin-bottom:0">
+                </div>
+            </div>
+        </div>
+
+        <div class="packages-list" id="premiumOptions">
+            <div class="pkg-btn premium-pkg selected" onclick="selectPackage('premium', 3, this)" data-value="3">
+                <div class="pkg-left">
+                    <div class="pkg-icon premium-pkg-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                        </svg>
+                    </div>
+                    <div class="pkg-info">
+                        <span class="pkg-name">3 месяца</span>
+                        <span class="pkg-desc">Короткий период</span>
+                    </div>
+                </div>
+                <div class="pkg-price" id="price-premium-3">$3.90</div>
+            </div>
+            <div class="pkg-btn premium-pkg" onclick="selectPackage('premium', 6, this)" data-value="6">
+                <div class="pkg-left">
+                    <div class="pkg-icon premium-pkg-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                        </svg>
+                    </div>
+                    <div class="pkg-info">
+                        <span class="pkg-name">6 месяцев</span>
+                        <span class="pkg-desc">Полгода</span>
+                    </div>
+                </div>
+                <span class="pkg-tag">Популярный</span>
+                <div class="pkg-price" id="price-premium-6">$6.99</div>
+            </div>
+            <div class="pkg-btn premium-pkg" onclick="selectPackage('premium', 12, this)" data-value="12">
+                <div class="pkg-left">
+                    <div class="pkg-icon premium-pkg-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                        </svg>
+                    </div>
+                    <div class="pkg-info">
+                        <span class="pkg-name">12 месяцев</span>
+                        <span class="pkg-desc">Лучшая цена</span>
+                    </div>
+                </div>
+                <span class="pkg-tag">Выгодно</span>
+                <div class="pkg-price" id="price-premium-12">$11.99</div>
+            </div>
+        </div>
+
+        <button class="action-btn premium-action-btn" onclick="openPaymentModal('premium')" id="premiumBuyBtn"
+            style="margin-top: 14px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+            Купить Premium 3 мес
+        </button>
+    </div>
+
+    <div id="page-rent" class="page page-rent-theme">
+
+        <div class="profile-tabs" id="rentCategoryTabs" style="margin-top: 16px;">
+            <button class="ptab active" onclick="switchRentCategory('gifts', this)">Подарки</button>
+            <button class="ptab" onclick="switchRentCategory('usernames', this)">Юзернеймы</button>
+            <button class="ptab" onclick="switchRentCategory('numbers', this)">Номера</button>
+        </div>
+
+        <div class="form-card rent-form-card" style="margin-top: 0; padding-bottom: 12px; margin-bottom: 0;">
+
+            <div id="rentCollectionWrap">
+                <label class="form-label">Коллекция</label>
+                <div class="custom-dd-wrap" id="collectionDropdown">
+                    <div class="custom-dd-trigger" onclick="toggleDropdown('collectionDropdown', event)">
+                        <img id="colTriggerImg" class="custom-dd-trigger-img" src="" alt="">
+                        <span class="custom-dd-trigger-name" id="colTriggerName">Загрузка...</span>
+                        <span class="custom-dd-trigger-price" id="colTriggerPrice"></span>
+                        <span class="custom-dd-arrow">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5">
+                                <polyline points="6 9 12 15 18 9" />
+                            </svg>
+                        </span>
+                    </div>
+                    <div class="custom-dd-menu" id="colMenu">
+                    </div>
+                </div>
+            </div>
+
+            <div id="rentModelWrap" style="display: none;">
+                <label class="form-label">Модель</label>
+                <div class="custom-dd-wrap" id="modelDropdown">
+                    <div class="custom-dd-trigger" onclick="toggleDropdown('modelDropdown', event)">
+                        <img id="modTriggerImg" class="custom-dd-trigger-img" src="" alt="">
+                        <span class="custom-dd-trigger-name" id="modTriggerName">Все модели</span>
+                        <span class="custom-dd-trigger-price" id="modTriggerPrice"></span>
+                        <span class="custom-dd-arrow">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5">
+                                <polyline points="6 9 12 15 18 9" />
+                            </svg>
+                        </span>
+                    </div>
+                    <div class="custom-dd-menu" id="modMenu">
+                    </div>
+                </div>
+            </div>
+
+            <label class="form-label">Сортировка</label>
+            <div class="sort-dd-wrap" id="sortDropdown">
+                <div class="sort-dd-trigger" id="rentSortTrigger" onclick="toggleSortDropdown(event)">
+                    <span class="sort-dd-label" id="rentSortLabel">Недавно обновленные</span>
+                    <svg class="sort-dd-arrow" width="13" height="13" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5">
+                        <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                </div>
+                <div class="sort-dd-menu" id="sortMenu">
+                    <div class="sort-dd-item selected" data-value="recently_touch" onclick="selectSortOption(this)">
+                        <span class="sort-item-label">Недавно обновленные</span>
+                    </div>
+                    <div class="sort-dd-item" data-value="price_per_day" onclick="selectSortOption(this)">
+                        <span class="sort-item-label">Сначала дешевые</span>
+                    </div>
+                    <div class="sort-dd-item" data-value="min_price" onclick="selectSortOption(this)">
+                        <span class="sort-item-label">Мин. цена</span>
+                    </div>
+                    <div class="sort-dd-item" data-value="duration_desc" onclick="selectSortOption(this)">
+                        <span class="sort-item-label">Макс. срок аренды</span>
+                    </div>
+                    <div class="sort-dd-item" data-value="duration_asc" onclick="selectSortOption(this)">
+                        <span class="sort-item-label">Мин. срок аренды</span>
+                    </div>
+                    <div class="sort-dd-item" data-value="item_num_asc" onclick="selectSortOption(this)">
+                        <span class="sort-item-label">Номер: по возрастанию</span>
+                    </div>
+                    <div class="sort-dd-item" data-value="item_num_desc" onclick="selectSortOption(this)">
+                        <span class="sort-item-label">Номер: по убыванию</span>
+                    </div>
+                </div>
+                <!-- Скрытый select для совместимости с onRentSortChange -->
+                <select id="rentSort" style="display:none">
+                    <option value="recently_touch">Недавно обновленные</option>
+                    <option value="price_per_day">Сначала дешевые</option>
+                    <option value="min_price">Мин. цена</option>
+                    <option value="duration_desc">Макс. срок аренды</option>
+                    <option value="duration_asc">Мин. срок аренды</option>
+                    <option value="item_num_asc">Номер: по возрастанию</option>
+                    <option value="item_num_desc">Номер: по убыванию</option>
+                </select>
+            </div>
+
+            <label class="form-label" style="margin-bottom:12px">Доступные NFT <span class="label-hint"
+                    id="rentCardsCount"></span></label>
+            <div class="rent-cards-grid" id="rentCardsContainer">
+                <div class="rent-cards-empty">Загрузка...</div>
+            </div>
+
+            <button id="rentLoadMoreBtn" class="load-more-btn" onclick="loadNextRentPage()">Показать еще</button>
+
+            <div style="font-size: 11px; text-align: center; color: var(--text-muted); margin-top: 12px;">Нажмите на
+                карточку для аренды</div>
+        </div>
+    </div>
+
+    <div id="page-wallet" class="page page-wallet-theme">
+        <div class="wallet-section-title" style="padding-top:20px">Пополнение</div>
+
+        <div class="packages-list" id="topupOptions">
+            <div class="pkg-btn topup-pkg selected" onclick="selectTopup(1, this)">
+                <div class="pkg-left">
+                    <div class="pkg-icon wallet-pkg-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="8" x2="12" y2="16" />
+                            <line x1="8" y1="12" x2="16" y2="12" />
+                        </svg>
+                    </div>
+                    <div class="pkg-info"><span class="pkg-name">1 TON</span><span class="pkg-desc">Мини</span>
+                    </div>
+                </div>
+                <div class="pkg-price" id="topup-price-1">≈ $2.00</div>
+            </div>
+            <div class="pkg-btn topup-pkg" onclick="selectTopup(5, this)">
+                <div class="pkg-left">
+                    <div class="pkg-icon wallet-pkg-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="8" x2="12" y2="16" />
+                            <line x1="8" y1="12" x2="16" y2="12" />
+                        </svg>
+                    </div>
+                    <div class="pkg-info"><span class="pkg-name">5 TON</span><span class="pkg-desc">Стандарт</span>
+                    </div>
+                </div>
+                <span class="pkg-tag">Хит</span>
+                <div class="pkg-price" id="topup-price-5">≈ $10.00</div>
+            </div>
+            <div class="pkg-btn topup-pkg" onclick="selectTopup(10, this)">
+                <div class="pkg-left">
+                    <div class="pkg-icon wallet-pkg-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="8" x2="12" y2="16" />
+                            <line x1="8" y1="12" x2="16" y2="12" />
+                        </svg>
+                    </div>
+                    <div class="pkg-info"><span class="pkg-name">10 TON</span><span class="pkg-desc">Большой</span>
+                    </div>
+                </div>
+                <div class="pkg-price" id="topup-price-10">≈ $20.00</div>
+            </div>
+            <div class="pkg-btn topup-pkg" onclick="selectTopup(25, this)">
+                <div class="pkg-left">
+                    <div class="pkg-icon wallet-pkg-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="8" x2="12" y2="16" />
+                            <line x1="8" y1="12" x2="16" y2="12" />
+                        </svg>
+                    </div>
+                    <div class="pkg-info"><span class="pkg-name">25 TON</span><span class="pkg-desc">Максимум</span>
+                    </div>
+                </div>
+                <span class="pkg-tag">Выгода</span>
+                <div class="pkg-price" id="topup-price-25">≈ $50.00</div>
+            </div>
+            <div class="pkg-btn topup-pkg pkg-custom-toggle" onclick="toggleCustomTopup(this)">
+                <div class="pkg-left">
+                    <div class="pkg-icon wallet-pkg-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                        </svg>
+                    </div>
+                    <div class="pkg-info"><span class="pkg-name">Своя сумма</span><span class="pkg-desc">Введите
+                            вручную</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="customTopupWrapper" class="custom-input-wrapper" style="display:none">
+            <input type="number" id="topupAmount" placeholder="Введите сумму TON" class="form-input" step="0.1"
+                min="0.1">
+        </div>
+
+        <button class="action-btn wallet-action-btn topup-action-btn" onclick="apiTopupWallet()" id="topupBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            Пополнить 1 TON
+        </button>
+
+        <div class="divider"></div>
+
+        <div class="wallet-section-title">Вывод средств</div>
+
+        <div class="form-card">
+            <label class="form-label">Сумма <span class="label-hint">(TON)</span></label>
+            <input type="number" id="withdrawAmount" placeholder="0.5" class="form-input" step="0.1">
+            <label class="form-label">Адрес получателя</label>
+            <input type="text" id="withdrawAddress" placeholder="EQ... или UQ..." class="form-input"
+                style="margin-bottom:0">
+        </div>
+
+        <button class="action-btn outline-action-btn" onclick="apiWithdrawWallet()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <polyline points="19 12 12 19 5 12" />
+            </svg>
+            Вывести средства
+        </button>
+    </div>
+
+    <div id="page-profile" class="page page-wallet-theme">
+
+        <div class="profile-tabs" style="margin-top: 16px">
+            <button class="ptab active" onclick="switchProfileTab('cheques', this)">Мои чеки</button>
+            <button class="ptab" onclick="switchProfileTab('history', this)">История</button>
+            <button class="ptab" onclick="switchProfileTab('rentals', this)">Моя аренда</button>
+        </div>
+
+        <div id="profileCheques" class="profile-panel">
+            <div class="profile-list" id="chequesList">
+                <div class="profile-empty">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="1.5">
+                        <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
+                        <rect x="9" y="3" width="6" height="4" rx="1" />
+                    </svg>
+                    <p>Нет активных чеков</p>
+                    <span>Создайте чек при покупке Stars или Premium</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="profileHistory" class="profile-panel" style="display:none">
+            <div class="profile-list" id="historyList">
+                <div class="profile-empty">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="1.5">
+                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                        <line x1="3" y1="9" x2="21" y2="9" />
+                        <line x1="9" y1="21" x2="9" y2="9" />
+                    </svg>
+                    <p>История пуста</p>
+                    <span>Здесь будут отображаться ваши покупки</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="profileRentals" class="profile-panel" style="display:none">
+            <div class="profile-list" id="rentalsList">
+                <div class="profile-empty">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="1.5">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                        <circle cx="8.5" cy="8.5" r="1.5" />
+                        <polyline points="21 15 16 10 5 21" />
+                    </svg>
+                    <p>Нет активной аренды</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <nav class="bottom-nav">
+        <div class="nav-item active" onclick="switchTab('home')" data-tab="home">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+            <span>Главная</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('stars')" data-tab="stars">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon
+                    points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+            <span>Stars</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('premium')" data-tab="premium">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+            <span>Premium</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('rent')" data-tab="rent">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                <circle cx="8.5" cy="8.5" r="1.5" />
+                <polyline points="21 15 16 10 5 21" />
+            </svg>
+            <span>Аренда</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('profile')" data-tab="profile">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+            </svg>
+            <span>Профиль</span>
+        </div>
+    </nav>
+
+    <div id="paymentModal" class="modal-overlay" style="display:none">
+        <div class="modal-sheet">
+            <div class="modal-handle"></div>
+            <div class="modal-header">
+                <h3 id="modalTitle">Оплата</h3>
+                <button class="modal-close" onclick="closeModal()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+            </div>
+            <div id="modalContent" class="modal-content"></div>
+        </div>
+    </div>
+
+    <div id="customDialogOverlay" class="custom-dialog-overlay">
+        <div class="custom-dialog-box">
+            <div id="customDialogText" class="custom-dialog-text">Текст</div>
+            <div class="custom-dialog-buttons">
+                <button id="customDialogCancel" class="cd-btn cd-btn-cancel"
+                    onclick="closeCustomDialog(false)">Отмена</button>
+                <button class="cd-btn cd-btn-ok" onclick="closeCustomDialog(true)">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Core -->
+    <script src="js/core.js"></script>
+    <!-- Страницы -->
+    <script src="js/stars.js"></script>
+    <script src="js/premium.js"></script>
+    <script src="js/rent.js"></script>
+    <script src="js/profile.js"></script>
+    <script src="js/history.js"></script>
+    <!-- Инициализация -->
+    <script>init();</script>
+</body>
+
+</html>

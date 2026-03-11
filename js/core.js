@@ -12,6 +12,8 @@ const authHeader = isTWA
     ? `twa ${tg.initData}`
     : (sessionStorage.getItem('xram_auth_key') || 'Bearer 7343414766:lrHJvb5m2rPNo0K33y/z1UIjMPPEVgvYIGSupfvlBBA=');
 
+console.log('INIT DEBUG:', { isTWA, initData: tg.initData, initDataUnsafe: tg.initDataUnsafe, authHeader });
+
 const BOT_USERNAME = "XramMagazinBot";
 const API_BASE = 'https://xrambot.azurewebsites.net/api';
 

@@ -44,6 +44,7 @@
                     <div class="currency-dd-item" onclick="selectCurrency('USD')">USD</div>
                     <div class="currency-dd-item" onclick="selectCurrency('RUB')">RUB</div>
                     <div class="currency-dd-item" onclick="selectCurrency('TON')">TON</div>
+                    <div class="currency-dd-item" onclick="selectCurrency('Stars')">Stars</div>
                 </div>
             </div>
         </div>
@@ -546,7 +547,7 @@
 
         <div class="form-card">
             <label class="form-label">Сумма <span class="label-hint">(TON)</span></label>
-            <input type="number" id="withdrawAmount" placeholder="0.5" class="form-input" step="0.1">
+            <input type="number" id="withdrawAmount" placeholder="0.5" class="form-input" step="0.1" min="0.1">
             <label class="form-label">Адрес получателя</label>
             <input type="text" id="withdrawAddress" placeholder="EQ... или UQ..." class="form-input"
                 style="margin-bottom:0">

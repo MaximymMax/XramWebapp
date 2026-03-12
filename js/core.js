@@ -95,6 +95,7 @@ function formatTonPrice(tonAmount) {
     if (cur === 'TON') return `${tonAmount.toFixed(2)} TON`;
     if (cur === 'USD') return `$${(tonAmount * getTonUsdRate()).toFixed(2)}`;
     if (cur === 'RUB') return `${Math.round(tonAmount * getTonUsdRate() * RUB_PER_USD)} ₽`;
+    if (cur === 'Stars') return `${Math.ceil((tonAmount * getTonUsdRate()) / RATES.USD.perStar)} ⭐️`;
     return `${tonAmount.toFixed(2)} TON`;
 }
 
@@ -103,6 +104,7 @@ function formatUsdPrice(usdAmount) {
     if (cur === 'USD') return `$${usdAmount.toFixed(2)}`;
     if (cur === 'RUB') return `${Math.round(usdAmount * RUB_PER_USD)} ₽`;
     if (cur === 'TON') return `${(usdAmount / getTonUsdRate()).toFixed(2)} TON`;
+    if (cur === 'Stars') return `${Math.ceil(usdAmount / RATES.USD.perStar)} ⭐️`;
     return `$${usdAmount.toFixed(2)}`;
 }
 
@@ -871,6 +873,8 @@ async function fetchServerData() {
 
         // Забираем УЖЕ ФИНАЛЬНЫЕ цены с бекенда (наценка уже включена)
         window.finalPrices.star = config.FinalPricesUsd.Star;
+        RATES.USD.perStar = config.FinalPricesUsd.Star; // Синхронизируем базовый курс покупки звезд с сервером
+        
         PREMIUM_TON = {
             3: config.FinalPricesUsd.Premium3 / RATES.USD.tonUsd,
             6: config.FinalPricesUsd.Premium6 / RATES.USD.tonUsd,

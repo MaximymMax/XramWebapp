@@ -30,7 +30,7 @@ window.selfStatus = { PremiumAvailable: true, StarsAvailable: true, Name: '', Us
 window.sysConfig = { isTestMode: false, receivingWallet: '' }; // НОВОЕ
 
 const state = {
-    stars: 50, starsCustom: false, premium: 3, currency: 'USD', topupAmount: 1, useCustomTopup: true,
+    stars: 50, starsCustom: false, premium: 3, currency: 'USD', topupAmount: 0, useCustomTopup: true,
     target: 'self',
 
     rentCategory: 'gifts',
@@ -739,7 +739,8 @@ function handleTxFlow(txData) {
 function updateTopupBtn() {
     const btn = document.getElementById('topupBtn');
     if (!btn) return;
-    btn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Пополнить ${state.topupAmount} TON`;
+    const amountStr = state.topupAmount > 0 ? ` ${state.topupAmount}` : '';
+    btn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Пополнить${amountStr} TON`;
 }
 
 function selectTopup(amount, element) {
@@ -762,6 +763,12 @@ function toggleCustomTopup(element) {
         state.topupAmount = parseFloat(e.target.value) || 0;
         updateTopupBtn();
     };
+}
+
+window.updateTopupAmountInput = function(val) {
+    state.useCustomTopup = true;
+    state.topupAmount = parseFloat(val) || 0;
+    updateTopupBtn();
 }
 
 window.updateTopupModalPrice = function() {
@@ -788,7 +795,7 @@ window.apiTopupWallet = function () {
     let amount = state.useCustomTopup
         ? parseFloat(document.getElementById('topupAmount').value)
         : state.topupAmount;
-    if (!amount || amount <= 0) return safeAlert('Введите корректную сумму');
+    if (!amount || amount < 0.1) return safeAlert('Минимальная сумма пополнения 0.1 TON');
 
     state.pay.topup = { method: 'CryptoTransfer', currency: 'TON' };
 
@@ -831,9 +838,11 @@ window.executeTopup = async function (amount) {
 }
 
 async function apiWithdrawWallet() {
-    const amount = document.getElementById('withdrawAmount').value;
+    const amountStr = document.getElementById('withdrawAmount').value;
     const address = document.getElementById('withdrawAddress').value.trim();
-    if (!amount || !address) return safeAlert('Заполните все поля');
+    if (!amountStr || !address) return safeAlert('Заполните все поля');
+    const amount = parseFloat(amountStr);
+    if (isNaN(amount) || amount < 0.1) return safeAlert('Минимальная сумма вывода 0.1 TON');
     const result = await apiCall('/transactions/create/withdrawal', { telegramId, currency: 'TON', amount, targetAddress: address });
     if (result && result.Success) { safeAlert('Заявка на вывод создана!'); fetchServerData(); }
     else if (result) safeAlert('Ошибка: ' + result.Error);

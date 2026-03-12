@@ -529,7 +529,7 @@
 
         <div id="customTopupWrapper" class="custom-input-wrapper" style="display:block">
             <input type="number" id="topupAmount" placeholder="Введите сумму TON" class="form-input" step="0.1"
-                min="0.1">
+                min="0.1" oninput="window.updateTopupAmountInput(this.value)">
         </div>
 
         <button class="action-btn wallet-action-btn topup-action-btn" onclick="apiTopupWallet()" id="topupBtn">

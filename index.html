@@ -241,12 +241,12 @@
                     </div>
                     <div class="pkg-info">
                         <span class="pkg-name">50 Stars</span>
-                        <span class="pkg-desc">Мини-пакет</span>
                     </div>
                 </div>
                 <div class="pkg-price" id="price-stars-50">$0.75</div>
             </div>
-            <div class="pkg-btn" onclick="selectPackage('stars', 100, this)" data-value="100">
+            
+            <div class="pkg-btn" onclick="selectPackage('stars', 200, this)" data-value="200">
                 <div class="pkg-left">
                     <div class="pkg-icon stars-pkg-icon">
                         <svg viewBox="0 0 24 24" fill="currentColor">
@@ -255,28 +255,12 @@
                         </svg>
                     </div>
                     <div class="pkg-info">
-                        <span class="pkg-name">100 Stars</span>
-                        <span class="pkg-desc">Базовый</span>
+                        <span class="pkg-name">200 Stars</span>
                     </div>
                 </div>
-                <div class="pkg-price" id="price-stars-100">$1.50</div>
+                <div class="pkg-price" id="price-stars-200">$3.00</div>
             </div>
-            <div class="pkg-btn" onclick="selectPackage('stars', 250, this)" data-value="250">
-                <div class="pkg-left">
-                    <div class="pkg-icon stars-pkg-icon">
-                        <svg viewBox="0 0 24 24" fill="currentColor">
-                            <polygon
-                                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                        </svg>
-                    </div>
-                    <div class="pkg-info">
-                        <span class="pkg-name">250 Stars</span>
-                        <span class="pkg-desc">Популярный</span>
-                    </div>
-                </div>
-                <span class="pkg-tag">Хит</span>
-                <div class="pkg-price" id="price-stars-250">$3.75</div>
-            </div>
+            
             <div class="pkg-btn" onclick="selectPackage('stars', 500, this)" data-value="500">
                 <div class="pkg-left">
                     <div class="pkg-icon stars-pkg-icon">
@@ -287,11 +271,11 @@
                     </div>
                     <div class="pkg-info">
                         <span class="pkg-name">500 Stars</span>
-                        <span class="pkg-desc">Большой</span>
                     </div>
                 </div>
                 <div class="pkg-price" id="price-stars-500">$7.50</div>
             </div>
+            
             <div class="pkg-btn" onclick="selectPackage('stars', 1000, this)" data-value="1000">
                 <div class="pkg-left">
                     <div class="pkg-icon stars-pkg-icon">
@@ -302,27 +286,11 @@
                     </div>
                     <div class="pkg-info">
                         <span class="pkg-name">1000 Stars</span>
-                        <span class="pkg-desc">Профи</span>
                     </div>
                 </div>
-                <span class="pkg-tag">Выгода</span>
                 <div class="pkg-price" id="price-stars-1000">$15.00</div>
             </div>
-            <div class="pkg-btn" onclick="selectPackage('stars', 2500, this)" data-value="2500">
-                <div class="pkg-left">
-                    <div class="pkg-icon stars-pkg-icon">
-                        <svg viewBox="0 0 24 24" fill="currentColor">
-                            <polygon
-                                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                        </svg>
-                    </div>
-                    <div class="pkg-info">
-                        <span class="pkg-name">2500 Stars</span>
-                        <span class="pkg-desc">Максимум</span>
-                    </div>
-                </div>
-                <div class="pkg-price" id="price-stars-2500">$37.50</div>
-            </div>
+            
             <div class="pkg-btn pkg-custom-toggle" onclick="toggleCustomStars(this)">
                 <div class="pkg-left">
                     <div class="pkg-icon stars-pkg-icon">
@@ -333,7 +301,6 @@
                     </div>
                     <div class="pkg-info">
                         <span class="pkg-name">Своё количество</span>
-                        <span class="pkg-desc">Введите вручную</span>
                     </div>
                 </div>
                 <div class="pkg-price" id="price-stars-custom">—</div>
@@ -411,7 +378,6 @@
                     </div>
                     <div class="pkg-info">
                         <span class="pkg-name">3 месяца</span>
-                        <span class="pkg-desc">Короткий период</span>
                     </div>
                 </div>
                 <div class="pkg-price" id="price-premium-3">$3.90</div>
@@ -425,10 +391,8 @@
                     </div>
                     <div class="pkg-info">
                         <span class="pkg-name">6 месяцев</span>
-                        <span class="pkg-desc">Полгода</span>
                     </div>
                 </div>
-                <span class="pkg-tag">Популярный</span>
                 <div class="pkg-price" id="price-premium-6">$6.99</div>
             </div>
             <div class="pkg-btn premium-pkg" onclick="selectPackage('premium', 12, this)" data-value="12">
@@ -440,10 +404,8 @@
                     </div>
                     <div class="pkg-info">
                         <span class="pkg-name">12 месяцев</span>
-                        <span class="pkg-desc">Лучшая цена</span>
                     </div>
                 </div>
-                <span class="pkg-tag">Выгодно</span>
                 <div class="pkg-price" id="price-premium-12">$11.99</div>
             </div>
         </div>
@@ -565,80 +527,7 @@
     <div id="page-wallet" class="page page-wallet-theme">
         <div class="wallet-section-title" style="padding-top:20px">Пополнение</div>
 
-        <div class="packages-list" id="topupOptions">
-            <div class="pkg-btn topup-pkg selected" onclick="selectTopup(1, this)">
-                <div class="pkg-left">
-                    <div class="pkg-icon wallet-pkg-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10" />
-                            <line x1="12" y1="8" x2="12" y2="16" />
-                            <line x1="8" y1="12" x2="16" y2="12" />
-                        </svg>
-                    </div>
-                    <div class="pkg-info"><span class="pkg-name">1 TON</span><span class="pkg-desc">Мини</span>
-                    </div>
-                </div>
-                <div class="pkg-price" id="topup-price-1">≈ $2.00</div>
-            </div>
-            <div class="pkg-btn topup-pkg" onclick="selectTopup(5, this)">
-                <div class="pkg-left">
-                    <div class="pkg-icon wallet-pkg-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10" />
-                            <line x1="12" y1="8" x2="12" y2="16" />
-                            <line x1="8" y1="12" x2="16" y2="12" />
-                        </svg>
-                    </div>
-                    <div class="pkg-info"><span class="pkg-name">5 TON</span><span class="pkg-desc">Стандарт</span>
-                    </div>
-                </div>
-                <span class="pkg-tag">Хит</span>
-                <div class="pkg-price" id="topup-price-5">≈ $10.00</div>
-            </div>
-            <div class="pkg-btn topup-pkg" onclick="selectTopup(10, this)">
-                <div class="pkg-left">
-                    <div class="pkg-icon wallet-pkg-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10" />
-                            <line x1="12" y1="8" x2="12" y2="16" />
-                            <line x1="8" y1="12" x2="16" y2="12" />
-                        </svg>
-                    </div>
-                    <div class="pkg-info"><span class="pkg-name">10 TON</span><span class="pkg-desc">Большой</span>
-                    </div>
-                </div>
-                <div class="pkg-price" id="topup-price-10">≈ $20.00</div>
-            </div>
-            <div class="pkg-btn topup-pkg" onclick="selectTopup(25, this)">
-                <div class="pkg-left">
-                    <div class="pkg-icon wallet-pkg-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10" />
-                            <line x1="12" y1="8" x2="12" y2="16" />
-                            <line x1="8" y1="12" x2="16" y2="12" />
-                        </svg>
-                    </div>
-                    <div class="pkg-info"><span class="pkg-name">25 TON</span><span class="pkg-desc">Максимум</span>
-                    </div>
-                </div>
-                <span class="pkg-tag">Выгода</span>
-                <div class="pkg-price" id="topup-price-25">≈ $50.00</div>
-            </div>
-            <div class="pkg-btn topup-pkg pkg-custom-toggle" onclick="toggleCustomTopup(this)">
-                <div class="pkg-left">
-                    <div class="pkg-icon wallet-pkg-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                        </svg>
-                    </div>
-                    <div class="pkg-info"><span class="pkg-name">Своя сумма</span><span class="pkg-desc">Введите
-                            вручную</span></div>
-                </div>
-            </div>
-        </div>
-
-        <div id="customTopupWrapper" class="custom-input-wrapper" style="display:none">
+        <div id="customTopupWrapper" class="custom-input-wrapper" style="display:block">
             <input type="number" id="topupAmount" placeholder="Введите сумму TON" class="form-input" step="0.1"
                 min="0.1">
         </div>

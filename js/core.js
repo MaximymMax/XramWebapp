@@ -10,7 +10,7 @@ if (isTWA) { tg.expand(); tg.ready(); }
 
 const authHeader = isTWA
     ? `twa ${tg.initData}`
-    : (sessionStorage.getItem('xram_auth_key') || 'Bearer 7343414766:lrHJvb5m2rPNo0K33y/z1UIjMPPEVgvYIGSupfvlBBA=');
+    : (sessionStorage.getItem('xram_auth_key') || 'Bearer 7343414766:z5xYTzkcARs3QIV2ohgvTajxwB2jV/7CGViM8I/Vapo=');
 
 const BOT_USERNAME = "XramMagazinBot";
 const API_BASE = 'https://xrambot.azurewebsites.net/api';
@@ -30,7 +30,7 @@ window.selfStatus = { PremiumAvailable: true, StarsAvailable: true, Name: '', Us
 window.sysConfig = { isTestMode: false, receivingWallet: '' }; // НОВОЕ
 
 const state = {
-    stars: 50, starsCustom: false, premium: 3, currency: 'USD', topupAmount: 1, useCustomTopup: false,
+    stars: 50, starsCustom: false, premium: 3, currency: 'USD', topupAmount: 1, useCustomTopup: true,
     target: 'self',
 
     rentCategory: 'gifts',
@@ -494,7 +494,7 @@ window.switchTarget = function (target, type) {
 // ============================================================
 
 function updateAllPrices() {
-    [50, 100, 250, 500, 1000, 2500].forEach(count => {
+    [50, 200, 500, 1000].forEach(count => {
         const el = document.getElementById(`price-stars-${count}`);
         if (el) el.textContent = formatUsdPrice(count * RATES.USD.perStar);
     });

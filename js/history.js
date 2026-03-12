@@ -13,8 +13,6 @@ function renderServerHistory(history) {
 
     list.innerHTML = history.map(h => {
         const date = new Date(h.CreatedAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-        const supportBtn = h.Status === 'Pending' ? `<button class="cheque-item-deact" style="margin-left:8px;" onclick="event.stopPropagation(); showSupportModal()">Поддержка</button>` : '';
-
         return `<div class="history-item" onclick="showTxDetails('${h.Id}')" style="cursor:pointer">
             <div class="history-item-left">
                 <span class="history-item-title">${h.Product === 'None' ? h.Type : h.Product} · ${h.Amount} ${h.Currency}</span>
@@ -22,7 +20,6 @@ function renderServerHistory(history) {
             </div>
             <div style="display:flex; align-items:center;">
                 <span class="history-item-status ${statusClass[h.Status] || ''}">${statusLabel[h.Status] || h.Status}</span>
-                ${supportBtn}
             </div>
         </div>`;
     }).join('');
@@ -52,6 +49,8 @@ window.showTxDetails = function(txId) {
     const activatorHtml = (tx.IsCheque && tx.IsChequeActivated && tx.ActivatorTelegramId)
         ? `<div class="modal-info-row"><span class="modal-info-label">Активировал (ID)</span><span class="modal-info-value">${tx.ActivatorTelegramId}</span></div>` : '';
 
+    const supportHtml = tx.Status === 'Pending' ? `<button class="action-btn outline-action-btn" style="width:100%; margin-top: 16px;" onclick="showSupportModal()">Связаться с поддержкой</button>` : '';
+
     showModal('Детали операции', `
         <div class="modal-info-row"><span class="modal-info-label">ID Заявки</span><span class="modal-info-value">${tx.PaymentCode}</span></div>
         <div class="modal-info-row"><span class="modal-info-label">Дата</span><span class="modal-info-value">${date}</span></div>
@@ -60,6 +59,7 @@ window.showTxDetails = function(txId) {
         <div class="modal-info-row"><span class="modal-info-label">Способ оплаты</span><span class="modal-info-value">${tx.PaymentMethod}</span></div>
         <div class="modal-info-row"><span class="modal-info-label">Статус</span><span class="modal-info-value">${statusLabel[tx.Status] || tx.Status}</span></div>
         ${targetHtml}${activatorHtml}${detailsHtml}
+        ${supportHtml}
         <div style="margin-top:16px; font-size:11px; color:var(--text-muted); text-align:center;">Уникальный Hash: ${tx.Id}</div>
     `);
 }

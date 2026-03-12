@@ -259,6 +259,7 @@ window.selectPayMethod = function (product, element) {
     element.classList.add('selected');
     state.pay[product] = { method: element.dataset.method, currency: element.dataset.currency };
     if (product === 'rent') updateRentModalPrice();
+    if (product === 'topup') updateTopupModalPrice();
 }
 
 // ── Обновление транзакции вручную ───────────────────────────
@@ -763,6 +764,26 @@ function toggleCustomTopup(element) {
     };
 }
 
+window.updateTopupModalPrice = function() {
+    let amount = state.useCustomTopup
+        ? parseFloat(document.getElementById('topupAmount').value)
+        : state.topupAmount;
+    if (!amount || amount <= 0) return;
+
+    const usdTotal = amount * getTonUsdRate();
+
+    if (state.pay.topup && state.pay.topup.method === 'TelegramStars') {
+        const starsTotal = Math.ceil(usdTotal / RATES.USD.starDeposit);
+        document.getElementById('modalTopupTotalUsd').textContent = `${starsTotal} ⭐️`;
+        document.getElementById('modalTopupTotalAlt').textContent = `(≈ $${usdTotal.toFixed(2)})`;
+    } else {
+        document.getElementById('modalTopupTotalUsd').textContent = formatUsdPrice(usdTotal);
+        let altTotal = formatTonPrice(amount);
+        if (state.currency === 'USD') altTotal = `${amount.toFixed(2)} TON`;
+        document.getElementById('modalTopupTotalAlt').textContent = `(≈ ${altTotal})`;
+    }
+}
+
 window.apiTopupWallet = function () {
     let amount = state.useCustomTopup
         ? parseFloat(document.getElementById('topupAmount').value)
@@ -770,7 +791,6 @@ window.apiTopupWallet = function () {
     if (!amount || amount <= 0) return safeAlert('Введите корректную сумму');
 
     state.pay.topup = { method: 'CryptoTransfer', currency: 'TON' };
-    const usdPrice = amount * getTonUsdRate();
 
     showModal('Пополнение баланса', `
         <div class="page-wallet-theme" style="margin-top: 10px;">
@@ -779,8 +799,8 @@ window.apiTopupWallet = function () {
             <div style="display:flex; justify-content:space-between; align-items:center; margin: 18px 0;">
                 <span style="font-size:14px; font-weight:700; color:var(--text-secondary)">К оплате:</span>
                 <div style="text-align:right">
-                    <div style="font-size:22px; font-weight:800; color:var(--text)">$${usdPrice.toFixed(2)}</div>
-                    <div style="font-size:13px; font-weight:600; color:var(--text-muted)">(≈ ${amount.toFixed(2)} TON)</div>
+                    <div style="font-size:22px; font-weight:800; color:var(--text)" id="modalTopupTotalUsd">$0.00</div>
+                    <div style="font-size:13px; font-weight:600; color:var(--text-muted)" id="modalTopupTotalAlt">(≈ 0.00 TON)</div>
                 </div>
             </div>
 
@@ -794,6 +814,7 @@ window.apiTopupWallet = function () {
             <button class="action-btn wallet-action-btn" id="modalConfirmTopupBtn" onclick="executeTopup(${amount})" style="width:100%; margin: 16px 0 0">Пополнить</button>
         </div>
     `);
+    updateTopupModalPrice();
 }
 
 window.executeTopup = async function (amount) {

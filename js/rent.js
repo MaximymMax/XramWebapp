@@ -313,10 +313,24 @@ window.openRentModal = function(address) {
     state.rentImageUrl = offer.ImageUrl;
     window.RENT_TON_PER_DAY = offer.PriceTon;
     state.rentDays = offer.MinDays;
-    state.pay.rent = { method: 'InternalWallet', currency: 'TON' };
+    const totalTon = window.RENT_TON_PER_DAY * state.rentDays;
+    const balNum = tonConnect.balance !== null ? parseFloat(tonConnect.balance) : 0;
+    const isEnough = balNum >= totalTon;
+    const balClass = isEnough ? 'selected' : '';
+    const otherClass = !isEnough ? 'selected' : '';
+    const balStyle = !isEnough ? 'opacity: 0.4; pointer-events: none;' : '';
+    
+    if (isEnough) {
+        state.pay.rent = { method: 'InternalWallet', currency: 'TON' };
+    } else {
+        state.pay.rent = { method: 'TelegramStars', currency: 'Stars' };
+    }
+
+    const balIndicatorHtml = `<div style="position:absolute; top: 12px; left: 16px; font-size: 11px; font-weight: 700; color: var(--wallet-primary);">Баланс: <br><span style="font-size:13px">${balNum.toFixed(2)} TON</span></div>`;
 
     showModal('Аренда NFT', `
-        <div style="display:flex; gap:14px; margin-bottom:16px; align-items:center" class="page-rent-theme">
+        ${balIndicatorHtml}
+        <div style="display:flex; gap:14px; margin-bottom:16px; align-items:center; margin-top:10px" class="page-rent-theme">
             <img src="${offer.ImageUrl}" style="width:64px;height:64px;border-radius:12px;object-fit:cover;background:var(--surface-3)" onerror="this.style.display='none'">
             <div style="min-width:0; flex:1">
                 <div style="font-weight:800; font-size:16px; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis">${offer.Name}</div>
@@ -337,9 +351,16 @@ window.openRentModal = function(address) {
         </div>
 
         <label class="form-label">Способ оплаты</label>
+        <div class="payment-methods page-rent-theme" style="display:flex; gap:8px; margin-bottom:8px;">
+            <div class="pay-method ${balClass}" style="flex:1; padding: 14px 10px; font-size: 13.5px; display:flex; flex-direction:column; gap:2px; ${balStyle}" data-method="InternalWallet" data-currency="TON" onclick="selectPayMethod('rent', this)">
+                <span>Оплатить со счета</span>
+            </div>
+            <div class="pay-method" style="flexShrink:0; width:110px; display:flex; align-items:center; justify-content:center; gap:6px; background:var(--wallet-dim); border-color:var(--wallet-primary); color:var(--wallet-primary); padding:13px 10px; font-size:12.5px;" onclick="closeModal(); switchTab('wallet');">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Пополнить
+            </div>
+        </div>
         <div class="payment-methods page-rent-theme">
-            <div class="pay-method selected" data-method="InternalWallet" data-currency="TON" onclick="selectPayMethod('rent', this)">Внутренний TON</div>
-            <div class="pay-method" data-method="TelegramStars" data-currency="Stars" onclick="selectPayMethod('rent', this)">Звёзды (Telegram)</div>
+            <div class="pay-method ${otherClass}" style="grid-column: span 2" data-method="TelegramStars" data-currency="Stars" onclick="selectPayMethod('rent', this)">Звёзды (Telegram)</div>
         </div>
 
         <button class="action-btn rent-action-btn" id="modalRentBtn" onclick="apiRentGift()" style="width:100%; margin:0">Оплатить аренду</button>

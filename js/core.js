@@ -12,8 +12,6 @@ const authHeader = isTWA
     ? `twa ${tg.initData}`
     : (sessionStorage.getItem('xram_auth_key') || 'Bearer 7343414766:lrHJvb5m2rPNo0K33y/z1UIjMPPEVgvYIGSupfvlBBA=');
 
-console.log('INIT DEBUG:', { isTWA, initData: tg.initData, initDataUnsafe: tg.initDataUnsafe, authHeader });
-
 const BOT_USERNAME = "XramMagazinBot";
 const API_BASE = 'https://xrambot.azurewebsites.net/api';
 
@@ -24,7 +22,7 @@ const tonConnect = { connected: false, address: null, balance: null, frozenBalan
 
 let RATES = { USD: { tonUsd: 2.0, perStar: 0.015, starDeposit: 0.013 }, RUB: { tonUsd: 180, perStar: 1.35 }, TON: { tonUsd: 1, perStar: 0.0075 } };
 let PREMIUM_TON = { 3: 6, 6: 10, 12: 18 };
-const RUB_PER_USD = 95; 
+const RUB_PER_USD = 95;
 
 // Дефолтные цены и системные настройки
 window.finalPrices = { star: 0.018, premium3: 14.38, premium6: 19.18, premium12: 34.78 };
@@ -74,7 +72,7 @@ function showCustomDialog(msg, isConfirm, cb) {
     document.getElementById('customDialogOverlay').classList.add('show');
 }
 
-window.closeCustomDialog = function(result) {
+window.closeCustomDialog = function (result) {
     document.getElementById('customDialogOverlay').classList.remove('show');
     if (_dialogCallback) { _dialogCallback(result); _dialogCallback = null; }
 }
@@ -138,7 +136,7 @@ function updateHomeBalances() {
     }
 }
 
-function updateTonConnectUI() {}
+function updateTonConnectUI() { }
 function onTonConnect() { safeAlert('Для подключения кошелька используйте бота или раздел Моя Аренда.'); }
 
 // --- nav.js ---
@@ -150,10 +148,10 @@ const TAB_ORDER = ['home', 'stars', 'premium', 'rent', 'profile'];
 let _currentTab = 'home';
 
 const PAGE_BANNER_CONFIG = {
-    stars:   { label: 'Telegram Stars',     icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`, theme: 'stars' },
-    premium: { label: 'Telegram Premium',   icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`, theme: 'premium' },
-    rent:    { label: 'Аренда NFT-подарков',icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`, theme: 'rent' },
-    wallet:  { label: 'TON Кошелёк',        icon: `<svg width="14" height="14" viewBox="0 0 56 56" fill="none"><path d="M28 4L4 18V38L28 52L52 38V18L28 4Z" fill="currentColor" opacity="0.2"/><path d="M28 4L4 18L28 32L52 18L28 4Z" fill="currentColor" opacity="0.7"/><path d="M28 32V52L52 38V18L28 32Z" fill="currentColor" opacity="0.5"/><path d="M4 18V38L28 52V32L4 18Z" fill="currentColor" opacity="0.6"/></svg>`, theme: 'wallet' }
+    stars: { label: 'Telegram Stars', icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`, theme: 'stars' },
+    premium: { label: 'Telegram Premium', icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`, theme: 'premium' },
+    rent: { label: 'Аренда NFT-подарков', icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`, theme: 'rent' },
+    wallet: { label: 'TON Кошелёк', icon: `<svg width="14" height="14" viewBox="0 0 56 56" fill="none"><path d="M28 4L4 18V38L28 52L52 38V18L28 4Z" fill="currentColor" opacity="0.2"/><path d="M28 4L4 18L28 32L52 18L28 4Z" fill="currentColor" opacity="0.7"/><path d="M28 32V52L52 38V18L28 32Z" fill="currentColor" opacity="0.5"/><path d="M4 18V38L28 52V32L4 18Z" fill="currentColor" opacity="0.6"/></svg>`, theme: 'wallet' }
 };
 
 function updatePageBanner(tabId) {
@@ -169,7 +167,7 @@ function updatePageBanner(tabId) {
     }
 }
 
-window.switchTab = function(tabId) {
+window.switchTab = function (tabId) {
     if (tabId === _currentTab) return;
     const oldPage = document.getElementById(`page-${_currentTab}`);
     const newPage = document.getElementById(`page-${tabId}`);
@@ -196,7 +194,7 @@ window.switchTab = function(tabId) {
 }
 
 // ── Выбор валюты ─────────────────────────────────────────────
-window.selectCurrency = function(cur) {
+window.selectCurrency = function (cur) {
     state.currency = cur;
     document.getElementById('currencyLabel').textContent = cur;
     document.getElementById('currencyDropdownWrap').classList.remove('open');
@@ -204,19 +202,19 @@ window.selectCurrency = function(cur) {
 }
 
 // ── Глобальные дропдауны ─────────────────────────────────────
-window.toggleDropdown = function(id, e) {
+window.toggleDropdown = function (id, e) {
     if (e && typeof e.stopPropagation === 'function') {
         e.stopPropagation();
     }
     const wrap = document.getElementById(id);
     if (!wrap) return;
     const isOpen = wrap.classList.contains('open');
-    
+
     // Закрыть все остальные
     document.querySelectorAll('.custom-dd-wrap, .sort-dd-wrap, .currency-dd-wrap').forEach(el => {
         if (el.id !== id) el.classList.remove('open');
     });
-    
+
     if (!isOpen) {
         wrap.classList.add('open');
     } else {
@@ -224,11 +222,11 @@ window.toggleDropdown = function(id, e) {
     }
 }
 
-window.toggleSortDropdown = function(e) {
+window.toggleSortDropdown = function (e) {
     window.toggleDropdown('sortDropdown', e);
 }
 
-document.addEventListener('click', function(e) {
+document.addEventListener('click', function (e) {
     if (!e.target.closest('.custom-dd-wrap, .sort-dd-wrap, .currency-dd-wrap')) {
         document.querySelectorAll('.custom-dd-wrap, .sort-dd-wrap, .currency-dd-wrap').forEach(el => el.classList.remove('open'));
     }
@@ -255,7 +253,7 @@ if (_modal) _modal.addEventListener('click', (e) => { if (e.target === e.current
 
 
 // ── Метод оплаты ─────────────────────────────────────────────
-window.selectPayMethod = function(product, element) {
+window.selectPayMethod = function (product, element) {
     const container = element.closest('.payment-methods');
     container.querySelectorAll('.pay-method').forEach(el => el.classList.remove('selected'));
     element.classList.add('selected');
@@ -404,11 +402,11 @@ function applyUsernameResult(product, data, rawUsername) {
 }
 
 // ── Логика вкладок получателя (для модалок openStarsModal/openPremiumModal) ──
-window.renderTargetSection = function(type) {
+window.renderTargetSection = function (type) {
     const isSelfAvail = type === 'premium' ? window.selfStatus?.PremiumAvailable : window.selfStatus?.StarsAvailable;
-    const selfBtn    = `<button class="ttab ${state.target === 'self'   ? 'active' : ''}" onclick="switchTarget('self', '${type}')"   ${!isSelfAvail ? 'disabled style="opacity:0.5"' : ''}>Себе</button>`;
-    const otherBtn   = `<button class="ttab ${state.target === 'other'  ? 'active' : ''}" onclick="switchTarget('other', '${type}')">Другому</button>`;
-    const chequeBtn  = `<button class="ttab ${state.target === 'cheque' ? 'active' : ''}" onclick="switchTarget('cheque', '${type}')">Чеком</button>`;
+    const selfBtn = `<button class="ttab ${state.target === 'self' ? 'active' : ''}" onclick="switchTarget('self', '${type}')"   ${!isSelfAvail ? 'disabled style="opacity:0.5"' : ''}>Себе</button>`;
+    const otherBtn = `<button class="ttab ${state.target === 'other' ? 'active' : ''}" onclick="switchTarget('other', '${type}')">Другому</button>`;
+    const chequeBtn = `<button class="ttab ${state.target === 'cheque' ? 'active' : ''}" onclick="switchTarget('cheque', '${type}')">Чеком</button>`;
 
     let contentHtml = '';
     if (state.target === 'self') {
@@ -442,7 +440,7 @@ window.renderTargetSection = function(type) {
 }
 
 let _targetCheckTimeout = null;
-window.onTargetUsernameInput = function(type) {
+window.onTargetUsernameInput = function (type) {
     clearTimeout(_targetCheckTimeout);
     const input = document.getElementById('targetUsername').value.trim();
     const preview = document.getElementById('targetUserPreview');
@@ -480,7 +478,7 @@ window.onTargetUsernameInput = function(type) {
     }, 700);
 }
 
-window.switchTarget = function(target, type) {
+window.switchTarget = function (target, type) {
     state.target = target;
     document.getElementById('modalTargetContainer').innerHTML = renderTargetSection(type);
     const btn = document.getElementById(type === 'premium' ? 'modalPremiumBtn' : 'modalStarsBtn');
@@ -546,24 +544,40 @@ function selectPackage(type, value, element) {
 //  payment.js — Оплата Stars/Premium (общая модалка + транзакции)
 // ============================================================
 
-function generatePaymentMethodsHtml(product, targetMode) {
+function generatePaymentMethodsHtml(product, targetMode, requiredTon) {
+    const balNum = tonConnect.balance !== null ? parseFloat(tonConnect.balance) : 0;
+    const isEnough = balNum >= requiredTon;
+    const balClass = isEnough ? 'selected' : '';
+    const otherClass = !isEnough ? 'selected' : '';
+    const balStyle = !isEnough ? 'opacity: 0.4; pointer-events: none;' : '';
+
+    const btnTopup = `<div class="pay-method" style="flexShrink:0; width:110px; display:flex; align-items:center; justify-content:center; gap:6px; background:var(--wallet-dim); border-color:var(--wallet-primary); color:var(--wallet-primary); padding:13px 10px; font-size:12.5px;" onclick="closeModal(); switchTab('wallet');"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Пополнить</div>`;
+
     if (targetMode === 'cheque') {
         return `
-            <div class="payment-methods">
-                <div class="pay-method selected" style="grid-column: span 2" data-method="InternalWallet" data-currency="TON" onclick="selectPayMethod('${product}', this)">Внутренний баланс TON</div>
+            <div class="payment-methods" style="display:flex; gap:8px;">
+                <div class="pay-method ${balClass}" style="flex:1; padding: 14px 10px; font-size: 13.5px; display:flex; flex-direction:column; gap:2px; ${balStyle}" data-method="InternalWallet" data-currency="TON" onclick="selectPayMethod('${product}', this)">
+                    <span>Оплатить со счета</span>
+                </div>
+                ${btnTopup}
             </div>
             <div style="font-size:11.5px; color:var(--text-muted); text-align:center; margin-top:-8px; margin-bottom:16px;">Сумма будет заморожена на балансе</div>`;
     }
     return `
-        <div class="payment-methods">
-            <div class="pay-method selected" data-method="InternalWallet" data-currency="TON" onclick="selectPayMethod('${product}', this)">Внутренний TON</div>
-            <div class="pay-method" data-method="CryptoTransfer" data-currency="TON" onclick="selectPayMethod('${product}', this)">Перевод TON</div>
+        <div class="payment-methods" style="display:flex; gap:8px; margin-bottom:8px;">
+            <div class="pay-method ${balClass}" style="flex:1; padding: 14px 10px; font-size: 13.5px; display:flex; flex-direction:column; gap:2px; ${balStyle}" data-method="InternalWallet" data-currency="TON" onclick="selectPayMethod('${product}', this)">
+                <span>Оплатить со счета</span>
+            </div>
+            ${btnTopup}
+        </div>
+        <div class="payment-methods" style="grid-template-columns: 1fr 1fr; display:grid;">
+            <div class="pay-method ${otherClass}" data-method="CryptoTransfer" data-currency="TON" onclick="selectPayMethod('${product}', this)">Перевод TON</div>
             <div class="pay-method" data-method="BankCard" data-currency="RUB" onclick="selectPayMethod('${product}', this)">Карта (RUB)</div>
-            <div class="pay-method" data-method="TelegramStars" data-currency="Stars" onclick="selectPayMethod('${product}', this)">Звёзды</div>
+            <div class="pay-method" style="grid-column: span 2" data-method="TelegramStars" data-currency="Stars" onclick="selectPayMethod('${product}', this)">Звёзды</div>
         </div>`;
 }
 
-window.openPaymentModal = function(product) {
+window.openPaymentModal = function (product) {
     const targetStr = getApiTarget(product);
     if (!targetStr) {
         safeAlert('Пожалуйста, проверьте юзернейм получателя или срок чека.');
@@ -592,9 +606,19 @@ window.openPaymentModal = function(product) {
         usdPrice = tonPrice * getTonUsdRate();
     }
 
-    state.pay[product] = { method: 'InternalWallet', currency: 'TON' };
+    const balNum = tonConnect.balance !== null ? parseFloat(tonConnect.balance) : 0;
+    const isEnough = balNum >= tonPrice;
+
+    if (mode === 'cheque' || isEnough) {
+        state.pay[product] = { method: 'InternalWallet', currency: 'TON' };
+    } else {
+        state.pay[product] = { method: 'CryptoTransfer', currency: 'TON' };
+    }
+
+    const balIndicatorHtml = `<div style="position:absolute; top: 12px; left: 16px; font-size: 11px; font-weight: 700; color: var(--wallet-primary);">Баланс: <br><span style="font-size:13px">${balNum.toFixed(2)} TON</span></div>`;
 
     showModal('Оформление заказа', `
+        ${balIndicatorHtml}
         <div class="page-${product}-theme" style="margin-top: 10px;">
             <div class="modal-info-row"><span class="modal-info-label">Товар</span><span class="modal-info-value" style="color:var(--${product}-primary)">${productName}</span></div>
             <div class="modal-info-row"><span class="modal-info-label">Получатель</span><span class="modal-info-value">${targetDisplay}</span></div>
@@ -608,14 +632,14 @@ window.openPaymentModal = function(product) {
             </div>
 
             <label class="form-label" style="margin-bottom:8px;">Способ оплаты</label>
-            ${generatePaymentMethodsHtml(product, mode)}
+            ${generatePaymentMethodsHtml(product, mode, tonPrice)}
 
             <button class="action-btn ${product}-action-btn" id="modalConfirmBtn" onclick="executePurchase('${product}')" style="width:100%; margin: 16px 0 0">Подтвердить заказ</button>
         </div>
     `);
 }
 
-window.executePurchase = async function(product) {
+window.executePurchase = async function (product) {
     const target = getApiTarget(product);
     const pm = state.pay[product].method;
     const pc = state.pay[product].currency;
@@ -642,8 +666,8 @@ window.executePurchase = async function(product) {
 }
 
 // Используется для Stars/Premium страниц (кнопки Купить на странице)
-window.apiBuyStars = function() { executePurchase('stars'); }
-window.apiBuyPremium = function(months) {
+window.apiBuyStars = function () { executePurchase('stars'); }
+window.apiBuyPremium = function (months) {
     state.premium = months || state.premium;
     executePurchase('premium');
 }
@@ -739,16 +763,50 @@ function toggleCustomTopup(element) {
     };
 }
 
-async function apiTopupWallet() {
+window.apiTopupWallet = function () {
     let amount = state.useCustomTopup
         ? parseFloat(document.getElementById('topupAmount').value)
         : state.topupAmount;
     if (!amount || amount <= 0) return safeAlert('Введите корректную сумму');
-    setLoading(document.getElementById('topupBtn'), true);
-    const result = await apiCall('/transactions/create/topup', { telegramId, currency: 'TON', method: 'CryptoTransfer', amount });
-    setLoading(document.getElementById('topupBtn'), false);
-    if (result && result.Success) handleTxFlow(result);
-    else if (result) safeAlert('Ошибка: ' + result.Error);
+
+    state.pay.topup = { method: 'CryptoTransfer', currency: 'TON' };
+    const usdPrice = amount * getTonUsdRate();
+
+    showModal('Пополнение баланса', `
+        <div class="page-wallet-theme" style="margin-top: 10px;">
+            <div class="modal-info-row"><span class="modal-info-label">Сумма пополнения</span><span class="modal-info-value" style="color:var(--wallet-primary)">${amount} TON</span></div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin: 18px 0;">
+                <span style="font-size:14px; font-weight:700; color:var(--text-secondary)">К оплате:</span>
+                <div style="text-align:right">
+                    <div style="font-size:22px; font-weight:800; color:var(--text)">$${usdPrice.toFixed(2)}</div>
+                    <div style="font-size:13px; font-weight:600; color:var(--text-muted)">(≈ ${amount.toFixed(2)} TON)</div>
+                </div>
+            </div>
+
+            <label class="form-label" style="margin-bottom:8px;">Способ оплаты</label>
+            <div class="payment-methods">
+                <div class="pay-method selected" data-method="CryptoTransfer" data-currency="TON" onclick="selectPayMethod('topup', this)">Перевод TON</div>
+                <div class="pay-method" data-method="BankCard" data-currency="RUB" onclick="selectPayMethod('topup', this)">Карта (RUB)</div>
+                <div class="pay-method" style="grid-column: span 2" data-method="TelegramStars" data-currency="Stars" onclick="selectPayMethod('topup', this)">Звёзды</div>
+            </div>
+
+            <button class="action-btn wallet-action-btn" id="modalConfirmTopupBtn" onclick="executeTopup(${amount})" style="width:100%; margin: 16px 0 0">Пополнить</button>
+        </div>
+    `);
+}
+
+window.executeTopup = async function (amount) {
+    const pm = state.pay.topup.method;
+    const pc = state.pay.topup.currency;
+    const btn = document.getElementById('modalConfirmTopupBtn');
+
+    setLoading(btn, true);
+    const result = await apiCall('/transactions/create/topup', { telegramId, currency: pc, method: pm, amount });
+    setLoading(btn, false);
+
+    if (result && result.Success) { handleTxFlow(result); }
+    else if (result) { safeAlert('Ошибка: ' + result.Error); }
 }
 
 async function apiWithdrawWallet() {
@@ -776,17 +834,17 @@ async function fetchServerData() {
         // Забираем системные данные
         window.sysConfig.isTestMode = config.IsTestMode;
         window.sysConfig.receivingWallet = config.ReceivingWalletAddress;
-        
+
         // Забираем курсы
-        RATES.USD.tonUsd = config.Rates.TonUsd; 
+        RATES.USD.tonUsd = config.Rates.TonUsd;
         RATES.USD.starDeposit = config.Rates.StarDepositUsd; // Курс для аренды в звездах
 
         // Забираем УЖЕ ФИНАЛЬНЫЕ цены с бекенда (наценка уже включена)
         window.finalPrices.star = config.FinalPricesUsd.Star;
-        PREMIUM_TON = { 
-            3: config.FinalPricesUsd.Premium3 / RATES.USD.tonUsd, 
-            6: config.FinalPricesUsd.Premium6 / RATES.USD.tonUsd, 
-            12: config.FinalPricesUsd.Premium12 / RATES.USD.tonUsd 
+        PREMIUM_TON = {
+            3: config.FinalPricesUsd.Premium3 / RATES.USD.tonUsd,
+            6: config.FinalPricesUsd.Premium6 / RATES.USD.tonUsd,
+            12: config.FinalPricesUsd.Premium12 / RATES.USD.tonUsd
         };
 
         // Включаем красную плашку, если включен тестовый режим
@@ -795,12 +853,12 @@ async function fetchServerData() {
 
         updateAllPrices();
     }
-    
+
     const balance = await apiCall('/webapp/user/balance');
     if (balance && balance.Success) {
-        tonConnect.balance = balance.TonBalance; 
+        tonConnect.balance = balance.TonBalance;
         tonConnect.frozenBalance = balance.FrozenTonBalance;
-        updateHomeBalances(); 
+        updateHomeBalances();
     }
 
     // Загружаем предложения по умолчанию, чтобы вкладка Аренды не была пустой

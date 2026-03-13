@@ -10,9 +10,11 @@ function updateStarsBtn() {
     const icon = `<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
     const chequeIcon = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><polyline points="9 12 11 14 15 10"/></svg>`;
     const priceStr = formatUsdPrice(count * RATES.USD.perStar);
+    const createChequeLabel = window.currentLang === 'en' ? 'Create cheque' : 'Создать чек';
+    const buyLabel = window.currentLang === 'en' ? 'Buy' : 'Купить';
     btn.innerHTML = isCheque
-        ? `${chequeIcon} Создать чек · ${count} Stars · ${priceStr}`
-        : `${icon} Купить ${count} Stars · ${priceStr}`;
+        ? `${chequeIcon} ${createChequeLabel} · ${count} Stars · ${priceStr}`
+        : `${icon} ${buyLabel} ${count} Stars · ${priceStr}`;
 }
 
 function updateStarsCustomPrice() {

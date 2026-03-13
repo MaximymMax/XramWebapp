@@ -10,9 +10,12 @@ function updatePremiumBtn() {
     const icon = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`;
     const chequeIcon = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><polyline points="9 12 11 14 15 10"/></svg>`;
     const priceStr = formatTonPrice(PREMIUM_TON[m]);
+    const createChequeLabel = window.currentLang === 'en' ? 'Create cheque' : 'Создать чек';
+    const buyLabel = window.currentLang === 'en' ? 'Buy' : 'Купить';
+    const moLabel = window.currentLang === 'en' ? 'mo' : 'мес';
     btn.innerHTML = isCheque
-        ? `${chequeIcon} Создать чек · Premium ${m} мес · ${priceStr}`
-        : `${icon} Купить Premium ${m} мес · ${priceStr}`;
+        ? `${chequeIcon} ${createChequeLabel} · Premium ${m} ${moLabel} · ${priceStr}`
+        : `${icon} ${buyLabel} Premium ${m} ${moLabel} · ${priceStr}`;
 }
 
 // ── Модальное окно Premium ────────────────────────────────────

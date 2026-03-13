@@ -111,7 +111,7 @@ function formatUsdPrice(usdAmount) {
 // ── UTILS ────────────────────────────────────────────────────
 function setLoading(btn, isLoading) {
     if (!btn) return;
-    if (isLoading) { btn.dataset.orig = btn.innerHTML; btn.innerHTML = '<span style="opacity:0.55">Загрузка...</span>'; btn.disabled = true; }
+    if (isLoading) { btn.dataset.orig = btn.innerHTML; btn.innerHTML = `<span style="opacity:0.55">${t('loading')}</span>`; btn.disabled = true; }
     else { btn.innerHTML = btn.dataset.orig || btn.innerHTML; btn.disabled = false; }
 }
 
@@ -139,7 +139,7 @@ function updateHomeBalances() {
 }
 
 function updateTonConnectUI() { }
-function onTonConnect() { safeAlert('Для подключения кошелька используйте бота или раздел Моя Аренда.'); }
+function onTonConnect() { safeAlert(t('alert_wallet_info')); }
 
 // --- nav.js ---
 // ============================================================
@@ -256,8 +256,10 @@ if (_modal) _modal.addEventListener('click', (e) => { if (e.target === e.current
 
 // ── Метод оплаты ─────────────────────────────────────────────
 window.selectPayMethod = function (product, element) {
-    const container = element.closest('.payment-methods');
-    container.querySelectorAll('.pay-method').forEach(el => el.classList.remove('selected'));
+    const container = element.closest('.modal-content') || element.closest('.page');
+    if (container) {
+        container.querySelectorAll('.pay-method').forEach(el => el.classList.remove('selected'));
+    }
     element.classList.add('selected');
     state.pay[product] = { method: element.dataset.method, currency: element.dataset.currency };
     if (product === 'rent') updateRentModalPrice();
@@ -350,7 +352,7 @@ function onUsernameInput(product, inputEl) {
     if (!raw || raw.length < 3) return;
 
     clearTimeout(state._usernameTimers[product]);
-    if (statusMsg) statusMsg.innerHTML = '<div class="username-checking">Проверяется...</div>';
+    if (statusMsg) statusMsg.innerHTML = `<div class="username-checking">${t('username_checking')}</div>`;
     state._usernameTimers[product] = setTimeout(() => doCheckUsername(product, raw), 600);
 }
 
@@ -397,7 +399,7 @@ function applyUsernameResult(product, data, rawUsername) {
             statusMsg.innerHTML = `
                 <div class="recipient-error-card">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-                    Пользователь не найден
+                    ${res?.Error || t('username_not_found')}
                 </div>`;
         }
         if (btn) btn.disabled = true;
@@ -426,15 +428,15 @@ window.renderTargetSection = function (type) {
                     </div>
                 </div>`;
         } else {
-            contentHtml = `<div style="color:#ff6b6b; font-size:13px; text-align:center; padding:10px 0;">Недоступно для вашего аккаунта</div>`;
+            contentHtml = `<div style="color:#ff6b6b; font-size:13px; text-align:center; padding:10px 0;">${t('username_not_found')}</div>`;
         }
     } else if (state.target === 'other') {
         contentHtml = `
-            <label class="form-label">Юзернейм получателя</label>
+            <label class="form-label">${t('label_recipient')}</label>
             <input type="text" id="targetUsername" class="form-input" placeholder="@username" oninput="onTargetUsernameInput('${type}')">
             <div id="targetUserPreview"></div>`;
     } else if (state.target === 'cheque') {
-        contentHtml = `<div style="font-size:13px; color:var(--text-secondary); text-align:center; padding:10px 0;">Будет создан чек-ссылка. Вы сможете переслать её получателю.</div>`;
+        contentHtml = `<div style="font-size:13px; color:var(--text-secondary); text-align:center; padding:10px 0;">${t('modal_frozen_note')}</div>`;
     }
 
     return `
@@ -450,7 +452,7 @@ window.onTargetUsernameInput = function (type) {
     const btn = document.getElementById(type === 'premium' ? 'modalPremiumBtn' : 'modalStarsBtn');
 
     if (!input) { preview.innerHTML = ''; btn.disabled = true; return; }
-    preview.innerHTML = '<div class="username-checking">Проверка пользователя...</div>';
+    preview.innerHTML = `<div class="username-checking">${t('username_checking')}</div>`;
     btn.disabled = true;
 
     _targetCheckTimeout = setTimeout(async () => {
@@ -474,7 +476,7 @@ window.onTargetUsernameInput = function (type) {
         } else {
             preview.innerHTML = `<div class="recipient-error-card">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-                ${res?.Error || 'Пользователь не найден'}
+                ${res?.Error || t('username_not_found')}
             </div>`;
             btn.disabled = true;
         }
@@ -554,52 +556,52 @@ function generatePaymentMethodsHtml(product, targetMode, requiredTon) {
     const otherClass = !isEnough ? 'selected' : '';
     const balStyle = !isEnough ? 'opacity: 0.4; pointer-events: none;' : '';
 
-    const btnTopup = `<div class="pay-method" style="flexShrink:0; width:110px; display:flex; align-items:center; justify-content:center; gap:6px; background:var(--wallet-dim); border-color:var(--wallet-primary); color:var(--wallet-primary); padding:13px 10px; font-size:12.5px;" onclick="closeModal(); switchTab('wallet');"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Пополнить</div>`;
+    const btnTopup = `<div class="pay-method" style="flexShrink:0; width:110px; display:flex; align-items:center; justify-content:center; gap:6px; background:var(--wallet-dim); border-color:var(--wallet-primary); color:var(--wallet-primary); padding:13px 10px; font-size:12.5px;" onclick="closeModal(); switchTab('wallet');"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> ${t('modal_pay_topup')}</div>`;
 
     if (targetMode === 'cheque') {
         return `
             <div class="payment-methods" style="display:flex; gap:8px;">
                 <div class="pay-method ${balClass}" style="flex:1; padding: 14px 10px; font-size: 13.5px; display:flex; flex-direction:column; gap:2px; ${balStyle}" data-method="InternalWallet" data-currency="TON" onclick="selectPayMethod('${product}', this)">
-                    <span>Оплатить со счета</span>
+                    <span>${t('modal_pay_internal')}</span>
                 </div>
                 ${btnTopup}
             </div>
-            <div style="font-size:11.5px; color:var(--text-muted); text-align:center; margin-top:-8px; margin-bottom:16px;">Сумма будет заморожена на балансе</div>`;
+            <div style="font-size:11.5px; color:var(--text-muted); text-align:center; margin-top:-8px; margin-bottom:16px;">${t('modal_frozen_note')}</div>`;
     }
     return `
         <div class="payment-methods" style="display:flex; gap:8px; margin-bottom:8px;">
             <div class="pay-method ${balClass}" style="flex:1; padding: 14px 10px; font-size: 13.5px; display:flex; flex-direction:column; gap:2px; ${balStyle}" data-method="InternalWallet" data-currency="TON" onclick="selectPayMethod('${product}', this)">
-                <span>Оплатить со счета</span>
+                <span>${t('modal_pay_internal')}</span>
             </div>
             ${btnTopup}
         </div>
         <div class="payment-methods" style="grid-template-columns: 1fr 1fr; display:grid;">
-            <div class="pay-method ${otherClass}" data-method="CryptoTransfer" data-currency="TON" onclick="selectPayMethod('${product}', this)">Перевод TON</div>
-            <div class="pay-method" data-method="BankCard" data-currency="RUB" onclick="selectPayMethod('${product}', this)">Карта (RUB)</div>
-            <div class="pay-method" style="grid-column: span 2" data-method="TelegramStars" data-currency="Stars" onclick="selectPayMethod('${product}', this)">Звёзды</div>
+            <div class="pay-method ${otherClass}" data-method="CryptoTransfer" data-currency="TON" onclick="selectPayMethod('${product}', this)">${t('modal_pay_transfer')}</div>
+            <div class="pay-method" data-method="BankCard" data-currency="RUB" onclick="selectPayMethod('${product}', this)">${t('modal_pay_card')}</div>
+            <div class="pay-method" style="grid-column: span 2" data-method="TelegramStars" data-currency="Stars" onclick="selectPayMethod('${product}', this)">${t('modal_pay_stars')}</div>
         </div>`;
 }
 
 window.openPaymentModal = function (product) {
     const targetStr = getApiTarget(product);
     if (!targetStr) {
-        safeAlert('Пожалуйста, проверьте юзернейм получателя или срок чека.');
+        safeAlert(t('alert_check_target'));
         return;
     }
 
     let productName = '', usdPrice = 0, tonPrice = 0, targetDisplay = '';
     const mode = state[`${product}RecipientMode`];
 
-    if (mode === 'self') targetDisplay = 'На свой аккаунт';
+    if (mode === 'self') targetDisplay = t('modal_target_self');
     else if (mode === 'other') targetDisplay = `@${state._validatedUsername[product]}`;
     else if (mode === 'cheque') {
         const hrs = getChequeHours(product);
-        targetDisplay = hrs >= 8760 ? 'Чек (бессрочный)' : `Чек (на ${hrs} ч.)`;
+        targetDisplay = hrs >= 8760 ? t('modal_target_cheque_inf') : t('modal_target_cheque', { hours: hrs });
     }
 
     if (product === 'stars') {
         const count = state.starsCustom ? parseInt(document.getElementById('starsCustomAmount')?.value) || 0 : state.stars;
-        if (count < 50) return safeAlert('Минимум 50 звезд');
+        if (count < 50) return safeAlert(t('alert_min_stars'));
         productName = `${count} Telegram Stars`;
         usdPrice = count * RATES.USD.perStar;
         tonPrice = usdPrice / getTonUsdRate();
@@ -618,26 +620,26 @@ window.openPaymentModal = function (product) {
         state.pay[product] = { method: 'CryptoTransfer', currency: 'TON' };
     }
 
-    const balIndicatorHtml = `<div style="position:absolute; top: 12px; left: 16px; font-size: 11px; font-weight: 700; color: var(--wallet-primary);">Баланс: <br><span style="font-size:13px">${balNum.toFixed(2)} TON</span></div>`;
+    const balIndicatorHtml = `<div class="modal-balance-indicator">${t('modal_balance')} <span class="mbi-value">${balNum.toFixed(2)} TON</span></div>`;
 
-    showModal('Оформление заказа', `
+    showModal(t('modal_order'), `
         ${balIndicatorHtml}
         <div class="page-${product}-theme" style="margin-top: 10px;">
-            <div class="modal-info-row"><span class="modal-info-label">Товар</span><span class="modal-info-value" style="color:var(--${product}-primary)">${productName}</span></div>
-            <div class="modal-info-row"><span class="modal-info-label">Получатель</span><span class="modal-info-value">${targetDisplay}</span></div>
+            <div class="modal-info-row"><span class="modal-info-label">${t('modal_product')}</span><span class="modal-info-value" style="color:var(--${product}-primary)">${productName}</span></div>
+            <div class="modal-info-row"><span class="modal-info-label">${t('modal_recipient')}</span><span class="modal-info-value">${targetDisplay}</span></div>
 
             <div style="display:flex; justify-content:space-between; align-items:center; margin: 18px 0;">
-                <span style="font-size:14px; font-weight:700; color:var(--text-secondary)">К оплате:</span>
+                <span style="font-size:14px; font-weight:700; color:var(--text-secondary)">${t('modal_total')}</span>
                 <div style="text-align:right">
                     <div style="font-size:22px; font-weight:800; color:var(--text)">$${usdPrice.toFixed(2)}</div>
                     <div style="font-size:13px; font-weight:600; color:var(--text-muted)">(≈ ${tonPrice.toFixed(2)} TON)</div>
                 </div>
             </div>
 
-            <label class="form-label" style="margin-bottom:8px;">Способ оплаты</label>
+            <label class="form-label" style="margin-bottom:8px;">${t('modal_pay_method')}</label>
             ${generatePaymentMethodsHtml(product, mode, tonPrice)}
 
-            <button class="action-btn ${product}-action-btn" id="modalConfirmBtn" onclick="executePurchase('${product}')" style="width:100%; margin: 16px 0 0">Подтвердить заказ</button>
+            <button class="action-btn ${product}-action-btn" id="modalConfirmBtn" onclick="executePurchase('${product}')" style="width:100%; margin: 16px 0 0">${t('modal_confirm')}</button>
         </div>
     `);
 }
@@ -665,7 +667,7 @@ window.executePurchase = async function (product) {
     setLoading(btn, false);
 
     if (result && result.Success) { handleTxFlow(result); }
-    else if (result) { safeAlert('Ошибка: ' + result.Error); }
+    else if (result) { safeAlert(t('loading') + ' ' + result.Error); }
 }
 
 // Используется для Stars/Premium страниц (кнопки Купить на странице)
@@ -681,52 +683,52 @@ function handleTxFlow(txData) {
     if (txData.PaymentMethod === 'InternalWallet') {
         if (txData.TargetUsername && txData.TargetUsername.startsWith('cheque_')) {
             const link = `https://t.me/${BOT_USERNAME}?start=chk_${txData.TransactionId}`;
-            showModal('🧾 Чек успешно создан!', `
-                <p style="color:var(--text-secondary);font-size:13px;margin-bottom:14px">Средства заморожены. Перешлите эту ссылку получателю:</p>
+            showModal(t('cheque_created'), `
+                <p style="color:var(--text-secondary);font-size:13px;margin-bottom:14px">${t('cheque_desc')}</p>
                 <div class="cheque-link-wrap" style="margin-bottom: 16px;">
                     <div class="cheque-link-input">${link}</div>
-                    <button class="cheque-copy-btn" onclick="copyChequeLink('${link}')">Копировать</button>
+                    <button class="cheque-copy-btn" onclick="copyChequeLink('${link}')">${t('cheque_copy')}</button>
                 </div>
-                <button class="action-btn outline-action-btn" onclick="closeModal(); fetchServerData(); loadProfile(); switchTab('profile');">Перейти в Мои чеки</button>
+                <button class="action-btn outline-action-btn" onclick="closeModal(); fetchServerData(); loadProfile(); switchTab('profile');">${t('cheque_go_to')}</button>
             `);
         } else {
-            safeAlert('Заявка успешно обработана! Подробности в профиле.');
+            safeAlert(t('alert_order_success'));
             fetchServerData();
             loadProfile();
         }
     } else if (txData.PaymentMethod === 'TelegramStars') {
         if (window.sysConfig && window.sysConfig.isTestMode) {
-            safeAlert('Тестовый режим: Оплата Звездами сымитирована и прошла успешно!');
+            safeAlert(t('stars_test_ok'));
             fetchServerData();
             if (typeof loadProfile === 'function') loadProfile();
         } else {
-            showModal('Оплата Звездами', `
+            showModal(t('stars_invoice_title'), `
                 <div style="text-align:center; padding: 10px 0;">
                     <div style="font-size:44px; margin-bottom:12px;">⭐️</div>
-                    <h3 style="margin-bottom:10px; color:var(--text)">Счет выставлен!</h3>
-                    <p style="color:var(--text-secondary);font-size:14px; margin-bottom:20px;">Закройте это окно и вернитесь в чат с ботом. Мы отправили вам счет на оплату Telegram Stars.</p>
-                    <button class="action-btn stars-action-btn" onclick="tg.close()" style="width:100%;">Закрыть WebApp</button>
+                    <h3 style="margin-bottom:10px; color:var(--text)">${t('stars_invoice_sent')}</h3>
+                    <p style="color:var(--text-secondary);font-size:14px; margin-bottom:20px;">${t('stars_invoice_desc')}</p>
+                    <button class="action-btn stars-action-btn" onclick="tg.close()" style="width:100%;">${t('stars_close_webapp')}</button>
                 </div>
             `);
         }
     } else if (txData.PaymentMethod === 'CryptoTransfer') {
-        showModal('Крипто-перевод', `
-            <p style="color:var(--text-secondary);font-size:13px;margin-bottom:14px">Переведите точную сумму на кошелек бота и укажите код в комментарии.</p>
-            <div class="modal-info-row"><span class="modal-info-label">Сумма</span><span class="modal-info-value" style="color:var(--rent-primary)">${txData.Amount} ${txData.Currency}</span></div>
+        showModal(t('crypto_title'), `
+            <p style="color:var(--text-secondary);font-size:13px;margin-bottom:14px">${t('crypto_desc')}</p>
+            <div class="modal-info-row"><span class="modal-info-label">${t('crypto_amount')}</span><span class="modal-info-value" style="color:var(--rent-primary)">${txData.Amount} ${txData.Currency}</span></div>
             
-            <label class="form-label" style="margin-top:12px">Кошелек (сохраните адрес)</label>
+            <label class="form-label" style="margin-top:12px">${t('crypto_wallet_label')}</label>
             <div class="cheque-link-wrap" style="margin-bottom: 8px;">
                 <div class="cheque-link-input">${window.sysConfig.receivingWallet}</div>
-                <button class="cheque-copy-btn" onclick="navigator.clipboard.writeText('${window.sysConfig.receivingWallet}'); safeAlert('Кошелек скопирован');">Копировать</button>
+                <button class="cheque-copy-btn" onclick="navigator.clipboard.writeText('${window.sysConfig.receivingWallet}'); safeAlert('${t('crypto_wallet_copied')}');">${t('crypto_copy_wallet')}</button>
             </div>
             
-            <label class="form-label" style="margin-top:12px">Код комментария (ОБЯЗАТЕЛЬНО)</label>
+            <label class="form-label" style="margin-top:12px">${t('crypto_code_label')}</label>
             <div class="cheque-link-wrap" style="margin-bottom: 16px;">
                 <div class="cheque-link-input">${txData.PaymentCode}</div>
-                <button class="cheque-copy-btn" onclick="navigator.clipboard.writeText('${txData.PaymentCode}'); safeAlert('Код скопирован');">Копировать</button>
+                <button class="cheque-copy-btn" onclick="navigator.clipboard.writeText('${txData.PaymentCode}'); safeAlert('${t('crypto_code_copied')}');">${t('crypto_copy_code')}</button>
             </div>
 
-            <div style="font-size:11.5px; color:#ff6b6b; text-align:center; padding: 10px; background: rgba(255,107,107,0.1); border-radius: 8px; border: 1px solid rgba(255,107,107,0.2); margin-bottom:14px;">Без кода в комментарии деньги не зачислятся!</div>
+            <div style="font-size:11.5px; color:#ff6b6b; text-align:center; padding: 10px; background: rgba(255,107,107,0.1); border-radius: 8px; border: 1px solid rgba(255,107,107,0.2); margin-bottom:14px;">${t('crypto_warning')}</div>
         `);
     } else {
         safeAlert(`Откройте бота, чтобы завершить оплату способом: ${txData.PaymentMethod}`);
@@ -742,7 +744,8 @@ function updateTopupBtn() {
     const btn = document.getElementById('topupBtn');
     if (!btn) return;
     const amountStr = state.topupAmount > 0 ? ` ${state.topupAmount}` : '';
-    btn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Пополнить${amountStr} TON`;
+    const topupLabel = window.currentLang === 'en' ? 'Top Up' : 'Пополнить';
+    btn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> ${topupLabel}${amountStr} TON`;
 }
 
 function selectTopup(amount, element) {
@@ -797,30 +800,30 @@ window.apiTopupWallet = function () {
     let amount = state.useCustomTopup
         ? parseFloat(document.getElementById('topupAmount').value)
         : state.topupAmount;
-    if (!amount || amount < 0.1) return safeAlert('Минимальная сумма пополнения 0.1 TON');
+    if (!amount || amount < 0.1) return safeAlert(t('alert_min_topup'));
 
     state.pay.topup = { method: 'CryptoTransfer', currency: 'TON' };
 
-    showModal('Пополнение баланса', `
+    showModal(t('modal_topup_title'), `
         <div class="page-wallet-theme" style="margin-top: 10px;">
-            <div class="modal-info-row"><span class="modal-info-label">Сумма пополнения</span><span class="modal-info-value" style="color:var(--wallet-primary)">${amount} TON</span></div>
+            <div class="modal-info-row"><span class="modal-info-label">${t('modal_topup_amount')}</span><span class="modal-info-value" style="color:var(--wallet-primary)">${amount} TON</span></div>
 
             <div style="display:flex; justify-content:space-between; align-items:center; margin: 18px 0;">
-                <span style="font-size:14px; font-weight:700; color:var(--text-secondary)">К оплате:</span>
+                <span style="font-size:14px; font-weight:700; color:var(--text-secondary)">${t('modal_total')}</span>
                 <div style="text-align:right">
                     <div style="font-size:22px; font-weight:800; color:var(--text)" id="modalTopupTotalUsd">$0.00</div>
                     <div style="font-size:13px; font-weight:600; color:var(--text-muted)" id="modalTopupTotalAlt">(≈ 0.00 TON)</div>
                 </div>
             </div>
 
-            <label class="form-label" style="margin-bottom:8px;">Способ оплаты</label>
+            <label class="form-label" style="margin-bottom:8px;">${t('modal_pay_method')}</label>
             <div class="payment-methods">
-                <div class="pay-method selected" data-method="CryptoTransfer" data-currency="TON" onclick="selectPayMethod('topup', this)">Перевод TON</div>
-                <div class="pay-method" data-method="BankCard" data-currency="RUB" onclick="selectPayMethod('topup', this)">Карта (RUB)</div>
-                <div class="pay-method" style="grid-column: span 2" data-method="TelegramStars" data-currency="Stars" onclick="selectPayMethod('topup', this)">Звёзды</div>
+                <div class="pay-method selected" data-method="CryptoTransfer" data-currency="TON" onclick="selectPayMethod('topup', this)">${t('modal_pay_transfer')}</div>
+                <div class="pay-method" data-method="BankCard" data-currency="RUB" onclick="selectPayMethod('topup', this)">${t('modal_pay_card')}</div>
+                <div class="pay-method" style="grid-column: span 2" data-method="TelegramStars" data-currency="Stars" onclick="selectPayMethod('topup', this)">${t('modal_pay_stars')}</div>
             </div>
 
-            <button class="action-btn wallet-action-btn" id="modalConfirmTopupBtn" onclick="executeTopup(${amount})" style="width:100%; margin: 16px 0 0">Пополнить</button>
+            <button class="action-btn wallet-action-btn" id="modalConfirmTopupBtn" onclick="executeTopup(${amount})" style="width:100%; margin: 16px 0 0">${t('modal_topup_btn')}</button>
         </div>
     `);
     updateTopupModalPrice();
@@ -836,17 +839,17 @@ window.executeTopup = async function (amount) {
     setLoading(btn, false);
 
     if (result && result.Success) { handleTxFlow(result); }
-    else if (result) { safeAlert('Ошибка: ' + result.Error); }
+    else if (result) { safeAlert(result.Error); }
 }
 
 async function apiWithdrawWallet() {
     const amountStr = document.getElementById('withdrawAmount').value;
     const address = document.getElementById('withdrawAddress').value.trim();
-    if (!amountStr || !address) return safeAlert('Заполните все поля');
+    if (!amountStr || !address) return safeAlert(t('alert_fill_fields'));
     const amount = parseFloat(amountStr);
-    if (isNaN(amount) || amount < 0.1) return safeAlert('Минимальная сумма вывода 0.1 TON');
+    if (isNaN(amount) || amount < 0.1) return safeAlert(t('alert_min_withdraw'));
     const result = await apiCall('/transactions/create/withdrawal', { telegramId, currency: 'TON', amount, targetAddress: address });
-    if (result && result.Success) { safeAlert('Заявка на вывод создана!'); fetchServerData(); }
+    if (result && result.Success) { safeAlert(t('alert_withdraw_ok')); fetchServerData(); }
     else if (result) safeAlert('Ошибка: ' + result.Error);
 }
 
@@ -947,5 +950,10 @@ async function init() {
     });
 
     fetchServerData();
+
+    // Apply saved language
+    if (window.currentLang && window.currentLang !== 'ru') {
+        switchLang(window.currentLang);
+    }
 }
 

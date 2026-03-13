@@ -15,7 +15,7 @@
 <body>
     <div id="testModeBanner"
         style="display:none; background:#ff6b6b; color:#fff; text-align:center; padding:6px; font-size:12px; font-weight:800; letter-spacing:1px; z-index:9999; position:relative; box-shadow: 0 2px 10px rgba(255,107,107,0.3);">
-        ⚙️ ТЕСТОВЫЙ РЕЖИМ (ДЕНЬГИ НЕ СПИСЫВАЮТСЯ)</div>
+        <span data-i18n="test_mode_banner">⚙️ ТЕСТОВЫЙ РЕЖИМ (ДЕНЬГИ НЕ СПИСЫВАЮТСЯ)</span></div>
 
     <header>
         <div class="header-logo">
@@ -33,6 +33,18 @@
                 </svg>
                 <span id="tonConnectLabel">TON Connect</span>
             </button>
+            <div class="currency-dd-wrap" id="langDropdownWrap" style="margin-right: 4px;">
+                <div class="currency-pill" id="langTrigger" onclick="toggleDropdown('langDropdownWrap')">
+                    <span id="langLabel">🇷🇺 RU</span>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                        <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                </div>
+                <div class="currency-dropdown-menu">
+                    <div class="currency-dd-item" onclick="switchLang('ru')">🇷🇺 RU</div>
+                    <div class="currency-dd-item" onclick="switchLang('en')">🇬🇧 EN</div>
+                </div>
+            </div>
             <div class="currency-dd-wrap" id="currencyDropdownWrap">
                 <div class="currency-pill" id="currencyTrigger" onclick="toggleDropdown('currencyDropdownWrap')">
                     <span id="currencyLabel">USD</span>
@@ -61,8 +73,7 @@
 
             <div class="home-hero-inner">
                 <div class="home-hero-toprow">
-                    <span class="home-hero-label">Ваши балансы</span>
-                    <span class="home-hero-badge">Xram Shop</span>
+                    <span class="home-hero-label" data-i18n="home_balances">Ваши балансы</span>
                 </div>
 
                 <div class="home-balances-row">
@@ -76,7 +87,7 @@
                             </svg>
                         </div>
                         <div class="hbc-info">
-                            <span class="hbc-label">TON Кошелёк</span>
+                            <span class="hbc-label" data-i18n="home_ton_wallet">TON Кошелёк</span>
                             <span class="hbc-value" id="homeTonBalance">0.00</span>
                         </div>
                         <svg class="hbc-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none"
@@ -94,7 +105,7 @@
                             </svg>
                         </div>
                         <div class="hbc-info">
-                            <span class="hbc-label">Заморожено (Чеки)</span>
+                            <span class="hbc-label" data-i18n="home_frozen">Заморожено (Чеки)</span>
                             <span class="hbc-value" id="homeFrozenBalance">0.00</span>
                         </div>
                     </div>
@@ -106,13 +117,13 @@
                             <line x1="12" y1="5" x2="12" y2="19"/>
                             <line x1="5" y1="12" x2="19" y2="12"/>
                         </svg>
-                        Пополнить баланс
+                        <span data-i18n="btn_topup_balance">Пополнить баланс</span>
                     </button>
                 </div>
             </div>
         </div>
 
-        <div class="home-section-title">Сервисы</div>
+        <div class="home-section-title" data-i18n="home_services">Сервисы</div>
         <div class="home-services">
             <div class="svc-row stars-svc" onclick="switchTab('stars')">
                 <div class="svc-icon-wrap stars-wrap">
@@ -122,8 +133,7 @@
                     </svg>
                 </div>
                 <div class="svc-body">
-                    <span class="svc-title">Telegram Stars</span>
-                    <span class="svc-sub">от $0.015 за штуку</span>
+                    <span class="svc-title" data-i18n="svc_stars_title">Telegram Stars</span>
                 </div>
                 <div class="svc-price-tag stars-price-tag">
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
@@ -141,8 +151,8 @@
                     </svg>
                 </div>
                 <div class="svc-body">
-                    <span class="svc-title">Telegram Premium</span>
-                    <span class="svc-sub">3, 6 или 12 месяцев</span>
+                    <span class="svc-title" data-i18n="svc_prem_title">Telegram Premium</span>
+                    <span class="svc-sub" data-i18n="svc_prem_sub_months">3, 6 или 12 месяцев</span>
                 </div>
                 <div class="svc-price-tag premium-price-tag">Premium</div>
             </div>
@@ -156,14 +166,14 @@
                     </svg>
                 </div>
                 <div class="svc-body">
-                    <span class="svc-title">Аренда NFT-подарков</span>
-                    <span class="svc-sub">Цифровые коллекции</span>
+                    <span class="svc-title" data-i18n="svc_rent_title">Аренда NFT-подарков</span>
+                    <span class="svc-sub" data-i18n="svc_rent_sub">Цифровые коллекции</span>
                 </div>
                 <div class="svc-price-tag rent-price-tag">NFT</div>
             </div>
         </div>
 
-        <div class="home-section-title" style="margin-top:6px">Аккаунт</div>
+        <div class="home-section-title" style="margin-top:6px" data-i18n="home_account">Аккаунт</div>
         <div class="home-services" style="margin-bottom: 24px">
             <div class="svc-row profile-svc" onclick="switchTab('profile')">
                 <div class="svc-icon-wrap profile-wrap">
@@ -173,8 +183,8 @@
                     </svg>
                 </div>
                 <div class="svc-body">
-                    <span class="svc-title">Профиль и история</span>
-                    <span class="svc-sub">Мои чеки, транзакции</span>
+                    <span class="svc-title" data-i18n="svc_prof_title">Профиль и история</span>
+                    <span class="svc-sub" data-i18n="svc_prof_sub">Мои чеки, транзакции</span>
                 </div>
                 <div class="svc-arrow">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -188,13 +198,13 @@
 
     <div id="page-stars" class="page page-stars-theme">
         <div class="form-card">
-            <label class="form-label">Получатель</label>
+            <label class="form-label" data-i18n="label_recipient">Получатель</label>
             <div class="recipient-tabs" id="starsRecipientTabs">
                 <button class="rtab active" data-mode="self"
-                    onclick="setRecipientMode('stars', 'self', this)">Себе</button>
+                    onclick="setRecipientMode('stars', 'self', this)" data-i18n="tab_self">Себе</button>
                 <button class="rtab" data-mode="other"
-                    onclick="setRecipientMode('stars', 'other', this)">Другому</button>
-                <button class="rtab" data-mode="cheque" onclick="setRecipientMode('stars', 'cheque', this)">Чек</button>
+                    onclick="setRecipientMode('stars', 'other', this)" data-i18n="tab_other">Другому</button>
+                <button class="rtab" data-mode="cheque" onclick="setRecipientMode('stars', 'cheque', this)" data-i18n="tab_cheque">Чек</button>
             </div>
 
             <div id="starsRecipientSelf" class="recipient-self-card">
@@ -203,7 +213,7 @@
                     <span class="self-card-name" id="starsNameSelf">Вы</span>
                     <span class="self-card-sub" id="starsUsernameSelf">@username</span>
                 </div>
-                <div class="self-card-badge">Я</div>
+                <div class="self-card-badge" data-i18n="badge_me">Я</div>
             </div>
 
             <div id="starsRecipientOther" class="recipient-extra" style="display:none">
@@ -216,7 +226,7 @@
             </div>
 
             <div id="starsRecipientCheque" class="recipient-extra" style="display:none">
-                <label class="form-label" style="margin-top:4px">Срок действия чека</label>
+                <label class="form-label" style="margin-top:4px" data-i18n="label_cheque_duration">Срок действия чека</label>
                 <div class="cheque-options">
                     <div class="cheque-opt selected" data-val="1" onclick="selectChequeOpt('stars', this)">1 ч</div>
                     <div class="cheque-opt" data-val="24" onclick="selectChequeOpt('stars', this)">24 ч</div>
@@ -301,7 +311,7 @@
                         </svg>
                     </div>
                     <div class="pkg-info">
-                        <span class="pkg-name">Своё количество</span>
+                        <span class="pkg-name" data-i18n="pkg_custom_amount">Своё количество</span>
                     </div>
                 </div>
                 <div class="pkg-price" id="price-stars-custom">—</div>
@@ -325,14 +335,14 @@
 
     <div id="page-premium" class="page page-premium-theme">
         <div class="form-card">
-            <label class="form-label">Получатель</label>
+            <label class="form-label" data-i18n="label_recipient">Получатель</label>
             <div class="recipient-tabs" id="premiumRecipientTabs">
                 <button class="rtab active" data-mode="self"
-                    onclick="setRecipientMode('premium', 'self', this)">Себе</button>
+                    onclick="setRecipientMode('premium', 'self', this)" data-i18n="tab_self">Себе</button>
                 <button class="rtab" data-mode="other"
-                    onclick="setRecipientMode('premium', 'other', this)">Другому</button>
+                    onclick="setRecipientMode('premium', 'other', this)" data-i18n="tab_other">Другому</button>
                 <button class="rtab" data-mode="cheque"
-                    onclick="setRecipientMode('premium', 'cheque', this)">Чек</button>
+                    onclick="setRecipientMode('premium', 'cheque', this)" data-i18n="tab_cheque">Чек</button>
             </div>
 
             <div id="premiumRecipientSelf" class="recipient-self-card">
@@ -341,7 +351,7 @@
                     <span class="self-card-name" id="premiumNameSelf">Вы</span>
                     <span class="self-card-sub" id="premiumUsernameSelf">@username</span>
                 </div>
-                <div class="self-card-badge">Я</div>
+                <div class="self-card-badge" data-i18n="badge_me">Я</div>
             </div>
 
             <div id="premiumRecipientOther" class="recipient-extra" style="display:none">
@@ -354,7 +364,7 @@
             </div>
 
             <div id="premiumRecipientCheque" class="recipient-extra" style="display:none">
-                <label class="form-label" style="margin-top:4px">Срок действия чека</label>
+                <label class="form-label" style="margin-top:4px" data-i18n="label_cheque_duration">Срок действия чека</label>
                 <div class="cheque-options">
                     <div class="cheque-opt selected" data-val="1" onclick="selectChequeOpt('premium', this)">1 ч</div>
                     <div class="cheque-opt" data-val="24" onclick="selectChequeOpt('premium', this)">24 ч</div>
@@ -378,7 +388,7 @@
                         </svg>
                     </div>
                     <div class="pkg-info">
-                        <span class="pkg-name">3 месяца</span>
+                        <span class="pkg-name" data-i18n="pkg_3_months">3 месяца</span>
                     </div>
                 </div>
                 <div class="pkg-price" id="price-premium-3">$3.90</div>
@@ -391,7 +401,7 @@
                         </svg>
                     </div>
                     <div class="pkg-info">
-                        <span class="pkg-name">6 месяцев</span>
+                        <span class="pkg-name" data-i18n="pkg_6_months">6 месяцев</span>
                     </div>
                 </div>
                 <div class="pkg-price" id="price-premium-6">$6.99</div>
@@ -404,7 +414,7 @@
                         </svg>
                     </div>
                     <div class="pkg-info">
-                        <span class="pkg-name">12 месяцев</span>
+                        <span class="pkg-name" data-i18n="pkg_12_months">12 месяцев</span>
                     </div>
                 </div>
                 <div class="pkg-price" id="price-premium-12">$11.99</div>
@@ -423,15 +433,15 @@
     <div id="page-rent" class="page page-rent-theme">
 
         <div class="profile-tabs" id="rentCategoryTabs" style="margin-top: 16px;">
-            <button class="ptab active" onclick="switchRentCategory('gifts', this)">Подарки</button>
-            <button class="ptab" onclick="switchRentCategory('usernames', this)">Юзернеймы</button>
-            <button class="ptab" onclick="switchRentCategory('numbers', this)">Номера</button>
+            <button class="ptab active" onclick="switchRentCategory('gifts', this)" data-i18n="rent_tab_gifts">Подарки</button>
+            <button class="ptab" onclick="switchRentCategory('usernames', this)" data-i18n="rent_tab_usernames">Юзернеймы</button>
+            <button class="ptab" onclick="switchRentCategory('numbers', this)" data-i18n="rent_tab_numbers">Номера</button>
         </div>
 
         <div class="form-card rent-form-card" style="margin-top: 0; padding-bottom: 12px; margin-bottom: 0;">
 
             <div id="rentCollectionWrap">
-                <label class="form-label">Коллекция</label>
+                <label class="form-label" data-i18n="label_collection">Коллекция</label>
                 <div class="custom-dd-wrap" id="collectionDropdown">
                     <div class="custom-dd-trigger" onclick="toggleDropdown('collectionDropdown', event)">
                         <img id="colTriggerImg" class="custom-dd-trigger-img" src="" alt="">
@@ -450,7 +460,7 @@
             </div>
 
             <div id="rentModelWrap" style="display: none;">
-                <label class="form-label">Модель</label>
+                <label class="form-label" data-i18n="label_model">Модель</label>
                 <div class="custom-dd-wrap" id="modelDropdown">
                     <div class="custom-dd-trigger" onclick="toggleDropdown('modelDropdown', event)">
                         <img id="modTriggerImg" class="custom-dd-trigger-img" src="" alt="">
@@ -468,7 +478,7 @@
                 </div>
             </div>
 
-            <label class="form-label">Сортировка</label>
+            <label class="form-label" data-i18n="label_sort">Сортировка</label>
             <div class="sort-dd-wrap" id="sortDropdown">
                 <div class="sort-dd-trigger" id="rentSortTrigger" onclick="toggleSortDropdown(event)">
                     <span class="sort-dd-label" id="rentSortLabel">Недавно обновленные</span>
@@ -512,21 +522,20 @@
                 </select>
             </div>
 
-            <label class="form-label" style="margin-bottom:12px">Доступные NFT <span class="label-hint"
+            <label class="form-label" style="margin-bottom:12px"><span data-i18n="label_available_nft">Доступные NFT</span> <span class="label-hint"
                     id="rentCardsCount"></span></label>
             <div class="rent-cards-grid" id="rentCardsContainer">
-                <div class="rent-cards-empty">Загрузка...</div>
+                <div class="rent-cards-empty" data-i18n="loading">Загрузка...</div>
             </div>
 
-            <button id="rentLoadMoreBtn" class="load-more-btn" onclick="loadNextRentPage()">Показать еще</button>
+            <button id="rentLoadMoreBtn" class="load-more-btn" onclick="loadNextRentPage()" data-i18n="btn_show_more">Показать еще</button>
 
-            <div style="font-size: 11px; text-align: center; color: var(--text-muted); margin-top: 12px;">Нажмите на
-                карточку для аренды</div>
+            <div style="font-size: 11px; text-align: center; color: var(--text-muted); margin-top: 12px;" data-i18n="hint_click_card">Нажмите на карточку для аренды</div>
         </div>
     </div>
 
     <div id="page-wallet" class="page page-wallet-theme">
-        <div class="wallet-section-title" style="padding-top:20px">Пополнение</div>
+        <div class="wallet-section-title" style="padding-top:20px" data-i18n="title_topup">Пополнение</div>
 
         <div id="customTopupWrapper" class="custom-input-wrapper" style="display:block">
             <input type="number" id="topupAmount" placeholder="Введите сумму TON" class="form-input" step="0.1"
@@ -543,13 +552,13 @@
 
         <div class="divider"></div>
 
-        <div class="wallet-section-title">Вывод средств</div>
+        <div class="wallet-section-title" data-i18n="title_withdraw">Вывод средств</div>
 
         <div class="form-card">
-            <label class="form-label">Сумма <span class="label-hint">(TON)</span></label>
+            <label class="form-label"><span data-i18n="label_amount">Сумма</span> <span class="label-hint">(TON)</span></label>
             <input type="number" id="withdrawAmount" placeholder="0.5" class="form-input" step="0.1" min="0.1">
-            <label class="form-label">Адрес получателя</label>
-            <input type="text" id="withdrawAddress" placeholder="EQ... или UQ..." class="form-input"
+            <label class="form-label" data-i18n="label_recipient_address">Адрес получателя</label>
+            <input type="text" id="withdrawAddress" placeholder="EQ... или UQ..." class="form-input" data-i18n="placeholder_address"
                 style="margin-bottom:0">
         </div>
 
@@ -558,16 +567,16 @@
                 <line x1="12" y1="5" x2="12" y2="19" />
                 <polyline points="19 12 12 19 5 12" />
             </svg>
-            Вывести средства
+            <span data-i18n="btn_withdraw">Вывести средства</span>
         </button>
     </div>
 
     <div id="page-profile" class="page page-wallet-theme">
 
         <div class="profile-tabs" style="margin-top: 16px">
-            <button class="ptab active" onclick="switchProfileTab('cheques', this)">Мои чеки</button>
-            <button class="ptab" onclick="switchProfileTab('history', this)">История</button>
-            <button class="ptab" onclick="switchProfileTab('rentals', this)">Моя аренда</button>
+            <button class="ptab active" onclick="switchProfileTab('cheques', this)" data-i18n="tab_my_cheques">Мои чеки</button>
+            <button class="ptab" onclick="switchProfileTab('history', this)" data-i18n="tab_history">История</button>
+            <button class="ptab" onclick="switchProfileTab('rentals', this)" data-i18n="tab_my_rentals">Моя аренда</button>
         </div>
 
         <div id="profileCheques" class="profile-panel">
@@ -578,8 +587,8 @@
                         <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
                         <rect x="9" y="3" width="6" height="4" rx="1" />
                     </svg>
-                    <p>Нет активных чеков</p>
-                    <span>Создайте чек при покупке Stars или Premium</span>
+                    <p data-i18n="empty_no_cheques">Нет активных чеков</p>
+                    <span data-i18n="empty_cheques_hint">Создайте чек при покупке Stars или Premium</span>
                 </div>
             </div>
         </div>
@@ -593,8 +602,8 @@
                         <line x1="3" y1="9" x2="21" y2="9" />
                         <line x1="9" y1="21" x2="9" y2="9" />
                     </svg>
-                    <p>История пуста</p>
-                    <span>Здесь будут отображаться ваши покупки</span>
+                    <p data-i18n="empty_history">История пуста</p>
+                    <span data-i18n="empty_history_hint">Здесь будут отображаться ваши покупки</span>
                 </div>
             </div>
         </div>
@@ -608,7 +617,7 @@
                         <circle cx="8.5" cy="8.5" r="1.5" />
                         <polyline points="21 15 16 10 5 21" />
                     </svg>
-                    <p>Нет активной аренды</p>
+                    <p data-i18n="empty_no_rentals">Нет активной аренды</p>
                 </div>
             </div>
         </div>
@@ -621,20 +630,20 @@
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
                 <polyline points="9 22 9 12 15 12 15 22" />
             </svg>
-            <span>Главная</span>
+            <span data-i18n="nav_home">Главная</span>
         </div>
         <div class="nav-item" onclick="switchTab('stars')" data-tab="stars">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polygon
                     points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
             </svg>
-            <span>Stars</span>
+            <span data-i18n="nav_stars">Stars</span>
         </div>
         <div class="nav-item" onclick="switchTab('premium')" data-tab="premium">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
             </svg>
-            <span>Premium</span>
+            <span data-i18n="nav_premium">Premium</span>
         </div>
         <div class="nav-item" onclick="switchTab('rent')" data-tab="rent">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -642,14 +651,14 @@
                 <circle cx="8.5" cy="8.5" r="1.5" />
                 <polyline points="21 15 16 10 5 21" />
             </svg>
-            <span>Аренда</span>
+            <span data-i18n="nav_rent">Аренда</span>
         </div>
         <div class="nav-item" onclick="switchTab('profile')" data-tab="profile">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                 <circle cx="12" cy="7" r="4" />
             </svg>
-            <span>Профиль</span>
+            <span data-i18n="nav_profile">Профиль</span>
         </div>
     </nav>
 
@@ -681,6 +690,8 @@
         </div>
     </div>
 
+    <!-- i18n -->
+    <script src="js/i18n.js"></script>
     <!-- Core -->
     <script src="js/core.js"></script>
     <!-- Страницы -->

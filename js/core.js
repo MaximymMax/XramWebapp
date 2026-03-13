@@ -201,6 +201,7 @@ window.selectCurrency = function (cur) {
     document.getElementById('currencyLabel').textContent = cur;
     document.getElementById('currencyDropdownWrap').classList.remove('open');
     updateAllPrices();
+    if (typeof updateGwCreatePrice === 'function') updateGwCreatePrice();
 }
 
 // ── Глобальные дропдауны ─────────────────────────────────────
@@ -224,14 +225,23 @@ window.toggleDropdown = function (id, e) {
     }
 }
 
-window.toggleSortDropdown = function (e) {
-    window.toggleDropdown('sortDropdown', e);
-}
+// ===== ОБРАБОТКА КАСТОМНЫХ ВЫПАДАЮЩИХ СПИСКОВ =====
+window.toggleSortDropdown = function(e) {
+    e.stopPropagation();
+    const wrap = e.currentTarget.closest('.sort-dd-wrap');
+    
+    // Закрываем все остальные открытые списки, чтобы не накладывались
+    document.querySelectorAll('.sort-dd-wrap.open').forEach(el => {
+        if (el !== wrap) el.classList.remove('open');
+    });
+    
+    // Переключаем тот, на который кликнули
+    if (wrap) wrap.classList.toggle('open');
+};
 
-document.addEventListener('click', function (e) {
-    if (!e.target.closest('.custom-dd-wrap, .sort-dd-wrap, .currency-dd-wrap')) {
-        document.querySelectorAll('.custom-dd-wrap, .sort-dd-wrap, .currency-dd-wrap').forEach(el => el.classList.remove('open'));
-    }
+// Закрываем списки при клике в любое другое место экрана
+document.addEventListener('click', () => {
+    document.querySelectorAll('.sort-dd-wrap.open').forEach(el => el.classList.remove('open'));
 });
 
 // --- ui.js ---
@@ -954,6 +964,14 @@ async function init() {
     // Apply saved language
     if (window.currentLang && window.currentLang !== 'ru') {
         switchLang(window.currentLang);
+    }
+
+    const startParam = tg.initDataUnsafe?.start_param;
+    if (startParam && startParam.startsWith('gw_')) {
+        const gwId = startParam.replace('gw_', '');
+        switchTab('giveaways'); // Перекидываем на вкладку
+        // Небольшая задержка, чтобы модалка не перекрылась анимацией
+        setTimeout(() => openGiveawayJoin(gwId), 500); 
     }
 }
 

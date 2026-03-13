@@ -33,6 +33,7 @@
                 </svg>
                 <span id="tonConnectLabel">TON Connect</span>
             </button>
+            
             <div class="currency-dd-wrap" id="langDropdownWrap" style="margin-right: 4px;">
                 <div class="currency-pill" id="langTrigger" onclick="toggleDropdown('langDropdownWrap')">
                     <span id="langLabel">🇷🇺 RU</span>
@@ -45,6 +46,7 @@
                     <div class="currency-dd-item" onclick="switchLang('en')">🇬🇧 EN</div>
                 </div>
             </div>
+
             <div class="currency-dd-wrap" id="currencyDropdownWrap">
                 <div class="currency-pill" id="currencyTrigger" onclick="toggleDropdown('currencyDropdownWrap')">
                     <span id="currencyLabel">USD</span>
@@ -510,7 +512,6 @@
                         <span class="sort-item-label">Номер: по убыванию</span>
                     </div>
                 </div>
-                <!-- Скрытый select для совместимости с onRentSortChange -->
                 <select id="rentSort" style="display:none">
                     <option value="recently_touch">Недавно обновленные</option>
                     <option value="price_per_day">Сначала дешевые</option>
@@ -531,6 +532,104 @@
             <button id="rentLoadMoreBtn" class="load-more-btn" onclick="loadNextRentPage()" data-i18n="btn_show_more">Показать еще</button>
 
             <div style="font-size: 11px; text-align: center; color: var(--text-muted); margin-top: 12px;" data-i18n="hint_click_card">Нажмите на карточку для аренды</div>
+        </div>
+    </div>
+
+    <div id="page-giveaways" class="page page-stars-theme">
+        <div class="profile-tabs" style="margin-top: 16px">
+            <button class="ptab active" onclick="switchGiveawayTab('create', this)">Создать</button>
+            <button class="ptab" onclick="switchGiveawayTab('participating', this)">Участвую</button>
+            <button class="ptab" onclick="switchGiveawayTab('my', this)">Мои</button>
+        </div>
+
+        <div id="gwTabCreate" class="profile-panel">
+            <div class="form-card">
+                <label class="form-label" data-i18n="gw_prize_type">Что разыгрываем?</label>
+                
+                <div class="sort-dd-wrap" id="gwPrizeDropdown" style="width: 100%; margin-bottom: 16px;">
+                    <div class="sort-dd-trigger" style="justify-content: space-between; padding: 12px 14px; border: 1px solid var(--border-strong); border-radius: 12px; background: var(--surface-2);" onclick="toggleSortDropdown(event)">
+                        <span class="sort-dd-label" id="gwPrizeLabel">Telegram Stars</span>
+                        <svg class="sort-dd-arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9" /></svg>
+                    </div>
+                    <div class="sort-dd-menu" style="width: 100%;">
+                        <div class="sort-dd-item selected" onclick="selectGwPrize('TelegramStars', this)"><span class="sort-item-label">Telegram Stars</span></div>
+                        <div class="sort-dd-item" onclick="selectGwPrize('Premium', this)"><span class="sort-item-label">Telegram Premium</span></div>
+                        <div class="sort-dd-item" onclick="selectGwPrize('TonTransfer', this)"><span class="sort-item-label">TON</span></div>
+                    </div>
+                </div>
+                <input type="hidden" id="gwPrizeType" value="TelegramStars">
+
+                <div id="gwInputStarsWrap">
+                    <label class="form-label" data-i18n="gw_amount_stars">Звезд на победителя (мин. 50)</label>
+                    <input type="number" id="gwPrizeStars" class="form-input" placeholder="50" value="50" min="50" oninput="updateGwCreatePrice()">
+                </div>
+
+                <div id="gwInputTonWrap" style="display:none">
+                    <label class="form-label" data-i18n="gw_amount_ton">TON на победителя (мин. 0.5)</label>
+                    <input type="number" id="gwPrizeTon" class="form-input" placeholder="0.5" value="0.5" min="0.5" step="0.1" oninput="updateGwCreatePrice()">
+                </div>
+
+                <div id="gwInputPremiumWrap" style="display:none">
+                    <label class="form-label" data-i18n="gw_amount_prem">Длительность Premium</label>
+                    
+                    <div class="sort-dd-wrap" id="gwPremDropdown" style="width: 100%; margin-bottom: 16px;">
+                        <div class="sort-dd-trigger" style="justify-content: space-between; padding: 12px 14px; border: 1px solid var(--border-strong); border-radius: 12px; background: var(--surface-2);" onclick="toggleSortDropdown(event)">
+                            <span class="sort-dd-label" id="gwPremLabel" data-i18n="pkg_3_months">3 месяца</span>
+                            <svg class="sort-dd-arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9" /></svg>
+                        </div>
+                        <div class="sort-dd-menu" style="width: 100%;">
+                            <div class="sort-dd-item selected" onclick="selectGwPremium(3, this)"><span class="sort-item-label" data-i18n="pkg_3_months">3 месяца</span></div>
+                            <div class="sort-dd-item" onclick="selectGwPremium(6, this)"><span class="sort-item-label" data-i18n="pkg_6_months">6 месяцев</span></div>
+                            <div class="sort-dd-item" onclick="selectGwPremium(12, this)"><span class="sort-item-label" data-i18n="pkg_12_months">12 месяцев</span></div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="gwPrizePremium" value="3">
+                </div>
+
+                <label class="form-label" data-i18n="gw_winners">Количество победителей</label>
+                <input type="number" id="gwWinnersCount" class="form-input" placeholder="1" value="1" min="1" oninput="updateGwCreatePrice()">
+
+                <label class="form-label" data-i18n="gw_end_date">Дата и время окончания (не менее 24ч)</label>
+                <div style="display: flex; gap: 10px; margin-bottom: 16px;">
+                    <div class="sort-dd-wrap" id="gwDateDropdown" style="flex: 3; margin-bottom: 0;">
+                        <div class="sort-dd-trigger" style="justify-content: space-between; padding: 12px 14px; border: 1px solid var(--border-strong); border-radius: 12px; background: var(--surface-2);" onclick="toggleSortDropdown(event)">
+                            <span class="sort-dd-label" id="gwDateLabel">Завтра</span>
+                            <svg class="sort-dd-arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9" /></svg>
+                        </div>
+                        <div class="sort-dd-menu" id="gwDateMenu" style="width: 100%; max-height: 220px; overflow-y: auto;">
+                        </div>
+                    </div>
+                    <div class="sort-dd-wrap" id="gwTimeDropdown" style="flex: 2; margin-bottom: 0;">
+                        <div class="sort-dd-trigger" style="justify-content: space-between; padding: 12px 14px; border: 1px solid var(--border-strong); border-radius: 12px; background: var(--surface-2);" onclick="toggleSortDropdown(event)">
+                            <span class="sort-dd-label" id="gwTimeLabel">12:00</span>
+                            <svg class="sort-dd-arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9" /></svg>
+                        </div>
+                        <div class="sort-dd-menu" id="gwTimeMenu" style="width: 100%; max-height: 220px; overflow-y: auto;">
+                        </div>
+                    </div>
+                </div>
+                <input type="hidden" id="gwSelectedDate" value="">
+                <input type="hidden" id="gwSelectedTime" value="">
+
+                <div style="display:flex; justify-content:space-between; align-items:center; margin: 18px 0 8px;">
+                    <span style="font-size:14px; font-weight:700; color:var(--text-secondary)" data-i18n="gw_total">Итого к оплате:</span>
+                    <div style="text-align:right">
+                        <div style="font-size:20px; font-weight:800; color:var(--text)" id="gwTotalCostUsd">$0.00</div>
+                        <div style="font-size:12px; font-weight:600; color:var(--text-muted)" id="gwTotalCostTon">(≈ 0.00 TON)</div>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="action-btn stars-action-btn" id="gwSubmitBtn" onclick="openGwPaymentModal()" data-i18n="gw_btn_pay">Оплатить и запустить</button>
+            <button class="action-btn wallet-action-btn" id="gwTopupBtn" onclick="switchTab('wallet')" style="display: none;" data-i18n="gw_topup">Пополнить баланс</button>
+        </div>
+
+        <div id="gwTabParticipating" class="profile-panel" style="display:none">
+            <div class="profile-list" id="gwParticipatingList"></div>
+        </div>
+
+        <div id="gwTabMy" class="profile-panel" style="display:none">
+            <div class="profile-list" id="gwMyList"></div>
         </div>
     </div>
 
@@ -653,6 +752,15 @@
             </svg>
             <span data-i18n="nav_rent">Аренда</span>
         </div>
+        <div class="nav-item" onclick="switchTab('giveaways')" data-tab="giveaways">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                <path d="M12 22V7"></path>
+                <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path>
+                <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path>
+            </svg>
+            <span data-i18n="nav_giveaways">Розыгрыши</span>
+        </div>
         <div class="nav-item" onclick="switchTab('profile')" data-tab="profile">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
@@ -679,6 +787,18 @@
         </div>
     </div>
 
+    <div id="captchaModal" class="modal-overlay" style="display:none">
+        <div class="modal-sheet" style="text-align: center;">
+            <div class="modal-handle"></div>
+            <h3 style="margin-bottom: 10px;">Проверка на бота</h3>
+            <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 20px;">
+                Выберите: <b id="captchaTargetName" style="color: var(--text); font-size: 16px;">Яблоко</b>
+            </p>
+            <div id="captchaEmojiGrid" style="display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-bottom: 20px;">
+                </div>
+        </div>
+    </div>
+
     <div id="customDialogOverlay" class="custom-dialog-overlay">
         <div class="custom-dialog-box">
             <div id="customDialogText" class="custom-dialog-text">Текст</div>
@@ -690,17 +810,14 @@
         </div>
     </div>
 
-    <!-- i18n -->
     <script src="js/i18n.js"></script>
-    <!-- Core -->
     <script src="js/core.js"></script>
-    <!-- Страницы -->
     <script src="js/stars.js"></script>
     <script src="js/premium.js"></script>
     <script src="js/rent.js"></script>
     <script src="js/profile.js"></script>
     <script src="js/history.js"></script>
-    <!-- Инициализация -->
+    <script src="js/giveaways.js"></script>
     <script>init();</script>
 </body>
 

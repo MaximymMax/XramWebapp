@@ -144,6 +144,22 @@ const translations = {
         
         // Rent per day
         rent_per_day: '/ дн',
+
+        // Giveaways
+        gw_tab_create: 'Создать',
+        gw_tab_part: 'Участвую',
+        gw_tab_my: 'Мои',
+        gw_prize_type: 'Что разыгрываем?',
+        gw_amount_stars: 'Звезд на победителя (мин. 50)',
+        gw_amount_ton: 'TON на победителя (мин. 0.5)',
+        gw_amount_prem: 'Длительность Premium',
+        gw_winners: 'Количество победителей',
+        gw_end_date: 'Дата и время окончания (не менее 24ч)',
+        gw_total: 'Итого к оплате:',
+        gw_insufficient: 'Недостаточно TON на балансе',
+        gw_btn_pay: 'Оплатить и запустить',
+        gw_topup: 'Пополнить баланс',
+        gw_min_duration_err: 'Минимальная длительность - 1 день (24ч)',
     },
     en: {
         // Navigation
@@ -290,6 +306,22 @@ const translations = {
         
         // Rent per day
         rent_per_day: '/ day',
+
+        // Giveaways
+        gw_tab_create: 'Create',
+        gw_tab_part: 'Participating',
+        gw_tab_my: 'My',
+        gw_prize_type: 'What is the prize?',
+        gw_amount_stars: 'Stars per winner (min 50)',
+        gw_amount_ton: 'TON per winner (min 0.5)',
+        gw_amount_prem: 'Premium duration',
+        gw_winners: 'Number of winners',
+        gw_end_date: 'End date and time (min 24h)',
+        gw_total: 'Total to pay:',
+        gw_insufficient: 'Insufficient TON balance',
+        gw_btn_pay: 'Pay and start',
+        gw_topup: 'Top up balance',
+        gw_min_duration_err: 'Minimum duration is 1 day (24h)',
     }
 };
 

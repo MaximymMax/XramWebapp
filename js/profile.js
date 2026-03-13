@@ -25,20 +25,22 @@ function renderServerCheques(cheques) {
     if (!cheques.length) { list.innerHTML = `<div class="profile-empty"><p>Нет активных чеков</p></div>`; return; }
 
     list.innerHTML = cheques.map(c => {
-        const exp = c.ChequeExpiresAt ? new Date(c.ChequeExpiresAt).toLocaleDateString('ru-RU') : 'Бессрочно';
-        const link = `https://t.me/${BOT_USERNAME}?start=chk_${c.Id}`;
-        return `<div class="cheque-item" style="flex-direction:column; align-items:stretch;">
-            <div style="display:flex; justify-content:space-between; align-items:center; width:100%">
-                <div class="cheque-item-left">
-                    <span class="cheque-item-title">${c.Product} · ${c.Amount} ${c.Currency}</span>
-                    <span class="cheque-item-meta">Код: ${c.PaymentCode} · До: ${exp}</span>
-                </div>
-                <button class="cheque-item-deact" onclick="deactivateCheque('${c.Id}')">Отменить</button>
+        // ФИКС ЧАСОВОГО ПОЯСА
+        let endsAtStr = c.ChequeExpiresAt;
+        if (endsAtStr && !endsAtStr.endsWith('Z')) endsAtStr += 'Z';
+
+        const expStr = endsAtStr 
+            ? `<span class="countdown-timer" data-ends="${endsAtStr}" data-timeout-text="Истек" style="color:var(--rent-primary); font-weight:700;">Считаем...</span>` 
+            : 'Бессрочно';
+            
+        const link = `https://t.me/${BOT_USERNAME}?start=XCQ_${c.TargetAddress}`;
+
+        return `<div class="cheque-item" onclick="showTxDetails('${c.Id}')" style="cursor:pointer">
+            <div class="cheque-item-left">
+                <span class="cheque-item-title">${c.Product === 'None' ? 'Перевод' : c.Product} · ${c.Amount} ${c.Currency}</span>
+                <span class="cheque-item-meta">До: ${expStr}</span>
             </div>
-            <div class="cheque-link-wrap">
-                <div class="cheque-link-input">${link}</div>
-                <button class="cheque-copy-btn" onclick="copyChequeLink('${link}')">Копировать</button>
-            </div>
+            <button class="cheque-item-deact" onclick="event.stopPropagation(); deactivateCheque('${c.Id}')">Отменить</button>
         </div>`;
     }).join('');
 }

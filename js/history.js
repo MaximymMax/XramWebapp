@@ -12,14 +12,33 @@ function renderServerHistory(history) {
     const statusClass = { Pending: 'status-pending', Completed: 'status-completed', Failed: 'status-failed', Cancelled: 'status-cancelled', Processing: 'status-pending' };
 
     list.innerHTML = history.map(h => {
-        const date = new Date(h.CreatedAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+        // ФИКС ЧАСОВОГО ПОЯСА ДЛЯ ДАТЫ СОЗДАНИЯ
+        const serverDateStr = h.CreatedAt.endsWith('Z') ? h.CreatedAt : h.CreatedAt + 'Z';
+        const createdDate = new Date(serverDateStr);
+        const date = createdDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+
+        let statusHtml = `<span class="history-item-status ${statusClass[h.Status] || ''}">${statusLabel[h.Status] || h.Status}</span>`;
+
+        // ТАЙМЕР ДЛЯ ТРАНЗАКЦИЙ (Берем точное время с сервера!)
+        if (h.Status === 'Pending' && h.ExpiresAt) {
+            // Фикс часового пояса для даты окончания
+            let endsAtStr = h.ExpiresAt;
+            if (!endsAtStr.endsWith('Z') && !endsAtStr.includes('+')) endsAtStr += 'Z';
+            
+            statusHtml = `
+                <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+                    ${statusHtml}
+                    <span class="countdown-timer" data-ends="${endsAtStr}" style="font-size:11px; color:#ff453a; font-weight:700;">Считаем...</span>
+                </div>`;
+        }
+
         return `<div class="history-item" onclick="showTxDetails('${h.Id}')" style="cursor:pointer">
             <div class="history-item-left">
                 <span class="history-item-title">${h.Product === 'None' ? h.Type : h.Product} · ${h.Amount} ${h.Currency}</span>
                 <span class="history-item-meta">${date}</span>
             </div>
             <div style="display:flex; align-items:center;">
-                <span class="history-item-status ${statusClass[h.Status] || ''}">${statusLabel[h.Status] || h.Status}</span>
+                ${statusHtml}
             </div>
         </div>`;
     }).join('');

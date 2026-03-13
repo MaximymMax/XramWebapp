@@ -912,6 +912,8 @@ async function fetchServerData() {
     if (!window.currentRentOffers || window.currentRentOffers.length === 0) {
         await switchRentCategory('gifts');
     }
+
+    
 }
 
 async function init() {
@@ -969,9 +971,68 @@ async function init() {
     const startParam = tg.initDataUnsafe?.start_param;
     if (startParam && startParam.startsWith('gw_')) {
         const gwId = startParam.replace('gw_', '');
-        switchTab('giveaways'); // Перекидываем на вкладку
-        // Небольшая задержка, чтобы модалка не перекрылась анимацией
-        setTimeout(() => openGiveawayJoin(gwId), 500); 
+        // Не переключаем вкладки, просто открываем модалку поверх всего
+        setTimeout(() => openGiveawayJoin(gwId), 300); 
     }
+
+    // ===== ГЛОБАЛЬНЫЙ ТАЙМЕР =====
+setInterval(() => {
+    const timers = document.querySelectorAll('.countdown-timer');
+    let needsRefresh = false;
+
+    timers.forEach(timer => {
+        let endsAtStr = timer.getAttribute('data-ends');
+        if (!endsAtStr) return;
+        
+        // ФИКС: Если сервер не прислал 'Z', добавляем сами, чтобы JS понял, что это UTC
+        if (!endsAtStr.endsWith('Z') && !endsAtStr.includes('+')) endsAtStr += 'Z';
+        
+        const endsAt = new Date(endsAtStr).getTime();
+        const diff = endsAt - new Date().getTime();
+
+        if (diff <= 0) {
+            // Читаем нужный текст (по умолчанию "Отменена")
+            const timeoutText = timer.getAttribute('data-timeout-text') || "Отменено";
+            timer.textContent = timeoutText;
+            
+            // Затираем инлайн-стили
+            timer.style.cssText = '';
+            
+            // Превращаем таймер в статус-плашку
+            timer.className = 'history-item-status status-cancelled'; 
+            
+            // --- ИСПРАВЛЕНИЕ ДЛЯ ДУБЛИРУЮЩИХСЯ ПЛАШЕК ---
+            // Ищем родительскую карточку транзакции
+            const historyRow = timer.closest('.history-item, .cheque-item');
+            if (historyRow) {
+                // Находим старый бейдж "Ожидание" и удаляем его из верстки
+                const oldBadge = historyRow.querySelector('.status-pending');
+                if (oldBadge) {
+                    oldBadge.remove();
+                }
+            }
+            // -------------------------------------------
+            
+            needsRefresh = true;
+        } else {
+            const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const s = Math.floor((diff % (1000 * 60)) / 1000);
+
+            let str = '';
+            if (d > 0) str += `${d}д `;
+            str += `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            timer.textContent = str;
+        }
+    });
+
+    // Если хоть один таймер дошел до 0, обновляем данные с бэкенда
+    if (needsRefresh) {
+        if (typeof fetchServerData === 'function') fetchServerData();
+        if (document.getElementById('gwTabParticipating')?.style.display === 'block' && typeof loadGiveawaysList === 'function') loadGiveawaysList('participating', false);
+        if (document.getElementById('gwTabMy')?.style.display === 'block' && typeof loadGiveawaysList === 'function') loadGiveawaysList('my', false);
+    }
+}, 1000);
 }
 

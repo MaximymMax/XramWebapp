@@ -11,8 +11,13 @@ window.switchGiveawayTab = function(tab, btn) {
     document.getElementById('gwTabMy').style.display = tab === 'my' ? 'block' : 'none';
 
     if (tab === 'participating' || tab === 'my') {
-        loadGiveawaysList(tab);
+        loadGiveawaysList(tab, false); // false убирает мерцание загрузки
     }
+}
+
+window.fetchAllGiveaways = function() {
+    loadGiveawaysList('participating', false);
+    loadGiveawaysList('my', false);
 }
 
 // ── Кастомные дропдауны ─────────────────────────────────────
@@ -203,83 +208,139 @@ window.cancelGiveaway = async function(gwId) {
     });
 }
 
-// ── Списки ──────────────────────────────────────────────────
-async function loadGiveawaysList(tab) {
+// ── Списки с Таймерами ──────────────────────────────────────
+async function loadGiveawaysList(tab, showLoading = true) {
     const container = document.getElementById(tab === 'my' ? 'gwMyList' : 'gwParticipatingList');
-    container.innerHTML = '<div class="profile-empty"><p>Загрузка...</p></div>';
+    
+    // Показываем "Загрузка..." только если контейнер пустой или если запросили явно
+    if (showLoading && container.innerHTML.trim() === '') {
+        container.innerHTML = '<div class="profile-empty"><p>Загрузка...</p></div>';
+    }
 
     const res = await apiCall(`/webapp/giveaways/list?type=${tab}`);
     if (res && res.Success) {
-        if (!res.Items.length) {
-            container.innerHTML = `<div class="profile-empty"><p>Пусто</p></div>`;
-            return;
-        }
-        container.innerHTML = res.Items.map(g => `
+        if (!res.Items.length) return container.innerHTML = `<div class="profile-empty"><p>Пусто</p></div>`;
+        
+        container.innerHTML = res.Items.map(g => {
+            // ФИКС ЧАСОВОГО ПОЯСА
+            let endsAtStr = g.EndsAt;
+            if (endsAtStr && !endsAtStr.endsWith('Z')) endsAtStr += 'Z';
+            
+            return `
             <div class="history-item" style="flex-direction:column; align-items:stretch; cursor:pointer;" onclick="openGiveawayJoin('${g.Id}')">
                 <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
                     <span style="font-weight:700">${g.PrizeType} ${g.PrizeType === 'Premium' ? g.Amount + ' мес' : ''} x${g.WinnersCount}</span>
-                    <span style="font-size:12px; color:var(--text-secondary)">До: ${new Date(g.EndsAt).toLocaleDateString()}</span>
+                    <div class="countdown-timer" data-ends="${endsAtStr}" data-timeout-text="Завершено" style="font-size:12px; color:var(--rent-primary); font-weight:700;">Считаем...</div>
                 </div>
                 <div style="font-size:12px; color:var(--text-muted)">Участников: ${g.ParticipantsCount}</div>
                 <div style="display:flex; gap: 8px; margin-top:12px">
-                    ${tab === 'my' 
-                        ? `<button class="action-btn outline-action-btn" style="flex:1; margin:0; padding:8px; font-size:12px;" onclick="event.stopPropagation(); navigator.clipboard.writeText('${g.InviteLink}'); safeAlert('Скопировано');">🔗 Копировать</button>` 
-                        : ''}
-                    ${tab === 'my' && g.ParticipantsCount === 0 
-                        ? `<button class="action-btn" style="flex:1; margin:0; padding:8px; font-size:12px; background: rgba(255, 69, 58, 0.15); color: #ff453a; border: none;" onclick="event.stopPropagation(); cancelGiveaway('${g.Id}')">❌ Отменить</button>` 
-                        : ''}
+                    ${tab === 'my' ? `<button class="action-btn outline-action-btn" style="flex:1; margin:0; padding:8px; font-size:12px;" onclick="event.stopPropagation(); navigator.clipboard.writeText('${g.InviteLink}'); safeAlert('Скопировано');">🔗 Копировать</button>` : ''}
+                    ${tab === 'my' && g.ParticipantsCount === 0 ? `<button class="action-btn" style="flex:1; margin:0; padding:8px; font-size:12px; background: rgba(255, 69, 58, 0.15); color: #ff453a; border: none;" onclick="event.stopPropagation(); cancelGiveaway('${g.Id}')">❌ Отменить</button>` : ''}
                 </div>
-            </div>
-        `).join('');
+            </div>`
+        }).join('');
     }
 }
 
-// ── Присоединение (Попап) ───────────────────────────────────
-window.openGiveawayJoin = async function(gwId) {
-    const res = await apiCall(`/webapp/giveaways/${gwId}/info`);
-    if (!res || !res.Success) return safeAlert('Розыгрыш не найден');
-
-    showModal('Розыгрыш 🎁', `
-        <div style="text-align:center; padding:10px 0;">
-            <div style="font-size:40px; margin-bottom:10px;">${res.PrizeType === 'TelegramStars' ? '⭐️' : '💎'}</div>
-            <h3 style="margin-bottom:6px">Приз: ${res.Amount} ${res.PrizeType}</h3>
-            <p style="color:var(--text-secondary); font-size:13px;">Победителей: ${res.WinnersCount} • Участников: ${res.ParticipantsCount}</p>
-            <p style="color:var(--text-muted); font-size:12px; margin-top:10px;">Завершится: ${new Date(res.EndsAt).toLocaleString()}</p>
-            
-            ${res.IsJoined 
-                ? `<button class="action-btn outline-action-btn" style="width:100%; margin-top:20px; pointer-events:none;">Вы уже участвуете ✅</button>` 
-                : `<button class="action-btn stars-action-btn" style="width:100%; margin-top:20px" onclick="startCaptcha('${gwId}')">Участвовать</button>`}
-        </div>
-    `);
-}
-
-// ── Капча ───────────────────────────────────────────────────
+// ── Полноэкранная Модалка с открытой Капчей ─────────────────
+// ── Полноэкранная Модалка с открытой Капчей и Видом для Автора ──
 let currentGiveawayId = null;
-window.startCaptcha = async function(gwId) {
-    currentGiveawayId = gwId;
-    closeModal(); // Закрываем инфо
-    const res = await apiCall(`/webapp/giveaways/${gwId}/captcha`);
-    
-    if (res && res.Success) {
-        document.getElementById('captchaTargetName').textContent = res.TargetName;
-        document.getElementById('captchaEmojiGrid').innerHTML = res.Emojis.map(emoji => `
-            <button onclick="submitCaptcha('${emoji}')" style="font-size: 32px; background: var(--surface-3); border: 1px solid var(--border-strong); border-radius: 12px; width: 60px; height: 60px; cursor: pointer;">
-                ${emoji}
-            </button>
-        `).join('');
-        document.getElementById('captchaModal').style.display = 'flex';
+
+window.openGiveawayJoin = async function(gwId) {
+    const modal = document.getElementById('giveawayJoinModal');
+    const content = document.getElementById('giveawayJoinContent');
+    content.innerHTML = '<div style="text-align:center; padding: 40px 0;"><p>Загрузка розыгрыша...</p></div>';
+    modal.style.display = 'flex';
+
+    const res = await apiCall(`/webapp/giveaways/${gwId}/info`);
+    if (!res || !res.Success) {
+        modal.style.display = 'none';
+        return safeAlert('Розыгрыш не найден или завершен');
+    }
+
+    let html = `
+        <div style="text-align:center;">
+            <div style="font-size:54px; margin-bottom:10px;">${res.PrizeType === 'Stars' ? '⭐️' : '💎'}</div>
+            <h2 style="margin-bottom:6px; font-size:22px;">Приз: ${res.Amount} ${res.PrizeType}</h2>
+            <p style="color:var(--text-secondary); font-size:14px; margin-bottom:16px;">
+                Победителей: <b>${res.WinnersCount}</b> • Участников: <b>${res.ParticipantsCount}</b>
+            </p>
+            
+            <div style="background: var(--surface-3); padding: 14px; border-radius: 16px; margin-bottom: 24px;">
+                <span style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">До конца:</span>
+                <div class="countdown-timer" data-ends="${res.EndsAt}" data-timeout-text="Завершено" style="font-size: 24px; font-weight: 800; color: var(--text); margin-top: 4px;">Считаем...</div>
+            </div>
+    `;
+
+    // === ЛОГИКА ДЛЯ СОЗДАТЕЛЯ РОЗЫГРЫША ===
+    if (res.IsCreator) {
+        html += `<div style="text-align:left; background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 20px; max-height: 200px; overflow-y: auto;">
+                    <div style="font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 8px; text-transform: uppercase;">Список участников:</div>`;
+        
+        if (res.Participants && res.Participants.length > 0) {
+            html += res.Participants.map(p => `
+                <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border-strong); font-size: 13px;">
+                    <span style="color: var(--text); font-weight: 600;">${p.Name}</span>
+                    <span style="color: var(--text-muted); font-family: monospace;">${p.Id}</span>
+                </div>
+            `).join('');
+        } else {
+            html += `<div style="font-size: 13px; color: var(--text-muted); text-align: center; padding: 10px 0;">Пока никто не присоединился</div>`;
+        }
+        html += `</div>`;
+        
+        html += `<button class="action-btn outline-action-btn" style="width:100%; margin:0 0 10px; pointer-events:none;">Это ваш розыгрыш 👑</button>`;
+        html += `<button class="action-btn" style="width:100%; margin:0; background: var(--surface-3); color: var(--text);" onclick="document.getElementById('giveawayJoinModal').style.display='none'">Закрыть</button></div>`;
+        content.innerHTML = html;
+        return; // Выходим, чтобы не рисовать капчу
+    }
+
+    // === ЛОГИКА ДЛЯ ОБЫЧНОГО УЧАСТНИКА ===
+    if (res.IsJoined) {
+        html += `<button class="action-btn outline-action-btn" style="width:100%; margin:0 0 10px; pointer-events:none;">Вы уже участвуете ✅</button>`;
+        html += `<button class="action-btn" style="width:100%; margin:0; background: var(--surface-3); color: var(--text);" onclick="document.getElementById('giveawayJoinModal').style.display='none'">Закрыть</button></div>`;
+        content.innerHTML = html;
     } else {
-        safeAlert(res?.Error || 'Ошибка загрузки капчи');
+        html += `<div id="inlineCaptcha" style="margin-bottom: 20px;"><p style="font-size:13px; color:var(--text-secondary);">Подготовка проверки на бота...</p></div>`;
+        html += `<button class="action-btn outline-action-btn" style="width:100%; margin:0;" onclick="document.getElementById('giveawayJoinModal').style.display='none'">Отмена</button></div>`;
+        content.innerHTML = html;
+
+        currentGiveawayId = gwId;
+        const capRes = await apiCall(`/webapp/giveaways/${gwId}/captcha`);
+        const capDiv = document.getElementById('inlineCaptcha');
+        
+        if (capRes && capRes.Success) {
+            capDiv.innerHTML = `
+                <div style="border-top: 1px solid var(--border); margin: 20px 0;"></div>
+                <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 14px;">
+                    Для участия выберите: <b style="color: var(--text); font-size: 16px;">${capRes.TargetName}</b>
+                </p>
+                <div style="display: flex; justify-content: center; gap: 8px; flex-wrap: wrap;">
+                    ${capRes.Emojis.map(emoji => `
+                        <button onclick="submitCaptcha('${emoji}')" style="font-size: 28px; background: var(--surface-2); border: 1px solid var(--border-strong); border-radius: 12px; width: 50px; height: 50px; cursor: pointer; display:flex; align-items:center; justify-content:center;">
+                            ${emoji}
+                        </button>
+                    `).join('')}
+                </div>
+            `;
+        } else {
+            capDiv.innerHTML = `<p style="color:#ff453a; font-size:13px;">${capRes?.Error || 'Ошибка загрузки капчи'}</p>`;
+        }
     }
 }
 
+// Отправка открытой капчи
 window.submitCaptcha = async function(emoji) {
-    document.getElementById('captchaModal').style.display = 'none';
+    const capDiv = document.getElementById('inlineCaptcha');
+    capDiv.innerHTML = `<p style="color:var(--text-secondary); font-size:14px;">Проверка...</p>`;
+    
     const res = await apiCall(`/webapp/giveaways/${currentGiveawayId}/join?emoji=${encodeURIComponent(emoji)}`);
     if (res && res.Success) {
+        document.getElementById('giveawayJoinModal').style.display = 'none';
         safeAlert(res.Message);
-        if(document.getElementById('gwTabParticipating').style.display === 'block') loadGiveawaysList('participating');
+        if(document.getElementById('gwTabParticipating')?.style.display === 'block') loadGiveawaysList('participating');
     } else {
+        document.getElementById('giveawayJoinModal').style.display = 'none';
         safeAlert(res?.Error || 'Неверно!');
     }
 }

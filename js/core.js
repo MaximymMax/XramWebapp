@@ -21,7 +21,7 @@ const telegramId = user.id;
 const tonConnect = { connected: false, address: null, balance: null, frozenBalance: null };
 
 let RATES = { USD: { tonUsd: 2.0, perStar: 0.015, starDeposit: 0.013 }, RUB: { tonUsd: 180, perStar: 1.35 }, TON: { tonUsd: 1, perStar: 0.0075 } };
-let PREMIUM_TON = { 3: 6, 6: 10, 12: 18 };
+let PREMIUM_TON = { 3: 6, 10: 10, 12: 18 };
 const RUB_PER_USD = 95;
 
 // Дефолтные цены и системные настройки
@@ -44,7 +44,8 @@ const state = {
     pay: {
         stars: { method: 'InternalWallet', currency: 'TON' },
         premium: { method: 'InternalWallet', currency: 'TON' },
-        rent: { method: 'InternalWallet', currency: 'TON' }
+        rent: { method: 'InternalWallet', currency: 'TON' },
+        topup: { method: 'CryptoTransfer', currency: 'TON' }
     }
 };
 
@@ -409,7 +410,7 @@ function applyUsernameResult(product, data, rawUsername) {
             statusMsg.innerHTML = `
                 <div class="recipient-error-card">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-                    ${res?.Error || t('username_not_found')}
+                    ${data?.Error || t('username_not_found')}
                 </div>`;
         }
         if (btn) btn.disabled = true;
@@ -912,8 +913,6 @@ async function fetchServerData() {
     if (!window.currentRentOffers || window.currentRentOffers.length === 0) {
         await switchRentCategory('gifts');
     }
-
-    
 }
 
 async function init() {
@@ -961,7 +960,11 @@ async function init() {
         if (usr) usr.textContent = usernameDisplay;
     });
 
-    fetchServerData();
+    // Ждем загрузки всех основных данных (цены, баланс, аренда, розыгрыши)
+    await Promise.all([
+        fetchServerData(),
+        typeof window.fetchAllGiveaways === 'function' ? window.fetchAllGiveaways() : Promise.resolve()
+    ]);
 
     // Apply saved language
     if (window.currentLang && window.currentLang !== 'ru') {
@@ -976,63 +979,70 @@ async function init() {
     }
 
     // ===== ГЛОБАЛЬНЫЙ ТАЙМЕР =====
-setInterval(() => {
-    const timers = document.querySelectorAll('.countdown-timer');
-    let needsRefresh = false;
+    setInterval(() => {
+        const timers = document.querySelectorAll('.countdown-timer');
+        let needsRefresh = false;
 
-    timers.forEach(timer => {
-        let endsAtStr = timer.getAttribute('data-ends');
-        if (!endsAtStr) return;
-        
-        // ФИКС: Если сервер не прислал 'Z', добавляем сами, чтобы JS понял, что это UTC
-        if (!endsAtStr.endsWith('Z') && !endsAtStr.includes('+')) endsAtStr += 'Z';
-        
-        const endsAt = new Date(endsAtStr).getTime();
-        const diff = endsAt - new Date().getTime();
+        timers.forEach(timer => {
+            let endsAtStr = timer.getAttribute('data-ends');
+            if (!endsAtStr) return;
+            
+            // ФИКС: Если сервер не прислал 'Z', добавляем сами, чтобы JS понял, что это UTC
+            if (!endsAtStr.endsWith('Z') && !endsAtStr.includes('+')) endsAtStr += 'Z';
+            
+            const endsAt = new Date(endsAtStr).getTime();
+            const diff = endsAt - new Date().getTime();
 
-        if (diff <= 0) {
-            // Читаем нужный текст (по умолчанию "Отменена")
-            const timeoutText = timer.getAttribute('data-timeout-text') || "Отменено";
-            timer.textContent = timeoutText;
-            
-            // Затираем инлайн-стили
-            timer.style.cssText = '';
-            
-            // Превращаем таймер в статус-плашку
-            timer.className = 'history-item-status status-cancelled'; 
-            
-            // --- ИСПРАВЛЕНИЕ ДЛЯ ДУБЛИРУЮЩИХСЯ ПЛАШЕК ---
-            // Ищем родительскую карточку транзакции
-            const historyRow = timer.closest('.history-item, .cheque-item');
-            if (historyRow) {
-                // Находим старый бейдж "Ожидание" и удаляем его из верстки
-                const oldBadge = historyRow.querySelector('.status-pending');
-                if (oldBadge) {
-                    oldBadge.remove();
+            if (diff <= 0) {
+                // Читаем нужный текст (по умолчанию "Отменена")
+                const timeoutText = timer.getAttribute('data-timeout-text') || "Отменено";
+                timer.textContent = timeoutText;
+                
+                // Затираем инлайн-стили
+                timer.style.cssText = '';
+                
+                // Превращаем таймер в статус-плашку
+                timer.className = 'history-item-status status-cancelled'; 
+                
+                // --- ИСПРАВЛЕНИЕ ДЛЯ ДУБЛИРУЮЩИХСЯ ПЛАШЕК ---
+                // Ищем родительскую карточку транзакции
+                const historyRow = timer.closest('.history-item, .cheque-item');
+                if (historyRow) {
+                    // Находим старый бейдж "Ожидание" и удаляем его из верстки
+                    const oldBadge = historyRow.querySelector('.status-pending');
+                    if (oldBadge) {
+                        oldBadge.remove();
+                    }
                 }
+                // -------------------------------------------
+                
+                needsRefresh = true;
+            } else {
+                const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const s = Math.floor((diff % (1000 * 60)) / 1000);
+
+                let str = '';
+                if (d > 0) str += `${d}д `;
+                str += `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+                timer.textContent = str;
             }
-            // -------------------------------------------
-            
-            needsRefresh = true;
-        } else {
-            const d = Math.floor(diff / (1000 * 60 * 60 * 24));
-            const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-            const s = Math.floor((diff % (1000 * 60)) / 1000);
+        });
 
-            let str = '';
-            if (d > 0) str += `${d}д `;
-            str += `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-            timer.textContent = str;
+        // Если хоть один таймер дошел до 0, обновляем данные с бэкенда
+        if (needsRefresh) {
+            if (typeof fetchServerData === 'function') fetchServerData();
+            if (document.getElementById('gwTabParticipating')?.style.display === 'block' && typeof loadGiveawaysList === 'function') loadGiveawaysList('participating', false);
+            if (document.getElementById('gwTabMy')?.style.display === 'block' && typeof loadGiveawaysList === 'function') loadGiveawaysList('my', false);
         }
-    });
+    }, 1000);
 
-    // Если хоть один таймер дошел до 0, обновляем данные с бэкенда
-    if (needsRefresh) {
-        if (typeof fetchServerData === 'function') fetchServerData();
-        if (document.getElementById('gwTabParticipating')?.style.display === 'block' && typeof loadGiveawaysList === 'function') loadGiveawaysList('participating', false);
-        if (document.getElementById('gwTabMy')?.style.display === 'block' && typeof loadGiveawaysList === 'function') loadGiveawaysList('my', false);
+    // СРЫВАЕМ ЭКРАН ЗАГРУЗКИ ПОСЛЕ ПОЛНОЙ ГОТОВНОСТИ
+    const loader = document.getElementById('appLoader');
+    if (loader) {
+        loader.classList.add('hidden');
+        // Через 300мс (когда закончится анимация затухания CSS) удаляем его из памяти
+        setTimeout(() => loader.remove(), 300);
     }
-}, 1000);
 }
-

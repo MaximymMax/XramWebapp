@@ -15,9 +15,12 @@ window.switchGiveawayTab = function(tab, btn) {
     }
 }
 
-window.fetchAllGiveaways = function() {
-    loadGiveawaysList('participating', false);
-    loadGiveawaysList('my', false);
+window.fetchAllGiveaways = async function() {
+    // Ждем загрузку обеих вкладок одновременно
+    await Promise.all([
+        loadGiveawaysList('participating', false),
+        loadGiveawaysList('my', false)
+    ]);
 }
 
 // ── Кастомные дропдауны ─────────────────────────────────────

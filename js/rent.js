@@ -403,7 +403,14 @@ async function apiRentGift() {
     if (days < state.rentMinDays || days > state.rentMaxDays) return safeAlert(`Доступно от ${state.rentMinDays} до ${state.rentMaxDays} дней`);
     const pm = state.pay.rent.method;
     const pc = state.pay.rent.currency;
-    setLoading(document.getElementById('modalRentBtn'), true);
+    const btn = document.getElementById('modalRentBtn');
+
+    if (pm === 'InternalWallet') {
+        closeModal();
+        showTxLoading();
+    } else {
+        setLoading(btn, true);
+    }
 
     const result = await apiCall('/transactions/create/rent', {
         telegramId, currency: pc, method: pm,
@@ -415,9 +422,19 @@ async function apiRentGift() {
         imageUrl: state.rentImageUrl
     });
 
-    setLoading(document.getElementById('modalRentBtn'), false);
-    if (result && result.Success) { closeModal(); handleTxFlow(result); }
-    else if (result) { safeAlert('Ошибка: ' + result.Error); }
+    if (pm === 'InternalWallet') {
+        if (result && result.Success) {
+            showTxResult(true, "Успешно!", `Аренда оформлена на ${days} дн.`, `<div style="text-align:center">Перейдите в профиль для подключения.</div>`);
+            fetchServerData();
+            loadProfile();
+        } else {
+            showTxResult(false, "Сбой аренды", result?.Error || "Ошибка списания средств", "");
+        }
+    } else {
+        setLoading(btn, false);
+        if (result && result.Success) { closeModal(); handleTxFlow(result); }
+        else if (result) { safeAlert('Ошибка: ' + result.Error); }
+    }
 }
 
 // ── TonConnect (установка NFT) ────────────────────────────────

@@ -9,34 +9,28 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
     <div id="appLoader" class="app-loader">
-        <div class="loader-spinner"></div>
+        <lottie-player src="https://cdn.changes.tg/gifts/models/Mini%20Oscar/lottie/Banana.json" background="transparent" speed="1" style="width: 150px; height: 150px;" loop autoplay></lottie-player>
         <div class="loader-text">Xram Shop...</div>
     </div>
+    
     <div id="testModeBanner"
         style="display:none; background:#ff6b6b; color:#fff; text-align:center; padding:6px; font-size:12px; font-weight:800; letter-spacing:1px; z-index:9999; position:relative; box-shadow: 0 2px 10px rgba(255,107,107,0.3);">
         <span data-i18n="test_mode_banner">⚙️ ТЕСТОВЫЙ РЕЖИМ (ДЕНЬГИ НЕ СПИСЫВАЮТСЯ)</span></div>
 
     <header>
         <div class="header-logo">
+            <img src="https://giftscache.tgmrkt.io/gifts/models/Mini%20Oscar/png/Action%20Film.png" alt="Oscar" class="logo-img">
             <span class="logo-text">Xram</span>
             <span class="logo-dot">·</span>
             <span class="logo-sub">shop</span>
         </div>
         <div class="header-right">
-            <button class="hdr-ton-connect" id="tonConnectBtn" onclick="onTonConnect()">
-                <svg width="14" height="14" viewBox="0 0 56 56" fill="none">
-                    <path d="M28 4L4 18V38L28 52L52 38V18L28 4Z" fill="#0098EA" opacity="0.2" />
-                    <path d="M28 4L4 18L28 32L52 18L28 4Z" fill="#0098EA" opacity="0.7" />
-                    <path d="M28 32V52L52 38V18L28 32Z" fill="#0098EA" opacity="0.5" />
-                    <path d="M4 18V38L28 52V32L4 18Z" fill="#0098EA" opacity="0.6" />
-                </svg>
-                <span id="tonConnectLabel">TON Connect</span>
-            </button>
             
             <div class="currency-dd-wrap" id="langDropdownWrap" style="margin-right: 4px;">
                 <div class="currency-pill" id="langTrigger" onclick="toggleDropdown('langDropdownWrap')">
@@ -67,8 +61,6 @@
             </div>
         </div>
     </header>
-
-    <div id="pageBanner" class="page-banner" style="display:none"></div>
 
     <div id="page-home" class="page active">
 
@@ -203,6 +195,12 @@
     </div>
 
     <div id="page-stars" class="page page-stars-theme">
+        <div class="page-hero hero-stars" style="margin-top: 16px;">
+            <img src="https://cdn.changes.tg/gifts/models/Mini%20Oscar/png/Seraphim.png" class="hero-img-left" alt="Oscar">
+            <h1 class="hero-title">Stars</h1>
+            <img src="https://cdn.changes.tg/gifts/models/Mini%20Oscar/png/Seraphim.png" class="hero-img-right" alt="Oscar">
+        </div>
+
         <div class="form-card">
             <label class="form-label" data-i18n="label_recipient">Получатель</label>
             <div class="recipient-tabs" id="starsRecipientTabs">
@@ -340,6 +338,12 @@
     </div>
 
     <div id="page-premium" class="page page-premium-theme">
+        <div class="page-hero hero-premium" style="margin-top: 16px;">
+            <img src="https://cdn.changes.tg/gifts/models/Mini%20Oscar/png/Nebula.png" class="hero-img-left" alt="Oscar">
+            <h1 class="hero-title">Premium</h1>
+            <img src="https://cdn.changes.tg/gifts/models/Mini%20Oscar/png/Nebula.png" class="hero-img-right" alt="Oscar">
+        </div>
+
         <div class="form-card">
             <label class="form-label" data-i18n="label_recipient">Получатель</label>
             <div class="recipient-tabs" id="premiumRecipientTabs">
@@ -437,6 +441,11 @@
     </div>
 
     <div id="page-rent" class="page page-rent-theme">
+        <div class="page-hero hero-rent" style="margin-top: 16px;">
+            <img src="https://cdn.changes.tg/gifts/models/Mini%20Oscar/png/Zesty.png" class="hero-img-left" alt="Oscar">
+            <h1 class="hero-title">Аренда</h1>
+            <img src="https://cdn.changes.tg/gifts/models/Mini%20Oscar/png/Zesty.png" class="hero-img-right" alt="Oscar">
+        </div>
 
         <div class="profile-tabs" id="rentCategoryTabs" style="margin-top: 16px;">
             <button class="ptab active" onclick="switchRentCategory('gifts', this)" data-i18n="rent_tab_gifts">Подарки</button>
@@ -540,6 +549,7 @@
     </div>
 
     <div id="page-giveaways" class="page page-stars-theme">
+        
         <div class="profile-tabs" style="margin-top: 16px">
             <button class="ptab active" onclick="switchGiveawayTab('create', this)">Создать</button>
             <button class="ptab" onclick="switchGiveawayTab('participating', this)">Участвую</button>
@@ -815,6 +825,31 @@
                 <button id="customDialogCancel" class="cd-btn cd-btn-cancel"
                     onclick="closeCustomDialog(false)">Отмена</button>
                 <button class="cd-btn cd-btn-ok" onclick="closeCustomDialog(true)">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="txStatusModal" class="modal-overlay" style="display:none; align-items: center; justify-content: center; z-index: 9999; flex-direction: column; background: var(--bg);">
+        <div class="tx-status-content" style="text-align: center; display: flex; flex-direction: column; align-items: center; width: 100%; padding: 20px; max-width: 400px;">
+            
+            <div id="txLoadingState" style="width: 100%; animation: fadeUp 0.2s ease;">
+                <div class="loader-spinner" style="display:block; margin: 0 auto; width: 50px; height: 50px; border: 4px solid var(--border-strong); border-top-color: var(--wallet-primary); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                <h2 style="margin-top: 24px; font-size: 20px; font-weight: 800; color: var(--text);">Ожидание ответа...</h2>
+                <p style="color: var(--text-secondary); margin-top: 8px; font-size: 14px;">Обработка транзакции сервером</p>
+            </div>
+
+            <div id="txResultState" style="display:none; width: 100%; animation: fadeUp 0.3s ease;">
+                <div id="txLottieContainer" style="width: 160px; height: 160px; margin: 0 auto;">
+                    <lottie-player id="txLottiePlayer" background="transparent" speed="1" style="width: 100%; height: 100%;" autoplay></lottie-player>
+                </div>
+                
+                <h2 id="txResultTitle" style="margin-top: 16px; font-size: 24px; font-weight: 800; color: var(--text);">Статус</h2>
+                <p id="txResultMessage" style="color: var(--text-secondary); margin-top: 8px; margin-bottom: 24px; font-size: 14px;">Описание статуса...</p>
+                
+                <div id="txResultDetails" style="background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-md); padding: 16px; text-align: left; margin-bottom: 24px; font-size: 13px; color: var(--text-secondary);">
+                    </div>
+
+                <button class="action-btn outline-action-btn" onclick="document.getElementById('txStatusModal').style.display='none'" style="width: 100%; margin: 0;">Закрыть</button>
             </div>
         </div>
     </div>

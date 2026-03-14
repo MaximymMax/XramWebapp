@@ -661,31 +661,52 @@ window.executePurchase = async function (product) {
     const pc = state.pay[product].currency;
     const btn = document.getElementById('modalConfirmBtn');
 
-    setLoading(btn, true);
-
     let endpoint = '';
     let payload = { telegramId, currency: pc, method: pm, targetUsername: target };
+    let productName = '';
 
     if (product === 'stars') {
         endpoint = '/transactions/create/stars';
         payload.stars = state.starsCustom ? parseInt(document.getElementById('starsCustomAmount')?.value) : state.stars;
+        productName = `${payload.stars} Stars`;
     } else if (product === 'premium') {
         endpoint = '/transactions/create/premium';
         payload.months = state.premium;
+        productName = `Premium ${payload.months} мес.`;
+    }
+
+    // Показываем Lottie-ожидание для внутреннего кошелька
+    if (pm === 'InternalWallet') {
+        closeModal();
+        showTxLoading();
+    } else {
+        setLoading(btn, true);
     }
 
     const result = await apiCall(endpoint, payload);
-    setLoading(btn, false);
-
-    if (result && result.Success) { handleTxFlow(result); }
-    else if (result) { safeAlert(t('loading') + ' ' + result.Error); }
-}
-
-// Используется для Stars/Premium страниц (кнопки Купить на странице)
-window.apiBuyStars = function () { executePurchase('stars'); }
-window.apiBuyPremium = function (months) {
-    state.premium = months || state.premium;
-    executePurchase('premium');
+    
+    // Обработка результата для внутреннего кошелька (Lottie-результат)
+    if (pm === 'InternalWallet') {
+        if (result && result.Success) {
+            if (result.TargetUsername && result.TargetUsername.startsWith('cheque_')) {
+                const link = `https://t.me/${BOT_USERNAME}?start=chk_${result.TransactionId}`;
+                const details = `<div style="margin-bottom:8px">Чек успешно создан:</div><div class="cheque-link-input" style="user-select:all; padding:10px; background:var(--bg); border-radius:8px; word-break:break-all;">${link}</div>`;
+                showTxResult(true, "Успешно!", "Ссылка на активацию чека:", details);
+            } else {
+                showTxResult(true, "Оплата успешна!", `Вы приобрели ${productName}`, "");
+            }
+            fetchServerData();
+            loadProfile();
+        } else {
+            showTxResult(false, "Ошибка оплаты", result?.Error || "Недостаточно средств на балансе", "");
+        }
+    } 
+    // Стандартная обработка для крипты и Stars
+    else {
+        setLoading(btn, false);
+        if (result && result.Success) { handleTxFlow(result); }
+        else if (result) { safeAlert(t('loading') + ' ' + result.Error); }
+    }
 }
 
 function handleTxFlow(txData) {
@@ -1045,4 +1066,42 @@ async function init() {
         // Через 300мс (когда закончится анимация затухания CSS) удаляем его из памяти
         setTimeout(() => loader.remove(), 300);
     }
+
+
+    window.showTxLoading = function() {
+    const modal = document.getElementById('txStatusModal');
+    if(!modal) return;
+    document.getElementById('txLoadingState').style.display = 'block';
+    document.getElementById('txResultState').style.display = 'none';
+    modal.style.display = 'flex';
+}
+
+window.showTxResult = function(isSuccess, title, message, detailsHtml) {
+    document.getElementById('txLoadingState').style.display = 'none';
+    
+    const lottiePlayer = document.getElementById('txLottiePlayer');
+    const titleEl = document.getElementById('txResultTitle');
+    const messageEl = document.getElementById('txResultMessage');
+    const detailsEl = document.getElementById('txResultDetails');
+
+    if (isSuccess) {
+        lottiePlayer.load("https://cdn.changes.tg/gifts/models/Victory%20Medal/lottie/Dealmaker.json");
+        titleEl.style.color = 'var(--rent-primary)';
+    } else {
+        lottiePlayer.load("https://cdn.changes.tg/gifts/models/Input%20Key/lottie/End%20Game.json");
+        titleEl.style.color = '#f07070';
+    }
+
+    titleEl.innerText = title;
+    messageEl.innerText = message;
+    
+    if (detailsHtml) {
+        detailsEl.innerHTML = detailsHtml;
+        detailsEl.style.display = 'block';
+    } else {
+        detailsEl.style.display = 'none';
+    }
+
+    document.getElementById('txResultState').style.display = 'block';
+}
 }

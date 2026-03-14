@@ -182,14 +182,19 @@ window.openGwPaymentModal = function() {
     safeConfirm('Списать средства с внутреннего баланса TON и запустить розыгрыш?', async (ok) => {
         if (!ok) return;
 
+        showTxLoading(); // Показываем Lottie-ожидание
+
         const res = await apiCall('/transactions/create/giveaway', { type, amount, winners, minutes });
+        
         if (res && res.Success) {
-            safeAlert('Розыгрыш запущен! Средства заморожены. Ссылка скопирована в буфер.');
+            const detailsHtml = `<div style="margin-bottom:8px">Ссылка скопирована в буфер:</div><div class="cheque-link-input" style="user-select:all; padding:10px; background:var(--bg); border-radius:8px; word-break:break-all;">${res.InviteLink}</div>`;
+            showTxResult(true, "Розыгрыш запущен!", "Средства заморожены на балансе.", detailsHtml);
+            
             navigator.clipboard.writeText(res.InviteLink);
             switchGiveawayTab('my', document.querySelectorAll('#page-giveaways .ptab')[2]);
-            if (typeof fetchServerData === 'function') fetchServerData(); // <--- ИСПРАВЛЕНО
+            if (typeof fetchServerData === 'function') fetchServerData();
         } else {
-            safeAlert(res?.Error || 'Ошибка создания');
+            showTxResult(false, "Ошибка создания", res?.Error || 'Не удалось списать средства.', "");
         }
     });
 }

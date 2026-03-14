@@ -45,11 +45,28 @@
     --ease: 0.18s ease;
 }
 
+/* ===== НОВЫЙ БАЛАНС В МОДАЛКЕ ===== */
+.modal-balance-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface-3);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--r-md);
+    padding: 12px 14px;
+    margin-bottom: 16px;
+}
+.modal-balance-top .mbt-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
 body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; padding-bottom: 110px; overflow-x: hidden; }
 
-header { position: sticky; top: 0; z-index: 50; display: flex; justify-content: space-between; align-items: center; padding: 36px 18px 12px; background: rgba(15, 15, 17, 0.90); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); }
+header { position: sticky; top: 0; z-index: 50; display: flex; justify-content: space-between; align-items: center; padding: 80px 18px 12px; background: rgba(15, 15, 17, 0.90); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); }
 .header-logo { display: flex; align-items: center; gap: 4px; }
 .logo-img { height: 26px; object-fit: contain; }
 .logo-text { font-size: 19px; font-weight: 800; letter-spacing: -0.6px; color: var(--text); }

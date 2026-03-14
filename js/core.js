@@ -120,8 +120,14 @@ function updateHomeBalances() {
     const tonEl = document.getElementById('homeTonBalance');
     const frozenEl = document.getElementById('homeFrozenBalance');
     const frozenCard = document.getElementById('homeFrozenCard');
+    const wBalance = document.getElementById('walletPageBalance');
+    const wRate = document.getElementById('walletPageRate');
 
-    if (tonEl) tonEl.textContent = tonConnect.balance !== null ? parseFloat(tonConnect.balance).toFixed(2) : '0.00';
+    const bal = tonConnect.balance !== null ? parseFloat(tonConnect.balance).toFixed(2) : '0.00';
+    
+    if (tonEl) tonEl.textContent = bal;
+    if (wBalance) wBalance.textContent = `${bal} TON`;
+    if (wRate) wRate.textContent = `$${getTonUsdRate().toFixed(2)}`;
 
     const frozen = tonConnect.frozenBalance !== null ? parseFloat(tonConnect.frozenBalance) : 0;
     if (frozenEl) frozenEl.textContent = frozen.toFixed(2);
@@ -631,7 +637,14 @@ window.openPaymentModal = function (product) {
         state.pay[product] = { method: 'CryptoTransfer', currency: 'TON' };
     }
 
-    const balIndicatorHtml = `<div class="modal-balance-indicator">${t('modal_balance')} <span class="mbi-value">${balNum.toFixed(2)} TON</span></div>`;
+    const balIndicatorHtml = `
+        <div class="modal-balance-top">
+            <div class="mbt-left">
+                <svg viewBox="0 0 56 56" fill="none" width="22" height="22"><path d="M28 4L4 18V38L28 52L52 38V18L28 4Z" fill="#0098EA"/><path d="M28 4L4 18L28 32L52 18L28 4Z" fill="#5BC3F5"/><path d="M28 32V52L52 38V18L28 32Z" fill="#A8DBF7"/><path d="M4 18V38L28 52V32L4 18Z" fill="#A8DBF7"/></svg>
+                <span style="font-size: 13.5px; font-weight: 600; color: var(--text-secondary);">Ваш баланс:</span>
+            </div>
+            <span style="font-size: 16px; font-weight: 800; color: var(--text);">${balNum.toFixed(2)} TON</span>
+        </div>`;
 
     showModal(t('modal_order'), `
         ${balIndicatorHtml}
@@ -690,8 +703,8 @@ window.executePurchase = async function (product) {
         if (result && result.Success) {
             if (result.TargetUsername && result.TargetUsername.startsWith('cheque_')) {
                 const link = `https://t.me/${BOT_USERNAME}?start=chk_${result.TransactionId}`;
-                const details = `<div style="margin-bottom:8px">Чек успешно создан:</div><div class="cheque-link-input" style="user-select:all; padding:10px; background:var(--bg); border-radius:8px; word-break:break-all;">${link}</div>`;
-                showTxResult(true, "Успешно!", "Ссылка на активацию чека:", details);
+                const details = `<div class="cheque-link-input" style="user-select:all; padding:10px; background:var(--bg); border-radius:8px; word-break:break-all;">${link}</div>`;
+                showTxResult(true, "Чек успешно создан!", `Новый чек на ${productName}`, details, () => switchTab('profile'));
             } else {
                 showTxResult(true, "Оплата успешна!", `Вы приобрели ${productName}`, "");
             }
@@ -700,7 +713,7 @@ window.executePurchase = async function (product) {
         } else {
             showTxResult(false, "Ошибка оплаты", result?.Error || "Недостаточно средств на балансе", "");
         }
-    } 
+    }
     // Стандартная обработка для крипты и Stars
     else {
         setLoading(btn, false);
@@ -832,7 +845,7 @@ window.apiTopupWallet = function () {
     let amount = state.useCustomTopup
         ? parseFloat(document.getElementById('topupAmount').value)
         : state.topupAmount;
-    if (!amount || amount < 0.1) return safeAlert(t('alert_min_topup'));
+    if (!amount || amount < 0.5) return safeAlert('Минимальная сумма пополнения: 0.5 TON');
 
     state.pay.topup = { method: 'CryptoTransfer', currency: 'TON' };
 
@@ -879,7 +892,7 @@ async function apiWithdrawWallet() {
     const address = document.getElementById('withdrawAddress').value.trim();
     if (!amountStr || !address) return safeAlert(t('alert_fill_fields'));
     const amount = parseFloat(amountStr);
-    if (isNaN(amount) || amount < 0.1) return safeAlert(t('alert_min_withdraw'));
+    if (isNaN(amount) || amount < 0.5) return safeAlert('Минимальная сумма вывода: 0.5 TON');
     const result = await apiCall('/transactions/create/withdrawal', { telegramId, currency: 'TON', amount, targetAddress: address });
     if (result && result.Success) { safeAlert(t('alert_withdraw_ok')); fetchServerData(); }
     else if (result) safeAlert('Ошибка: ' + result.Error);
@@ -939,6 +952,24 @@ async function fetchServerData() {
 async function init() {
     const testUsername = 'alwys_online';
     const reqUsername = user.username || testUsername;
+
+    if (window.selfStatus) {
+        ['premium', 'stars'].forEach(prod => {
+            const isAvail = prod === 'premium' ? window.selfStatus.PremiumAvailable : window.selfStatus.StarsAvailable;
+            if (!isAvail) {
+                const btnSelf = document.querySelector(`#${prod}RecipientTabs .rtab[data-mode="self"]`);
+                const btnOther = document.querySelector(`#${prod}RecipientTabs .rtab[data-mode="other"]`);
+                if (btnSelf && btnOther) {
+                    btnSelf.disabled = true;
+                    btnSelf.style.opacity = '0.4';
+                    // Если сейчас выбрано "Себе", автоматически переключаем на "Другому"
+                    if (state[`${prod}RecipientMode`] === 'self') {
+                        setRecipientMode(prod, 'other', btnOther);
+                    }
+                }
+            }
+        });
+    }
 
     // 1. Получаем персонализированные цены и статус аккаунта с Fragment
     try {
@@ -1067,6 +1098,7 @@ async function init() {
         setTimeout(() => loader.remove(), 300);
     }
 
+    let _txModalCloseCallback = null;
 
     window.showTxLoading = function() {
     const modal = document.getElementById('txStatusModal');
@@ -1076,13 +1108,14 @@ async function init() {
     modal.style.display = 'flex';
 }
 
-window.showTxResult = function(isSuccess, title, message, detailsHtml) {
+window.showTxResult = function(isSuccess, title, message, detailsHtml, onCloseCallback = null) {
     document.getElementById('txLoadingState').style.display = 'none';
     
     const lottiePlayer = document.getElementById('txLottiePlayer');
     const titleEl = document.getElementById('txResultTitle');
     const messageEl = document.getElementById('txResultMessage');
     const detailsEl = document.getElementById('txResultDetails');
+    const closeBtn = document.getElementById('txStatusCloseBtn'); // Берем кнопку по новому ID
 
     if (isSuccess) {
         lottiePlayer.load("https://cdn.changes.tg/gifts/models/Victory%20Medal/lottie/Dealmaker.json");
@@ -1101,6 +1134,13 @@ window.showTxResult = function(isSuccess, title, message, detailsHtml) {
     } else {
         detailsEl.style.display = 'none';
     }
+
+    _txModalCloseCallback = onCloseCallback;
+    
+    closeBtn.onclick = () => {
+        document.getElementById('txStatusModal').style.display = 'none';
+        if (_txModalCloseCallback) _txModalCloseCallback(); // Если есть редирект - выполняем
+    };
 
     document.getElementById('txResultState').style.display = 'block';
 }

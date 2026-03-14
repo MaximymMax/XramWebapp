@@ -28,8 +28,8 @@ window.selectGwPrize = function(val, elem) {
     document.getElementById('gwPrizeType').value = val;
     document.getElementById('gwPrizeLabel').textContent = elem.textContent;
     
-    // Подсветка выбранного
-    elem.parentNode.querySelectorAll('.sort-dd-item').forEach(el => el.classList.remove('selected'));
+    // Подсветка выбранного (ИСПРАВЛЕНО на closest)
+    elem.closest('.sort-dd-menu').querySelectorAll('.sort-dd-item').forEach(el => el.classList.remove('selected'));
     elem.classList.add('selected');
 
     document.getElementById('gwInputStarsWrap').style.display = val === 'TelegramStars' ? 'block' : 'none';
@@ -43,7 +43,7 @@ window.selectGwPremium = function(months, elem) {
     document.getElementById('gwPrizePremium').value = months;
     document.getElementById('gwPremLabel').textContent = elem.textContent;
     
-    elem.parentNode.querySelectorAll('.sort-dd-item').forEach(el => el.classList.remove('selected'));
+    elem.closest('.sort-dd-menu').querySelectorAll('.sort-dd-item').forEach(el => el.classList.remove('selected'));
     elem.classList.add('selected');
     updateGwCreatePrice();
 }
@@ -99,7 +99,7 @@ setTimeout(initGwDateSelectors, 300);
 window.selectGwDate = function(val, label, elem) {
     document.getElementById('gwSelectedDate').value = val;
     document.getElementById('gwDateLabel').textContent = label;
-    elem.parentNode.querySelectorAll('.sort-dd-item').forEach(el => el.classList.remove('selected'));
+    elem.closest('.sort-dd-menu').querySelectorAll('.sort-dd-item').forEach(el => el.classList.remove('selected'));
     elem.classList.add('selected');
     updateGwCreatePrice();
 }
@@ -107,7 +107,7 @@ window.selectGwDate = function(val, label, elem) {
 window.selectGwTime = function(val, elem) {
     document.getElementById('gwSelectedTime').value = val;
     document.getElementById('gwTimeLabel').textContent = val;
-    elem.parentNode.querySelectorAll('.sort-dd-item').forEach(el => el.classList.remove('selected'));
+    elem.closest('.sort-dd-menu').querySelectorAll('.sort-dd-item').forEach(el => el.classList.remove('selected'));
     elem.classList.add('selected');
     updateGwCreatePrice();
 }
@@ -187,11 +187,12 @@ window.openGwPaymentModal = function() {
         const res = await apiCall('/transactions/create/giveaway', { type, amount, winners, minutes });
         
         if (res && res.Success) {
-            const detailsHtml = `<div style="margin-bottom:8px">Ссылка скопирована в буфер:</div><div class="cheque-link-input" style="user-select:all; padding:10px; background:var(--bg); border-radius:8px; word-break:break-all;">${res.InviteLink}</div>`;
-            showTxResult(true, "Розыгрыш запущен!", "Средства заморожены на балансе.", detailsHtml);
+            const detailsHtml = `<div class="cheque-link-input" style="user-select:all; padding:10px; background:var(--bg); border-radius:8px; word-break:break-all;">${res.InviteLink}</div>`;
+            showTxResult(true, "Розыгрыш запущен!", "Средства заморожены. Ссылка для участия скопирована:", detailsHtml, () => {
+                switchGiveawayTab('my', document.querySelectorAll('#page-giveaways .ptab')[2]);
+            });
             
             navigator.clipboard.writeText(res.InviteLink);
-            switchGiveawayTab('my', document.querySelectorAll('#page-giveaways .ptab')[2]);
             if (typeof fetchServerData === 'function') fetchServerData();
         } else {
             showTxResult(false, "Ошибка создания", res?.Error || 'Не удалось списать средства.', "");
@@ -209,7 +210,7 @@ window.cancelGiveaway = async function(gwId) {
         if (res && res.Success) {
             safeAlert('Розыгрыш отменен. Средства разморожены.');
             loadGiveawaysList('my'); // Обновляем список
-            if (typeof fetchServerData === 'function') fetchServerData(); // <--- ИСПРАВЛЕНО
+            if (typeof fetchServerData === 'function') fetchServerData(); 
         } else {
             safeAlert(res?.Error || 'Не удалось отменить розыгрыш');
         }
@@ -251,7 +252,6 @@ async function loadGiveawaysList(tab, showLoading = true) {
 }
 
 // ── Полноэкранная Модалка с открытой Капчей ─────────────────
-// ── Полноэкранная Модалка с открытой Капчей и Видом для Автора ──
 let currentGiveawayId = null;
 
 window.openGiveawayJoin = async function(gwId) {

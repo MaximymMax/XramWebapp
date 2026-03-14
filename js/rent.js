@@ -326,7 +326,14 @@ window.openRentModal = function(address) {
         state.pay.rent = { method: 'TelegramStars', currency: 'Stars' };
     }
 
-    const balIndicatorHtml = `<div style="position:absolute; top: 12px; left: 16px; font-size: 11px; font-weight: 700; color: var(--wallet-primary);">Баланс: <br><span style="font-size:13px">${balNum.toFixed(2)} TON</span></div>`;
+    const balIndicatorHtml = `
+    <div class="modal-balance-top" style="margin-top:10px;">
+        <div class="mbt-left">
+            <svg viewBox="0 0 56 56" fill="none" width="22" height="22"><path d="M28 4L4 18V38L28 52L52 38V18L28 4Z" fill="#0098EA"/><path d="M28 4L4 18L28 32L52 18L28 4Z" fill="#5BC3F5"/><path d="M28 32V52L52 38V18L28 32Z" fill="#A8DBF7"/><path d="M4 18V38L28 52V32L4 18Z" fill="#A8DBF7"/></svg>
+            <span style="font-size: 13.5px; font-weight: 600; color: var(--text-secondary);">Ваш баланс:</span>
+        </div>
+        <span style="font-size: 16px; font-weight: 800; color: var(--text);">${balNum.toFixed(2)} TON</span>
+    </div>`;
 
     showModal('Аренда NFT', `
         ${balIndicatorHtml}
@@ -406,11 +413,17 @@ async function apiRentGift() {
     const btn = document.getElementById('modalRentBtn');
 
     if (pm === 'InternalWallet') {
-        closeModal();
-        showTxLoading();
-    } else {
+        if (result && result.Success) {
+            showTxResult(true, "Аренда оформлена!", `Вы успешно арендовали NFT на ${days} дн.`, `<div style="text-align:center">Нажмите «Закрыть», чтобы перейти к установке NFT.</div>`, () => {
+                switchTab('profile');
+                setTimeout(() => switchProfileTab('rentals', document.querySelectorAll('#page-profile .ptab')[2]), 50);
+            });
+            fetchServerData();
+            loadProfile();
+        } else {
         setLoading(btn, true);
     }
+}
 
     const result = await apiCall('/transactions/create/rent', {
         telegramId, currency: pc, method: pm,

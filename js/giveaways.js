@@ -227,18 +227,27 @@ async function loadGiveawaysList(tab, showLoading = true) {
     }
 
     const res = await apiCall(`/webapp/giveaways/list?type=${tab}`);
+
     if (res && res.Success) {
-        if (!res.Items.length) return container.innerHTML = `<div class="profile-empty"><p>Пусто</p></div>`;
+        // БЕРЕМ ПРАВИЛЬНЫЙ МАССИВ ИЗ JSON ОТВЕТА
+        const items = tab === 'my' ? res.My : res.Participating;
+
+        if (!items || !items.length) {
+            return container.innerHTML = `<div class="profile-empty"><p>Пусто</p></div>`;
+        }
         
-        container.innerHTML = res.Items.map(g => {
+        container.innerHTML = items.map(g => {
             // ФИКС ЧАСОВОГО ПОЯСА
             let endsAtStr = g.EndsAt;
             if (endsAtStr && !endsAtStr.endsWith('Z')) endsAtStr += 'Z';
             
+            // Если сумма не указана (например для TON), чтобы не писало "undefined"
+            const amountText = g.Amount ? g.Amount : '';
+            
             return `
             <div class="history-item" style="flex-direction:column; align-items:stretch; cursor:pointer;" onclick="openGiveawayJoin('${g.Id}')">
                 <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                    <span style="font-weight:700">${g.PrizeType} ${g.PrizeType === 'Premium' ? g.Amount + ' мес' : ''} x${g.WinnersCount}</span>
+                    <span style="font-weight:700">${g.PrizeType} ${g.PrizeType === 'Premium' ? amountText + ' мес' : ''} x${g.WinnersCount}</span>
                     <div class="countdown-timer" data-ends="${endsAtStr}" data-timeout-text="Завершено" style="font-size:12px; color:var(--rent-primary); font-weight:700;">Считаем...</div>
                 </div>
                 <div style="font-size:12px; color:var(--text-muted)">Участников: ${g.ParticipantsCount}</div>
@@ -248,6 +257,8 @@ async function loadGiveawaysList(tab, showLoading = true) {
                 </div>
             </div>`
         }).join('');
+    } else {
+        container.innerHTML = `<div class="profile-empty"><p>Ошибка загрузки</p></div>`;
     }
 }
 

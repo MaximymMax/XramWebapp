@@ -8,13 +8,16 @@ async function loadProfile() {
 
     const data = await apiCall('/webapp/user/history');
     if (data && data.Success) {
-        renderServerHistory(data.History);
-        renderServerCheques(data.History.filter(h => h.IsCheque && !h.IsChequeActivated && h.Status === 'Completed'));
+        // ИСПРАВЛЕНИЕ: Бэкенд возвращает Transactions, а не History!
+        const txs = data.Transactions || [];
+        
+        if (typeof renderServerHistory === 'function') renderServerHistory(txs);
+        if (typeof renderServerCheques === 'function') renderServerCheques(txs.filter(h => h.IsCheque && !h.IsChequeActivated && h.Status === 'Completed'));
     }
 
     const rentData = await apiCall('/webapp/rent/my');
     if (rentData && rentData.Success) {
-        renderServerRentals(rentData.Rentals);
+        if (typeof renderServerRentals === 'function') renderServerRentals(rentData.Rentals || []);
     }
 }
 

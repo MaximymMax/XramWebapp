@@ -124,8 +124,13 @@ function renderServerRentals(rentals) {
     list.innerHTML = rentals.map(r => {
         let img = r.ImageUrl;
         
-        // ИСПРАВЛЕННАЯ ЛОГИКА ФОРМИРОВАНИЯ ССЫЛОК НА КАРТИНКИ
-        if (!img || img === 'null' || img === 'undefined') {
+        // 1. ИСПРАВЛЕНИЕ: Раскодируем URL, если он пришел закодированным (%3A%2F%2F -> ://)
+        if (img && img !== 'null' && img !== 'undefined') {
+            try { img = decodeURIComponent(img); } catch(e) {}
+        }
+        
+        // 2. Если картинки всё равно нет или она битая, собираем её правильно (например, plushpepe-1821)
+        if (!img || img === 'null' || img === 'undefined' || !img.startsWith('http')) {
             let rawName = r.Name || '';
             if (r.Category === 'usernames') {
                 let safeName = rawName.toLowerCase().replace('.t.me', '').replace('@', '').trim();
@@ -134,8 +139,11 @@ function renderServerRentals(rentals) {
                 let safeName = rawName.replace('+888', '').replace(/[\s-]/g, '').trim();
                 img = `https://nft.fragment.com/number/${safeName}.webp`;
             } else {
-                // Для подарков заменяем пробелы на дефисы, убираем спецсимволы (напр. "Santa Hat" -> "santa-hat")
-                let safeName = rawName.toLowerCase().replace(/\s+/g, '-').replace(/['’#]/g, '');
+                // Для подарков: "Plush Pepe #1821" -> "plushpepe-1821"
+                let safeName = rawName.toLowerCase()
+                    .replace(/\s*#\s*/g, '-') // заменяем решетку на дефис
+                    .replace(/\s+/g, '')      // убираем все остальные пробелы
+                    .replace(/['’]/g, '');    // убираем апострофы (например, Durov's)
                 img = `https://nft.fragment.com/gift/${safeName}.medium.jpg`;
             }
         }

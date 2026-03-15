@@ -405,26 +405,22 @@ window.updateRentModalPrice = function() {
     }
 }
 
-async function apiRentGift() {
+window.apiRentGift = async function() {
     const days = state.rentDays;
     if (days < state.rentMinDays || days > state.rentMaxDays) return safeAlert(`Доступно от ${state.rentMinDays} до ${state.rentMaxDays} дней`);
     const pm = state.pay.rent.method;
     const pc = state.pay.rent.currency;
     const btn = document.getElementById('modalRentBtn');
 
+    // Если внутренний кошелек, показываем Lottie-загрузку сразу
     if (pm === 'InternalWallet') {
-        if (result && result.Success) {
-            showTxResult(true, "Аренда оформлена!", `Вы успешно арендовали NFT на ${days} дн.`, `<div style="text-align:center">Нажмите «Закрыть», чтобы перейти к установке NFT.</div>`, () => {
-                switchTab('profile');
-                setTimeout(() => switchProfileTab('rentals', document.querySelectorAll('#page-profile .ptab')[2]), 50);
-            });
-            fetchServerData();
-            loadProfile();
-        } else {
+        closeModal();
+        showTxLoading();
+    } else {
         setLoading(btn, true);
     }
-}
 
+    // Делаем запрос к серверу
     const result = await apiCall('/transactions/create/rent', {
         telegramId, currency: pc, method: pm,
         nftAddress: state.rentNftAddress,
@@ -435,9 +431,13 @@ async function apiRentGift() {
         imageUrl: state.rentImageUrl
     });
 
+    // Обрабатываем ответ
     if (pm === 'InternalWallet') {
         if (result && result.Success) {
-            showTxResult(true, "Успешно!", `Аренда оформлена на ${days} дн.`, `<div style="text-align:center">Перейдите в профиль для подключения.</div>`);
+            showTxResult(true, "Аренда оформлена!", `Вы успешно арендовали NFT на ${days} дн.`, `<div style="text-align:center">Нажмите «Закрыть», чтобы перейти к установке NFT.</div>`, () => {
+                switchTab('profile');
+                setTimeout(() => switchProfileTab('rentals', document.querySelectorAll('#page-profile .ptab')[2]), 50);
+            });
             fetchServerData();
             loadProfile();
         } else {
@@ -445,7 +445,10 @@ async function apiRentGift() {
         }
     } else {
         setLoading(btn, false);
-        if (result && result.Success) { closeModal(); handleTxFlow(result); }
+        if (result && result.Success) { 
+            closeModal(); 
+            handleTxFlow(result); 
+        }
         else if (result) { safeAlert('Ошибка: ' + result.Error); }
     }
 }

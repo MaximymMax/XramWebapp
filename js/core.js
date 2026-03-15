@@ -722,61 +722,86 @@ window.executePurchase = async function (product) {
     }
 }
 
-function handleTxFlow(txData) {
+window.handleTxFlow = function(txData) {
     closeModal();
 
     if (txData.PaymentMethod === 'InternalWallet') {
         if (txData.TargetUsername && txData.TargetUsername.startsWith('cheque_')) {
             const link = `https://t.me/${BOT_USERNAME}?start=chk_${txData.TransactionId}`;
-            showModal(t('cheque_created'), `
-                <p style="color:var(--text-secondary);font-size:13px;margin-bottom:14px">${t('cheque_desc')}</p>
+            showModal(t('cheque_created') || 'Чек создан', `
+                <p style="color:var(--text-secondary);font-size:13px;margin-bottom:14px">${t('cheque_desc') || 'Отправьте эту ссылку получателю.'}</p>
                 <div class="cheque-link-wrap" style="margin-bottom: 16px;">
                     <div class="cheque-link-input">${link}</div>
-                    <button class="cheque-copy-btn" onclick="copyChequeLink('${link}')">${t('cheque_copy')}</button>
+                    <button class="cheque-copy-btn" onclick="copyChequeLink('${link}')">${t('cheque_copy') || 'Копировать'}</button>
                 </div>
-                <button class="action-btn outline-action-btn" onclick="closeModal(); fetchServerData(); loadProfile(); switchTab('profile');">${t('cheque_go_to')}</button>
+                <button class="action-btn outline-action-btn" onclick="closeModal(); fetchServerData(); loadProfile(); switchTab('profile');">${t('cheque_go_to') || 'В профиль'}</button>
             `);
         } else {
-            safeAlert(t('alert_order_success'));
+            safeAlert(t('alert_order_success') || 'Успешно оплачено!');
             fetchServerData();
             loadProfile();
         }
-    } else if (txData.PaymentMethod === 'TelegramStars') {
+    } 
+    // ОПЛАТА ЗВЕЗДАМИ
+    else if (txData.PaymentMethod === 'TelegramStars') {
         if (window.sysConfig && window.sysConfig.isTestMode) {
-            safeAlert(t('stars_test_ok'));
+            safeAlert(t('stars_test_ok') || 'Тестовая оплата прошла успешно!');
             fetchServerData();
             if (typeof loadProfile === 'function') loadProfile();
         } else {
-            showModal(t('stars_invoice_title'), `
-                <div style="text-align:center; padding: 10px 0;">
-                    <div style="font-size:44px; margin-bottom:12px;">⭐️</div>
-                    <h3 style="margin-bottom:10px; color:var(--text)">${t('stars_invoice_sent')}</h3>
-                    <p style="color:var(--text-secondary);font-size:14px; margin-bottom:20px;">${t('stars_invoice_desc')}</p>
-                    <button class="action-btn stars-action-btn" onclick="tg.close()" style="width:100%;">${t('stars_close_webapp')}</button>
-                </div>
-            `);
-        }
-    } else if (txData.PaymentMethod === 'CryptoTransfer') {
-        showModal(t('crypto_title'), `
-            <p style="color:var(--text-secondary);font-size:13px;margin-bottom:14px">${t('crypto_desc')}</p>
-            <div class="modal-info-row"><span class="modal-info-label">${t('crypto_amount')}</span><span class="modal-info-value" style="color:var(--rent-primary)">${txData.Amount} ${txData.Currency}</span></div>
+            // Ищем ссылку на счет от сервера (обычно это InvoiceLink или PayUrl)
+            const invoiceUrl = txData.InvoiceLink || txData.PayUrl || txData.Url || txData.InvoiceUrl;
             
-            <label class="form-label" style="margin-top:12px">${t('crypto_wallet_label')}</label>
+            if (invoiceUrl && tg.openInvoice) {
+                // Открываем платежку прямо внутри WebApp!
+                tg.openInvoice(invoiceUrl, function(status) {
+                    if (status === 'paid') {
+                        showTxResult(true, "Оплата успешна!", "Звезды успешно списаны.", "", () => {
+                            fetchServerData();
+                            if (typeof loadProfile === 'function') loadProfile();
+                            switchTab('profile'); // Перекидываем в профиль после успеха
+                        });
+                    } else if (status === 'failed') {
+                        showTxResult(false, "Ошибка оплаты", "Оплата звездами не удалась.", "");
+                    } else if (status === 'cancelled') {
+                        // Пользователь просто закрыл окно оплаты, ничего не делаем
+                    }
+                });
+            } else {
+                // Fallback: Если ссылки нет (старый бекенд), просим оплатить в боте
+                showModal(t('stars_invoice_title') || 'Счет выставлен', `
+                    <div style="text-align:center; padding: 10px 0;">
+                        <div style="font-size:44px; margin-bottom:12px;">⭐️</div>
+                        <h3 style="margin-bottom:10px; color:var(--text)">${t('stars_invoice_sent') || 'Счет отправлен в бота'}</h3>
+                        <p style="color:var(--text-secondary);font-size:14px; margin-bottom:20px;">${t('stars_invoice_desc') || 'Пожалуйста, закройте окно и оплатите счет в диалоге с ботом.'}</p>
+                        <button class="action-btn stars-action-btn" onclick="tg.close()" style="width:100%;">${t('stars_close_webapp') || 'Закрыть и оплатить'}</button>
+                    </div>
+                `);
+            }
+        }
+    } 
+    // ОПЛАТА КРИПТОЙ (Перевод)
+    else if (txData.PaymentMethod === 'CryptoTransfer') {
+        showModal(t('crypto_title') || 'Перевод', `
+            <p style="color:var(--text-secondary);font-size:13px;margin-bottom:14px">${t('crypto_desc') || 'Переведите по реквизитам ниже:'}</p>
+            <div class="modal-info-row"><span class="modal-info-label">${t('crypto_amount') || 'Сумма'}</span><span class="modal-info-value" style="color:var(--rent-primary)">${txData.Amount} ${txData.Currency}</span></div>
+            
+            <label class="form-label" style="margin-top:12px">${t('crypto_wallet_label') || 'Кошелек'}</label>
             <div class="cheque-link-wrap" style="margin-bottom: 8px;">
                 <div class="cheque-link-input">${window.sysConfig.receivingWallet}</div>
-                <button class="cheque-copy-btn" onclick="navigator.clipboard.writeText('${window.sysConfig.receivingWallet}'); safeAlert('${t('crypto_wallet_copied')}');">${t('crypto_copy_wallet')}</button>
+                <button class="cheque-copy-btn" onclick="navigator.clipboard.writeText('${window.sysConfig.receivingWallet}'); safeAlert('${t('crypto_wallet_copied') || 'Скопировано'}');">${t('crypto_copy_wallet') || 'Копировать'}</button>
             </div>
             
-            <label class="form-label" style="margin-top:12px">${t('crypto_code_label')}</label>
+            <label class="form-label" style="margin-top:12px">${t('crypto_code_label') || 'Комментарий (ОБЯЗАТЕЛЬНО)'}</label>
             <div class="cheque-link-wrap" style="margin-bottom: 16px;">
                 <div class="cheque-link-input">${txData.PaymentCode}</div>
-                <button class="cheque-copy-btn" onclick="navigator.clipboard.writeText('${txData.PaymentCode}'); safeAlert('${t('crypto_code_copied')}');">${t('crypto_copy_code')}</button>
+                <button class="cheque-copy-btn" onclick="navigator.clipboard.writeText('${txData.PaymentCode}'); safeAlert('${t('crypto_code_copied') || 'Скопировано'}');">${t('crypto_copy_code') || 'Копировать'}</button>
             </div>
 
-            <div style="font-size:11.5px; color:#ff6b6b; text-align:center; padding: 10px; background: rgba(255,107,107,0.1); border-radius: 8px; border: 1px solid rgba(255,107,107,0.2); margin-bottom:14px;">${t('crypto_warning')}</div>
+            <div style="font-size:11.5px; color:#ff6b6b; text-align:center; padding: 10px; background: rgba(255,107,107,0.1); border-radius: 8px; border: 1px solid rgba(255,107,107,0.2); margin-bottom:14px;">${t('crypto_warning') || 'Если вы не укажете комментарий, мы не сможем найти платеж!'}</div>
         `);
     } else {
-        safeAlert(`Откройте бота, чтобы завершить оплату способом: ${txData.PaymentMethod}`);
+        safeAlert(`Откройте бота, чтобы завершить оплату: ${txData.PaymentMethod}`);
     }
 }
 

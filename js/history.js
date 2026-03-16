@@ -1,43 +1,49 @@
-// ============================================================
-//  history.js — История
-// ============================================================
+window.renderServerHistory = function(history) {
+    window.currentHistory = history;
+    const list = document.getElementById('historyList');
+    if (!list) return;
+    
+    if (!history || history.length === 0) { 
+        list.innerHTML = `<div class="profile-empty"><p>История пуста</p></div>`; 
+        return; 
+    }
 
-window.showSupportModal = function() {
-    showModal('Поддержка', `
-        <div style="text-align:center; padding: 10px 0;">
-            <div style="font-size:36px; margin-bottom:12px;">🎧</div>
-            <h3 style="margin-bottom:10px; color:var(--text)">Проблема с оплатой?</h3>
-            <p style="color:var(--text-secondary);font-size:14px; margin-bottom:20px;">
-                Если вы перевели средства по указанным реквизитам, но услуги или товары не были зачислены — пожалуйста, напишите нашему администратору. Укажите ID заявки для ускорения решения вашего вопроса.
-            </p>
-            <button class="action-btn wallet-action-btn" onclick="tg.openTelegramLink ? tg.openTelegramLink('https://t.me/putyat1n') : window.open('https://t.me/putyat1n')" style="width:100%;">Написать администратору</button>
-        </div>
-    `);
-}
+    const statusLabel = { Pending: 'Ожидание', Completed: 'Выполнено', Failed: 'Ошибка', Cancelled: 'Отменено', Processing: 'В обработке' };
+    const statusClass = { Pending: 'status-pending', Completed: 'status-completed', Failed: 'status-failed', Cancelled: 'status-cancelled', Processing: 'status-pending' };
 
-window.showTxDetails = function(txId) {
-    const tx = window.currentHistory.find(h => h.Id === txId);
+    list.innerHTML = history.map(h => {
+        // Безопасный парсинг даты
+        const serverDateStr = h.CreatedAt ? (h.CreatedAt.endsWith('Z') ? h.CreatedAt : h.CreatedAt + 'Z') : new Date().toISOString();
+        const createdDate = new Date(serverDateStr);
+        const date = createdDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+
+        let statusHtml = `<span class="status-badge ${statusClass[h.Status] || 'status-pending'}">${statusLabel[h.Status] || h.Status}</span>`;
+
+        return `
+        <div class="tx-item" onclick="showTxDetails('${h.Id}')" style="cursor:pointer">
+            <div class="tx-icon" style="background: rgba(255,255,255,0.05);">💎</div>
+            <div class="tx-info">
+                <div class="tx-title">${h.Product === 'None' ? h.Type : h.Product}</div>
+                <div class="tx-date">${date}</div>
+            </div>
+            <div class="tx-amount">
+                <span style="font-weight:700; font-size: 14px;">${h.Amount} ${h.Currency}</span>
+                ${statusHtml}
+            </div>
+        </div>`;
+    }).join('');
+};
+
+window.showTxDetails = function(id) {
+    if (!window.currentHistory) return;
+    const tx = window.currentHistory.find(x => x.Id === id);
     if (!tx) return;
-    const date = new Date(tx.CreatedAt).toLocaleString('ru-RU');
-    const statusLabel = { Pending: 'Ожидание оплаты', Completed: 'Выполнено', Failed: 'Ошибка выдачи', Cancelled: 'Отменено', Processing: 'В обработке' };
-
-    const targetHtml = tx.TargetAddress ? `<div class="modal-info-row"><span class="modal-info-label">Получатель</span><span class="modal-info-value">${tx.TargetAddress}</span></div>` : '';
-    const detailsHtml = tx.ProductDetails ? `<div class="modal-info-row"><span class="modal-info-label">Инфо</span><span class="modal-info-value" style="font-size:12px;text-align:right;max-width:60%">${tx.ProductDetails}</span></div>` : '';
-    const activatorHtml = (tx.IsCheque && tx.IsChequeActivated && tx.ActivatorTelegramId)
-        ? `<div class="modal-info-row"><span class="modal-info-label">Активировал (ID)</span><span class="modal-info-value">${tx.ActivatorTelegramId}</span></div>` : '';
-
-    const supportHtml = tx.Status === 'Pending' ? `<button class="action-btn outline-action-btn" style="width:100%; margin-top: 16px;" onclick="showSupportModal()">Связаться с поддержкой</button>` : '';
-
-    showModal('Детали операции', `
-        <div class="modal-info-row"><span class="modal-info-label">ID Заявки</span><span class="modal-info-value">${tx.PaymentCode}</span></div>
-        <div class="modal-info-row"><span class="modal-info-label">Дата</span><span class="modal-info-value">${date}</span></div>
-        <div class="modal-info-row"><span class="modal-info-label">Сумма</span><span class="modal-info-value" style="color:var(--rent-primary)">${tx.Amount} ${tx.Currency}</span></div>
-        <div class="modal-info-row"><span class="modal-info-label">Тип товара</span><span class="modal-info-value">${tx.Product === 'None' ? tx.Type : tx.Product}</span></div>
-        <div class="modal-info-row"><span class="modal-info-label">Способ оплаты</span><span class="modal-info-value">${tx.PaymentMethod}</span></div>
-        <div class="modal-info-row"><span class="modal-info-label">Статус</span><span class="modal-info-value">${statusLabel[tx.Status] || tx.Status}</span></div>
-        ${targetHtml}${activatorHtml}${detailsHtml}
-        ${supportHtml}
-        <div style="margin-top:16px; font-size:11px; color:var(--text-muted); text-align:center;">Уникальный Hash: ${tx.Id}</div>
-    `);
-}
-
+    
+    const title = `Детали: ${tx.Type}`;
+    const text = `Сумма: ${tx.Amount} ${tx.Currency}\nСтатус: ${tx.Status}\nID транзакции: ${tx.Id}`;
+    
+    // Выводим детали транзакции в нашу красивую модалку
+    if (window.showSuccessModal) {
+        window.showSuccessModal(title, text, 'Закрыть', tx.Status === 'Failed' || tx.Status === 'Cancelled');
+    }
+};

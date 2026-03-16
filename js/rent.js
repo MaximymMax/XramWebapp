@@ -468,13 +468,14 @@ window.openTonConnectModal = function(nftAddress) {
 
 window.submitTonConnectUri = async function(nftAddress) {
     const uri = document.getElementById('tcUriInput').value.trim();
-    if (!uri.startsWith('tc://')) return safeAlert('Ссылка должна начинаться с tc://');
+    if (!uri.startsWith('tc://')) {
+        return showSuccessModal('Ошибка', 'Ссылка должна начинаться с tc://', 'Понятно', true);
+    }
 
     const btn = document.querySelector('.rent-action-btn');
-    setLoading(btn, true);
+    if (typeof setLoading === 'function') setLoading(btn, true);
 
     try {
-        // Отправляем POST-запрос, чтобы длинная ссылка не обрезалась сервером
         const response = await fetch(`${API_BASE}/webapp/rent/connect`, {
             method: 'POST',
             headers: { 
@@ -483,26 +484,25 @@ window.submitTonConnectUri = async function(nftAddress) {
             },
             body: JSON.stringify({ 
                 nftAddress: nftAddress, 
-                uri: uri // Отправляем 'uri', как того ждет твой C# контроллер
+                uri: uri 
             })
         });
         
         const res = await response.json();
-        setLoading(btn, false);
+        if (typeof setLoading === 'function') setLoading(btn, false);
 
         if (res && res.Success) {
-            safeAlert('✅ Кошелек успешно подключен! NFT появится в профиле.');
-            closeModal();
+            closeModal(); // Закрываем окно ввода ссылки
+            showSuccessModal('Успешно!', 'Кошелек подключен. NFT скоро обновит статус в профиле.', 'Отлично');
+            if (typeof loadProfile === 'function') loadProfile(); // Обновляем данные профиля
         } else {
-            // Обрезаем длинную ошибку, чтобы не крашнулся Telegram WebApp
             let errorMsg = res?.Error || JSON.stringify(res);
-            if (errorMsg.length > 100) {
-                errorMsg = 'Неверный формат ссылки или ошибка сервера.';
-            }
-            safeAlert('❌ Ошибка: ' + errorMsg);
+            // Делаем вывод системных ошибок более понятным
+            if (errorMsg.includes('forbidden')) errorMsg = "Доступ запрещен. Убедитесь, что арендовали этот NFT.";
+            showSuccessModal('Ошибка', errorMsg, 'Понятно', true);
         }
     } catch (e) {
-        setLoading(btn, false);
-        safeAlert('❌ Ошибка сети при подключении');
+        if (typeof setLoading === 'function') setLoading(btn, false);
+        showSuccessModal('Ошибка', 'Не удалось связаться с сервером.', 'Понятно', true);
     }
 }

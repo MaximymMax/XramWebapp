@@ -8,8 +8,8 @@ async function loadProfile() {
 
     const data = await apiCall('/webapp/user/history');
     if (data && data.Success) {
-        // ИСПРАВЛЕНИЕ: Бэкенд возвращает Transactions, а не History!
-        const txs = data.Transactions || [];
+        // ФИКС: Сервер отдает ключ History, а не Transactions!
+        const txs = data.History || [];
         
         if (typeof renderServerHistory === 'function') renderServerHistory(txs);
         if (typeof renderServerCheques === 'function') renderServerCheques(txs.filter(h => h.IsCheque && !h.IsChequeActivated && h.Status === 'Completed'));
@@ -72,7 +72,7 @@ function renderServerRentals(rentals) {
                 let safeName = rawName.replace('+888', '').replace(/[\s-]/g, '').trim();
                 img = `https://nft.fragment.com/number/${safeName}.webp`;
             } else {
-                let safeName = rawName.replace(/[\s\-']/g, '');
+                let safeName = rawName.replace(/[\s\-']/g, ''); // Удаляем только пробелы, дефисы и апострофы
                 img = `https://nft.fragment.com/gift/${safeName}.medium.jpg`;
             }
         }
@@ -84,20 +84,31 @@ function renderServerRentals(rentals) {
         const exp = new Date(endsAtStr);
         const isExpired = exp < new Date();
         const expStr = exp.toLocaleString('ru-RU', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
-        
-        let statusClass = isExpired ? 'status-failed' : r.IsConnected ? 'status-completed' : 'status-pending';
-        let statusText = isExpired ? 'Истек' : r.IsConnected ? 'Установлен' : 'Ожидает';
 
+        // Выводим карточку без статуса
         return `
-        <div class="history-item" style="opacity: ${isExpired ? 0.6 : 1}; cursor:pointer;" onclick="openRentalModal('${r.NftAddress}', '${name}', '${img}', '${expStr}', ${isExpired}, '${statusText}')">
+        <div class="history-item" style="opacity: ${isExpired ? 0.6 : 1}; cursor:pointer;" onclick="openRentalModal('${r.NftAddress}', '${name}', '${img}', '${expStr}', ${isExpired})">
             <img src="${img}" style="width:40px;height:40px;border-radius:10px;object-fit:cover;background:#2c2c2e; border:1px solid rgba(255,255,255,0.05);" onerror="this.src='https://nft.fragment.com/number/8888888.webp'">
             <div class="history-item-left" style="flex:1; margin-left:12px;">
                 <div class="history-item-title">${name}</div>
                 <div class="history-item-meta">До: ${expStr}</div>
             </div>
-            <div><span class="history-item-status ${statusClass}">${statusText}</span></div>
         </div>`;
     }).join('');
+}
+
+// Модальное окно без лишних данных
+window.openRentalModal = function(address, name, img, expStr, isExpired) {
+    showModal('Аренда NFT', `
+        <div style="display:flex; flex-direction:column; align-items:center; margin-bottom:16px;">
+            <img src="${img}" style="width:100px; height:100px; border-radius:16px; object-fit:cover; margin-bottom:12px; background:#2c2c2e; border: 1px solid rgba(255,255,255,0.05);" onerror="this.src='https://nft.fragment.com/number/8888888.webp'">
+            <h3 style="margin:0; font-size:18px; color:var(--text); text-align:center;">${name}</h3>
+        </div>
+        <div class="modal-info-row"><span class="modal-info-label">Действует до</span><span class="modal-info-value">${expStr}</span></div>
+        <div style="display:flex; gap:10px; margin-top:20px;">
+            <button class="action-btn rent-action-btn" style="flex:1; margin:0; padding:12px; font-size:14px; opacity: ${isExpired ? '0.5' : '1'}" onclick="${isExpired ? '' : `openTonConnectModal('${address}')`}">${isExpired ? 'Истекло' : 'Установить'}</button>
+        </div>
+    `);
 }
 
 window.openChequeModal = function(id, amount, expStr, isExpired) {

@@ -2,46 +2,6 @@
 //  history.js — История
 // ============================================================
 
-function renderServerHistory(history) {
-    window.currentHistory = history;
-    const list = document.getElementById('historyList');
-    if (!list) return;
-    if (!history.length) { list.innerHTML = `<div class="profile-empty"><p>История пуста</p></div>`; return; }
-
-    const statusLabel = { Pending: 'Ожидание', Completed: 'Выполнено', Failed: 'Ошибка', Cancelled: 'Отменено', Processing: 'В обработке' };
-    const statusClass = { Pending: 'status-pending', Completed: 'status-completed', Failed: 'status-failed', Cancelled: 'status-cancelled', Processing: 'status-pending' };
-
-    list.innerHTML = history.map(h => {
-        // БЕЗОПАСНАЯ ПРОВЕРКА ДАТЫ:
-        const serverDateStr = h.CreatedAt ? (h.CreatedAt.endsWith('Z') ? h.CreatedAt : h.CreatedAt + 'Z') : new Date().toISOString();
-        const createdDate = new Date(serverDateStr);
-        const date = createdDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-
-        let statusHtml = `<span class="history-item-status ${statusClass[h.Status] || ''}">${statusLabel[h.Status] || h.Status}</span>`;
-
-        if (h.Status === 'Pending' && h.ExpiresAt) {
-            let endsAtStr = h.ExpiresAt;
-            if (!endsAtStr.endsWith('Z') && !endsAtStr.includes('+')) endsAtStr += 'Z';
-            
-            statusHtml = `
-                <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
-                    ${statusHtml}
-                    <span class="countdown-timer" data-ends="${endsAtStr}" style="font-size:11px; color:#ff453a; font-weight:700;">Считаем...</span>
-                </div>`;
-        }
-
-        return `<div class="history-item" onclick="showTxDetails('${h.Id}')" style="cursor:pointer">
-            <div class="history-item-left">
-                <span class="history-item-title">${h.Product === 'None' ? h.Type : h.Product} · ${h.Amount} ${h.Currency}</span>
-                <span class="history-item-meta">${date}</span>
-            </div>
-            <div style="display:flex; align-items:center;">
-                ${statusHtml}
-            </div>
-        </div>`;
-    }).join('');
-}
-
 window.showSupportModal = function() {
     showModal('Поддержка', `
         <div style="text-align:center; padding: 10px 0;">

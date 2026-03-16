@@ -472,13 +472,37 @@ window.submitTonConnectUri = async function(nftAddress) {
 
     const btn = document.querySelector('.rent-action-btn');
     setLoading(btn, true);
-    const res = await apiCall('/webapp/rent/connect', { nftAddress, uri });
-    setLoading(btn, false);
 
-    if (res && res.Success) {
-        safeAlert('✅ Кошелек успешно подключен! NFT должен появиться в вашем профиле Telegram.');
-        closeModal();
-    } else {
-        safeAlert('❌ Ошибка: ' + (res?.Error || 'Не удалось подключить. Убедитесь, что ссылка свежая (они живут 2-3 минуты).'));
+    try {
+        // Отправляем правильный POST-запрос
+        const response = await fetch(`${API_BASE}/webapp/rent/connect`, {
+            method: 'POST',
+            headers: { 
+                'Authorization': authHeader,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ 
+                nftAddress: nftAddress, 
+                tonconnect_url: uri 
+            })
+        });
+        
+        const res = await response.json();
+        setLoading(btn, false);
+
+        if (res && res.Success) {
+            safeAlert('✅ Кошелек успешно подключен! NFT появится в профиле.');
+            closeModal();
+        } else {
+            // Обрезаем длинную ошибку, чтобы Telegram WebApp не крашился
+            let errorMsg = res?.Error || JSON.stringify(res);
+            if (errorMsg.length > 100) {
+                errorMsg = 'Неверный формат ссылки или ошибка сервера.';
+            }
+            safeAlert('❌ Ошибка: ' + errorMsg);
+        }
+    } catch (e) {
+        setLoading(btn, false);
+        safeAlert('❌ Ошибка сети при подключении');
     }
 }

@@ -21,14 +21,12 @@ async function loadProfile() {
     }
 }
 
-// ── Мои чеки ─────────────────────────────────────────────────
 function renderServerCheques(cheques) {
     const list = document.getElementById('chequesList');
     if (!list) return;
     if (!cheques.length) { list.innerHTML = `<div class="profile-empty"><p>Нет активных чеков</p></div>`; return; }
 
     list.innerHTML = cheques.map(c => {
-        // ФИКС ЧАСОВОГО ПОЯСА
         let endsAtStr = c.ChequeExpiresAt;
         if (endsAtStr && !endsAtStr.endsWith('Z')) endsAtStr += 'Z';
         
@@ -37,17 +35,67 @@ function renderServerCheques(cheques) {
         const expStr = isExpired ? 'Истек' : exp.toLocaleString('ru-RU', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
 
         let statusHtml = isExpired 
-            ? `<span class="status-badge status-failed">Истек</span>`
-            : `<span class="status-badge status-completed">Активен</span>`;
+            ? `<span class="history-item-status status-failed">Истек</span>`
+            : `<span class="history-item-status status-completed">Активен</span>`;
 
         return `
-        <div class="tx-item" style="opacity: ${isExpired ? 0.6 : 1}; cursor: pointer;" onclick="openChequeModal('${c.Id}', '${c.Amount}', '${expStr}', ${isExpired})">
-            <div class="tx-icon" style="background: rgba(46, 204, 113, 0.15); color: #2ecc71;">🧾</div>
-            <div class="tx-info">
-                <div class="tx-title">Чек на ${c.Amount} TON</div>
-                <div class="tx-date">До: ${expStr}</div>
+        <div class="history-item" style="opacity: ${isExpired ? 0.6 : 1}; cursor: pointer;" onclick="openChequeModal('${c.Id}', '${c.Amount}', '${expStr}', ${isExpired})">
+            <div style="font-size: 20px; background: rgba(46, 204, 113, 0.15); border-radius: 10px; padding: 6px 10px; display:flex; align-items:center; justify-content:center;">🧾</div>
+            <div class="history-item-left" style="flex:1; margin-left: 8px;">
+                <div class="history-item-title">Чек на ${c.Amount} TON</div>
+                <div class="history-item-meta">До: ${expStr}</div>
             </div>
-            <div class="tx-amount">${statusHtml}</div>
+            <div>${statusHtml}</div>
+        </div>`;
+    }).join('');
+}
+
+// ── Мои аренды (NFT) ─────────────────────────────────────────
+function renderServerRentals(rentals) {
+    const list = document.getElementById('rentalsList');
+    if (!list) return;
+    if (!rentals || !rentals.length) { list.innerHTML = `<div class="profile-empty"><p>У вас пока нет арендованных NFT</p></div>`; return; }
+
+    list.innerHTML = rentals.map(r => {
+        let img = r.ImageUrl;
+        
+        if (img && img !== 'null' && img !== 'undefined') {
+            try { img = decodeURIComponent(img); } catch(e) {}
+        }
+        
+        if (!img || img === 'null' || img === 'undefined' || !img.startsWith('http')) {
+            let rawName = r.Name || '';
+            if (r.Category === 'usernames') {
+                let safeName = rawName.toLowerCase().replace('.t.me', '').replace('@', '').trim();
+                img = `https://nft.fragment.com/username/${safeName}.webp`;
+            } else if (r.Category === 'numbers') {
+                let safeName = rawName.replace('+888', '').replace(/[\s-]/g, '').trim();
+                img = `https://nft.fragment.com/number/${safeName}.webp`;
+            } else {
+                let safeName = rawName.replace(/[\s\-']/g, '');
+                img = `https://nft.fragment.com/gift/${safeName}.medium.jpg`;
+            }
+        }
+
+        let name = r.Name || 'NFT';
+        let endsAtStr = r.ExpiresAt;
+        if (endsAtStr && !endsAtStr.endsWith('Z')) endsAtStr += 'Z';
+
+        const exp = new Date(endsAtStr);
+        const isExpired = exp < new Date();
+        const expStr = exp.toLocaleString('ru-RU', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
+        
+        let statusClass = isExpired ? 'status-failed' : r.IsConnected ? 'status-completed' : 'status-pending';
+        let statusText = isExpired ? 'Истек' : r.IsConnected ? 'Установлен' : 'Ожидает';
+
+        return `
+        <div class="history-item" style="opacity: ${isExpired ? 0.6 : 1}; cursor:pointer;" onclick="openRentalModal('${r.NftAddress}', '${name}', '${img}', '${expStr}', ${isExpired}, '${statusText}')">
+            <img src="${img}" style="width:40px;height:40px;border-radius:10px;object-fit:cover;background:#2c2c2e; border:1px solid rgba(255,255,255,0.05);" onerror="this.src='https://nft.fragment.com/number/8888888.webp'">
+            <div class="history-item-left" style="flex:1; margin-left:12px;">
+                <div class="history-item-title">${name}</div>
+                <div class="history-item-meta">До: ${expStr}</div>
+            </div>
+            <div><span class="history-item-status ${statusClass}">${statusText}</span></div>
         </div>`;
     }).join('');
 }
@@ -118,60 +166,6 @@ function renderServerHistory(history) {
     }).join('');
 }
 
-// ── Мои аренды (NFT) ─────────────────────────────────────────
-function renderServerRentals(rentals) {
-    const list = document.getElementById('rentalsList');
-    if (!list) return;
-    if (!rentals || !rentals.length) { list.innerHTML = `<div class="profile-empty"><p>У вас пока нет арендованных NFT</p></div>`; return; }
-
-    list.innerHTML = rentals.map(r => {
-        let img = r.ImageUrl;
-        
-        // 1. ИСПРАВЛЕНИЕ: Раскодируем URL, если он пришел закодированным (%3A%2F%2F -> ://)
-        if (img && img !== 'null' && img !== 'undefined') {
-            try { img = decodeURIComponent(img); } catch(e) {}
-        }
-        
-        // 2. Если картинки всё равно нет или она битая, собираем её правильно (например, plushpepe-1821)
-        if (!img || img === 'null' || img === 'undefined' || !img.startsWith('http')) {
-            let rawName = r.Name || '';
-            if (r.Category === 'usernames') {
-                let safeName = rawName.toLowerCase().replace('.t.me', '').replace('@', '').trim();
-                img = `https://nft.fragment.com/username/${safeName}.webp`;
-            } else if (r.Category === 'numbers') {
-                let safeName = rawName.replace('+888', '').replace(/[\s-]/g, '').trim();
-                img = `https://nft.fragment.com/number/${safeName}.webp`;
-            } else {
-                // Убираем только пробелы, дефисы и апострофы, заглавные буквы не трогаем
-                let safeName = rawName.replace(/[\s\-']/g, '');
-                img = `https://nft.fragment.com/gift/${safeName}.medium.jpg`;
-            }
-        }
-
-        let name = r.Name || 'NFT';
-        
-        // ФИКС ЧАСОВОГО ПОЯСА
-        let endsAtStr = r.ExpiresAt;
-        if (endsAtStr && !endsAtStr.endsWith('Z')) endsAtStr += 'Z';
-
-        const exp = new Date(endsAtStr);
-        const isExpired = exp < new Date();
-        const expStr = exp.toLocaleString('ru-RU', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
-        
-        let statusClass = isExpired ? 'status-failed' : r.IsConnected ? 'status-completed' : 'status-pending';
-        let statusText = isExpired ? 'Истек' : r.IsConnected ? 'Установлен' : 'Ожидает';
-
-        return `
-        <div class="tx-item" style="opacity: ${isExpired ? 0.6 : 1}; cursor:pointer;" onclick="openRentalModal('${r.NftAddress}', '${name}', '${img}', '${expStr}', ${isExpired}, '${statusText}')">
-            <img src="${img}" style="width:40px;height:40px;border-radius:10px;object-fit:cover;background:#2c2c2e; border:1px solid rgba(255,255,255,0.05);" onerror="this.src='https://nft.fragment.com/number/8888888.webp'">
-            <div class="tx-info" style="margin-left:12px;">
-                <div class="tx-title" style="font-weight:600">${name}</div>
-                <div class="tx-date">До: ${expStr}</div>
-            </div>
-            <div class="tx-amount"><span class="status-badge ${statusClass}">${statusText}</span></div>
-        </div>`;
-    }).join('');
-}
 
 window.openRentalModal = function(address, name, img, expStr, isExpired, status) {
     let link = `https://fragment.com/nft/${address}`;

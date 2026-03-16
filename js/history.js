@@ -12,16 +12,14 @@ function renderServerHistory(history) {
     const statusClass = { Pending: 'status-pending', Completed: 'status-completed', Failed: 'status-failed', Cancelled: 'status-cancelled', Processing: 'status-pending' };
 
     list.innerHTML = history.map(h => {
-        // ФИКС ЧАСОВОГО ПОЯСА ДЛЯ ДАТЫ СОЗДАНИЯ
-        const serverDateStr = h.CreatedAt.endsWith('Z') ? h.CreatedAt : h.CreatedAt + 'Z';
+        // БЕЗОПАСНАЯ ПРОВЕРКА ДАТЫ:
+        const serverDateStr = h.CreatedAt ? (h.CreatedAt.endsWith('Z') ? h.CreatedAt : h.CreatedAt + 'Z') : new Date().toISOString();
         const createdDate = new Date(serverDateStr);
         const date = createdDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 
         let statusHtml = `<span class="history-item-status ${statusClass[h.Status] || ''}">${statusLabel[h.Status] || h.Status}</span>`;
 
-        // ТАЙМЕР ДЛЯ ТРАНЗАКЦИЙ (Берем точное время с сервера!)
         if (h.Status === 'Pending' && h.ExpiresAt) {
-            // Фикс часового пояса для даты окончания
             let endsAtStr = h.ExpiresAt;
             if (!endsAtStr.endsWith('Z') && !endsAtStr.includes('+')) endsAtStr += 'Z';
             

@@ -474,7 +474,7 @@ window.submitTonConnectUri = async function(nftAddress) {
     setLoading(btn, true);
 
     try {
-        // Отправляем правильный POST-запрос
+        // Отправляем POST-запрос, чтобы длинная ссылка не обрезалась сервером
         const response = await fetch(`${API_BASE}/webapp/rent/connect`, {
             method: 'POST',
             headers: { 
@@ -483,7 +483,7 @@ window.submitTonConnectUri = async function(nftAddress) {
             },
             body: JSON.stringify({ 
                 nftAddress: nftAddress, 
-                tonconnect_url: uri 
+                uri: uri // Отправляем 'uri', как того ждет твой C# контроллер
             })
         });
         
@@ -494,7 +494,7 @@ window.submitTonConnectUri = async function(nftAddress) {
             safeAlert('✅ Кошелек успешно подключен! NFT появится в профиле.');
             closeModal();
         } else {
-            // Обрезаем длинную ошибку, чтобы Telegram WebApp не крашился
+            // Обрезаем длинную ошибку, чтобы не крашнулся Telegram WebApp
             let errorMsg = res?.Error || JSON.stringify(res);
             if (errorMsg.length > 100) {
                 errorMsg = 'Неверный формат ссылки или ошибка сервера.';

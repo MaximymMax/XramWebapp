@@ -121,52 +121,6 @@ window.openChequeModal = function(id, amount, expStr, isExpired) {
     `);
 }
 
-// ── История транзакций ───────────────────────────────────────
-function renderServerHistory(history) {
-    const list = document.getElementById('historyList');
-    if (!list) return;
-    if (!history.length) { list.innerHTML = `<div class="profile-empty"><p>История пуста</p></div>`; return; }
-
-    list.innerHTML = history.map(tx => {
-        const isTopUp = tx.Type === 'TopUp';
-        const isWithdraw = tx.Type === 'Withdrawal';
-        
-        // ФИКС ЧАСОВОГО ПОЯСА
-        let createdStr = tx.CreatedAt;
-        if (createdStr && !createdStr.endsWith('Z')) createdStr += 'Z';
-        const dateStr = new Date(createdStr).toLocaleString('ru-RU', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
-
-        let title = isTopUp ? 'Пополнение' : isWithdraw ? 'Вывод' : 'Покупка';
-        let productText = tx.Product === 'None' ? 'Баланс' : tx.Product;
-        if (tx.IsCheque) productText = 'TON Чек';
-        if (tx.IsGiveawayPrize) productText = 'Взнос за розыгрыш';
-
-        let icon = isTopUp ? '↓' : isWithdraw ? '↑' : '🛒';
-        let iconColor = isTopUp ? '#2ecc71' : isWithdraw ? '#e74c3c' : '#8a2be2';
-        let iconBg = isTopUp ? 'rgba(46,204,113,0.15)' : isWithdraw ? 'rgba(231,76,60,0.15)' : 'rgba(138,43,226,0.15)';
-
-        let statusClass = tx.Status === 'Completed' ? 'status-completed' : tx.Status === 'Failed' || tx.Status === 'Cancelled' ? 'status-failed' : 'status-pending';
-        let statusText = tx.Status === 'Completed' ? 'Успешно' : tx.Status === 'Failed' ? 'Ошибка' : tx.Status === 'Cancelled' ? 'Отмена' : 'В процессе';
-
-        let sign = isTopUp || tx.Status === 'Failed' || tx.Status === 'Cancelled' ? '' : '-';
-        if (tx.Status === 'Failed' || tx.Status === 'Cancelled') sign = ''; 
-
-        return `
-        <div class="tx-item">
-            <div class="tx-icon" style="background:${iconBg}; color:${iconColor};">${icon}</div>
-            <div class="tx-info">
-                <div class="tx-title">${title}: ${productText}</div>
-                <div class="tx-date">${dateStr}</div>
-            </div>
-            <div class="tx-amount" style="display:flex; flex-direction:column; align-items:flex-end;">
-                <span style="font-weight:700;">${sign}${tx.Amount} ${tx.Currency}</span>
-                <span class="status-badge ${statusClass}" style="margin-top:4px;">${statusText}</span>
-            </div>
-        </div>`;
-    }).join('');
-}
-
-
 window.openRentalModal = function(address, name, img, expStr, isExpired, status) {
     let link = `https://fragment.com/nft/${address}`;
     showModal('Аренда NFT', `

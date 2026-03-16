@@ -142,11 +142,8 @@ function renderServerRentals(rentals) {
                 let safeName = rawName.replace('+888', '').replace(/[\s-]/g, '').trim();
                 img = `https://nft.fragment.com/number/${safeName}.webp`;
             } else {
-                // Для подарков: "Plush Pepe #1821" -> "plushpepe-1821"
-                let safeName = rawName.toLowerCase()
-                    .replace(/\s*#\s*/g, '-') // заменяем решетку на дефис
-                    .replace(/\s+/g, '')      // убираем все остальные пробелы
-                    .replace(/['’]/g, '');    // убираем апострофы (например, Durov's)
+                // Убираем только пробелы, дефисы и апострофы, заглавные буквы не трогаем
+                let safeName = rawName.replace(/[\s\-']/g, '');
                 img = `https://nft.fragment.com/gift/${safeName}.medium.jpg`;
             }
         }
@@ -198,11 +195,18 @@ window.switchProfileTab = function(tab, btn) {
     document.querySelectorAll('.ptab').forEach(t => t.classList.remove('active'));
     btn.classList.add('active');
 
-    document.getElementById('historyList').style.display = 'none';
-    document.getElementById('chequesList').style.display = 'none';
-    document.getElementById('rentalsList').style.display = 'none';
+    // Скрываем родительские панели-обертки
+    document.getElementById('profileHistory').style.display = 'none';
+    document.getElementById('profileCheques').style.display = 'none';
+    document.getElementById('profileRentals').style.display = 'none';
 
-    document.getElementById(`${tab}List`).style.display = 'block';
+    // Формируем ID нужной панели (например, 'history' -> 'profileHistory')
+    const panelId = 'profile' + tab.charAt(0).toUpperCase() + tab.slice(1);
+    const activePanel = document.getElementById(panelId);
+    
+    if (activePanel) {
+        activePanel.style.display = 'block';
+    }
 }
 
 if (document.getElementById('historyList')) loadProfile();

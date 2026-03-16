@@ -412,6 +412,17 @@ window.apiRentGift = async function() {
     const pc = state.pay.rent.currency;
     const btn = document.getElementById('modalRentBtn');
 
+    // === ИНТЕГРАЦИЯ ОПЛАТЫ ЗВЕЗДАМИ ===
+    if (pm === 'TelegramStars') {
+        const totalTon = window.RENT_TON_PER_DAY * days;
+        const usdTotal = totalTon * getTonUsdRate();
+        const starsCost = Math.ceil(usdTotal / RATES.USD.starDeposit);
+        // Формат details для бэкенда: nftAddress:цена:дни
+        const details = `${state.rentNftAddress}:${window.RENT_TON_PER_DAY}:${days}`;
+        closeModal();
+        return payWithTelegramStars('rentgift', details, starsCost, telegramId.toString());
+    }
+
     // Если внутренний кошелек, показываем Lottie-загрузку сразу
     if (pm === 'InternalWallet') {
         closeModal();

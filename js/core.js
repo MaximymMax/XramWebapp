@@ -672,8 +672,23 @@ window.executePurchase = async function (product) {
     const target = getApiTarget(product);
     const pm = state.pay[product].method;
     const pc = state.pay[product].currency;
-    const btn = document.getElementById('modalConfirmBtn');
+    const btn = document.getElementById('modalConfirmBtn') || document.getElementById(`modal${product.charAt(0).toUpperCase() + product.slice(1)}Btn`);
 
+    // === ИНТЕГРАЦИЯ ОПЛАТЫ ЗВЕЗДАМИ ===
+    if (pm === 'TelegramStars') {
+        let starsCost = 0;
+        let details = '';
+        if (product === 'stars') {
+            details = state.starsCustom ? parseInt(document.getElementById('starsCustomAmount')?.value) : state.stars;
+            starsCost = details; // Для звезд цена в звездах равна количеству
+        } else if (product === 'premium') {
+            details = state.premium;
+            const usdPrice = details === 12 ? window.finalPrices.premium12 : (details === 6 ? window.finalPrices.premium6 : window.finalPrices.premium3);
+            starsCost = Math.ceil(usdPrice / RATES.USD.perStar);
+        }
+        closeModal();
+        return payWithTelegramStars(product, details, starsCost, target);
+    }
     let endpoint = '';
     let payload = { telegramId, currency: pc, method: pm, targetUsername: target };
     let productName = '';
@@ -805,6 +820,47 @@ window.handleTxFlow = function(txData) {
     }
 }
 
+window.payWithTelegramStars = async function(product, details, starsAmount, target = "~") {
+    // Включаем твою Lottie-анимацию ожидания
+    if (typeof showTxLoading === 'function') showTxLoading(); 
+
+    try {
+        const res = await apiCall('/webapp/pay/stars/create', { 
+            product: product, 
+            details: details,
+            amount: parseInt(starsAmount),
+            target: target
+        }, 'POST');
+
+        if (res && res.Success && res.InvoiceUrl) {
+            // Прячем анимацию загрузки перед тем, как открыть нативную шторку TG
+            document.getElementById('txStatusModal').style.display = 'none';
+
+            tg.openInvoice(res.InvoiceUrl, function(status) {
+                if (status === 'paid') {
+                    // Возвращаем модалку и показываем красивую галочку
+                    document.getElementById('txStatusModal').style.display = 'flex';
+                    showTxResult(true, "Оплата успешна!", "Оплата звездами прошла успешно. Товар скоро будет выдан.", "", () => {
+                        if (typeof loadProfile === 'function') loadProfile();
+                        if (typeof fetchServerData === 'function') fetchServerData();
+                        switchTab('profile'); 
+                    });
+                } else if (status === 'failed') {
+                    document.getElementById('txStatusModal').style.display = 'flex';
+                    showTxResult(false, "Ошибка оплаты", "Не удалось провести платеж звездами.", "");
+                }
+            });
+        } else {
+            document.getElementById('txStatusModal').style.display = 'flex';
+            showTxResult(false, "Ошибка счета", res?.Error || 'Сервер не смог создать счет на оплату', "");
+        }
+    } catch (e) {
+        document.getElementById('txStatusModal').style.display = 'flex';
+        showTxResult(false, "Ошибка сети", "Не удалось связаться с сервером.", "");
+    }
+}
+
+
 // --- wallet.js ---
 // ============================================================
 //  wallet.js — Пополнение и вывод TON-кошелька
@@ -903,6 +959,14 @@ window.executeTopup = async function (amount) {
     const pm = state.pay.topup.method;
     const pc = state.pay.topup.currency;
     const btn = document.getElementById('modalConfirmTopupBtn');
+
+    // === ИНТЕГРАЦИЯ ОПЛАТЫ ЗВЕЗДАМИ ===
+    if (pm === 'TelegramStars') {
+        const usdTotal = amount * getTonUsdRate();
+        const starsCost = Math.ceil(usdTotal / RATES.USD.starDeposit);
+        closeModal();
+        return payWithTelegramStars('topup', amount.toString(), starsCost, telegramId.toString());
+    }
 
     setLoading(btn, true);
     const result = await apiCall('/transactions/create/topup', { telegramId, currency: pc, method: pm, amount });

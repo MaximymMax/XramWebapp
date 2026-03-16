@@ -17,17 +17,17 @@ window.renderServerHistory = function(history) {
         const createdDate = new Date(serverDateStr);
         const date = createdDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 
-        let statusHtml = `<span class="status-badge ${statusClass[h.Status] || 'status-pending'}">${statusLabel[h.Status] || h.Status}</span>`;
+        let statusHtml = `<span class="history-item-status ${statusClass[h.Status] || 'status-pending'}">${statusLabel[h.Status] || h.Status}</span>`;
 
+        // Используем твои родные классы из style.css
         return `
-        <div class="tx-item" onclick="showTxDetails('${h.Id}')" style="cursor:pointer">
-            <div class="tx-icon" style="background: rgba(255,255,255,0.05);">💎</div>
-            <div class="tx-info">
-                <div class="tx-title">${h.Product === 'None' ? h.Type : h.Product}</div>
-                <div class="tx-date">${date}</div>
+        <div class="history-item" onclick="showTxDetails('${h.Id}')" style="cursor:pointer">
+            <div class="history-item-left">
+                <span class="history-item-title">${h.Product === 'None' ? h.Type : h.Product}</span>
+                <span class="history-item-meta">${date}</span>
             </div>
-            <div class="tx-amount">
-                <span style="font-weight:700; font-size: 14px;">${h.Amount} ${h.Currency}</span>
+            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px;">
+                <span style="font-weight:700; font-size: 15px; color: var(--text);">${h.Amount} ${h.Currency}</span>
                 ${statusHtml}
             </div>
         </div>`;

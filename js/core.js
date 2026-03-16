@@ -54,13 +54,30 @@ window.currentRentOffers = [];
 window.currentRentals = [];
 
 // ── API ──────────────────────────────────────────────────────
-async function apiCall(endpoint, params = {}) {
+async function apiCall(endpoint, params = {}, method = 'GET') {
     try {
-        const qs = new URLSearchParams(params).toString();
-        const url = `${API_BASE}${endpoint}${qs ? '?' + qs : ''}`;
-        const response = await fetch(url, { method: 'GET', headers: { 'Authorization': authHeader } });
+        let url = `${API_BASE}${endpoint}`;
+        let options = {
+            method: method,
+            headers: { 'Authorization': authHeader }
+        };
+
+        if (method === 'GET') {
+            // Для GET склеиваем параметры в URL
+            const qs = new URLSearchParams(params).toString();
+            if (qs) url += '?' + qs;
+        } else {
+            // Для POST/PUT отправляем параметры в теле запроса как JSON
+            options.headers['Content-Type'] = 'application/json';
+            options.body = JSON.stringify(params);
+        }
+
+        const response = await fetch(url, options);
         return await response.json();
-    } catch (error) { console.error('API Error:', error); return null; }
+    } catch (error) { 
+        console.error('API Error:', error); 
+        return null; 
+    }
 }
 
 // ── ДИАЛОГИ ──────────────────────────────────────────────────

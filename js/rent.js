@@ -115,12 +115,16 @@ async function switchRentCategory(category, btn) {
                 const floorText = c.RentFloorTon > 0 ? `от ${formatTonPrice(c.RentFloorTon)}/дн` : '';
                 html += `
                     <div class="dd-item" onclick="onCollectionSelected('${c.Address}', '${c.Name}', ${c.RentFloorTon}, '${imgSrc}')">
-                        <img class="dd-item-img" src="${imgSrc}" style="display:block" onerror="this.style.display='none'">
+                        <img class="dd-item-img" data-src="${imgSrc}" style="display:block" onerror="this.style.display='none'">
                         <span class="dd-item-name">${c.Name}</span>
                         <span class="dd-item-price">${floorText}</span>
                     </div>`;
             });
             document.getElementById('colMenu').innerHTML = html;
+            
+            // ФИКС: Активируем ленивую загрузку для выпадающего меню коллекций
+            observeRentImages(document.getElementById('colMenu')); 
+            
             onCollectionSelected('', 'Все коллекции', 0, '');
         }
     } else {
@@ -168,13 +172,17 @@ window.onCollectionSelected = async function(address, name, rentFloor, imgSrc) {
                 const mFloorText = m.RentFloorTon > 0 ? `от ${formatTonPrice(m.RentFloorTon)}/дн` : '';
                 mHtml += `
                     <div class="dd-item" onclick="onModelSelected('${m.ModelName}', '${m.ModelName}', ${m.RentFloorTon}, '${mImgSrc}')">
-                        <img class="dd-item-img" src="${mImgSrc}" style="display:block" onerror="this.style.display='none'">
+                        <img class="dd-item-img" data-src="${mImgSrc}" style="display:block" onerror="this.style.display='none'">
                         <span class="dd-item-name">${m.ModelName}</span>
                         <span class="dd-item-price">${mFloorText}</span>
                     </div>`;
             });
         }
         document.getElementById('modMenu').innerHTML = mHtml;
+        
+        // ФИКС: Активируем ленивую загрузку для выпадающего меню моделей
+        observeRentImages(document.getElementById('modMenu'));
+        
         onModelSelected('', 'Все модели', 0, '');
     } else {
         modWrap.style.display = 'none';
@@ -199,7 +207,29 @@ window.onModelSelected = async function(modelId, modelName, rentFloor, imgSrc) {
 }
 
 // ── Lazy Load Observer ────────────────────────────────────────
-let _rentImgObserver = null;
+const _rentImgObserver = new IntersectionObserver((entries, observer) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            const img = entry.target;
+            if (img.dataset.src) {
+                img.src = img.dataset.src;
+                // Как только картинка загрузилась - добавляем класс для плавного появления
+                img.onload = () => img.classList.add('lazy-loaded'); 
+                img.removeAttribute('data-src');
+                observer.unobserve(img); // Перестаем следить за загруженной
+            }
+        }
+    });
+}, { 
+    // Начинаем грузить за 250px до того, как картинка появится на экране (чтобы не было видно подгрузок)
+    rootMargin: '250px 0px', 
+    threshold: 0.01 
+});
+
+function observeRentImages(container) {
+    if (!container) return;
+    container.querySelectorAll('img[data-src]').forEach(img => _rentImgObserver.observe(img));
+}
 
 function initRentImageObserver() {
     if (_rentImgObserver) _rentImgObserver.disconnect();

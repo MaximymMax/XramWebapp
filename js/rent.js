@@ -345,6 +345,8 @@ window.openRentModal = function(address) {
     state.rentImageUrl = offer.ImageUrl;
     window.RENT_TON_PER_DAY = offer.PriceTon;
     window.RENT_NANO_PER_DAY = offer.PriceNano;
+    window.ORIGINAL_NANO_PER_DAY = offer.OriginalPriceNano || offer.PriceNano; // Сохраняем чистые нанотоны
+    window.ORIGINAL_TON_PER_DAY = window.ORIGINAL_NANO_PER_DAY / 1000000000; // Чистые TON
     state.rentDays = offer.MinDays;
     const totalTon = window.RENT_TON_PER_DAY * state.rentDays;
     const balNum = tonConnect.balance !== null ? parseFloat(tonConnect.balance) : 0;
@@ -469,9 +471,10 @@ window.apiRentGift = async function() {
         const usdTotal = totalTon * getTonUsdRate();
         const starsCost = Math.ceil(usdTotal / RATES.USD.starDeposit);
 
-        const exactNano = window.RENT_NANO_PER_DAY || (window.RENT_TON_PER_DAY * 1000000000).toString();
+        const exactNano = window.ORIGINAL_NANO_PER_DAY; 
         const encodedName = encodeURIComponent(state.rentNftName);
         const encodedImg = encodeURIComponent(state.rentImageUrl);
+        // В details теперь уходит точная базовая цена без наценок
         const details = `${state.rentNftAddress}:${exactNano}:${days}:${encodedName}:${encodedImg}`;
 
         closeModal();
@@ -515,7 +518,10 @@ window.apiRentGift = async function() {
     const result = await apiCall('/webapp/transactions/create/rent', {
         telegramId, currency: pc, method: pm,
         nftAddress: state.rentNftAddress, nftName: state.rentNftName,
-        days, pricePerDayTon: window.RENT_TON_PER_DAY, priceNano: window.RENT_NANO_PER_DAY,
+        days, 
+        // Отправляем БАЗОВЫЕ цены на бэкенд, а наценку он накинет сам
+        pricePerDayTon: window.ORIGINAL_TON_PER_DAY, 
+        priceNano: window.ORIGINAL_NANO_PER_DAY,
         category: state.rentCategory, imageUrl: state.rentImageUrl
     }, 'POST');
 

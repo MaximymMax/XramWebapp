@@ -479,16 +479,18 @@ window.apiRentGift = async function() {
     }
 
     // Делаем запрос к серверу (ФИКС: ДОБАВЛЕН priceNano)
-    const result = await apiCall('/transactions/create/rent', {
-        telegramId, currency: pc, method: pm,
+    const result = await apiCall('/webapp/transactions/create/rent', {
+        telegramId, 
+        currency: pc, 
+        method: pm,
         nftAddress: state.rentNftAddress,
         nftName: state.rentNftName,
         days,
         pricePerDayTon: window.RENT_TON_PER_DAY,
-        priceNano: window.RENT_NANO_PER_DAY, // <--- Отправляем строгую строку!
+        priceNano: window.RENT_NANO_PER_DAY, 
         category: state.rentCategory,
         imageUrl: state.rentImageUrl
-    });
+    }, 'POST'); // <--- ОБЯЗАТЕЛЬНО ДОБАВИТЬ 'POST' СЮДА
 
     // Обрабатываем ответ
     if (pm === 'InternalWallet') {

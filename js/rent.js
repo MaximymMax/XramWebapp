@@ -277,12 +277,13 @@ async function loadRentOffers(category, collectionAddress, model, reset = true) 
     if (res && res.Success) {
         if (reset) document.getElementById('rentCardsContainer').innerHTML = '';
 
-        if (res.Offers && res.Offers.length > 0) {
-            window.currentRentOffers.push(...res.Offers);
+        // ФИКС: Меняем res.Offers на res.Items
+        if (res.Items && res.Items.length > 0) {
+            window.currentRentOffers.push(...res.Items); // И здесь
             const container = document.getElementById('rentCardsContainer');
             const fragment = document.createDocumentFragment();
 
-            res.Offers.forEach(o => {
+            res.Items.forEach(o => { // И здесь
                 const card = document.createElement('div');
                 card.className = 'rent-card page-rent-theme';
                 card.onclick = () => openRentModal(o.NftAddress);

@@ -262,7 +262,6 @@ async function loadRentOffers(category, collectionAddress, model, reset = true) 
         document.getElementById('rentCardsContainer').innerHTML = '<div class="rent-cards-empty">⏳ Загрузка...</div>';
         if (btn) btn.style.display = 'none';
         if (_rentImgObserver) _rentImgObserver.disconnect();
-        _rentImgObserver = null;
     } else {
         if (btn) { btn.textContent = 'Загружаем...'; btn.disabled = true; }
     }

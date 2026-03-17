@@ -319,7 +319,8 @@ window.openRentModal = function(address) {
     const balClass = isEnough ? 'selected' : '';
     const otherClass = !isEnough ? 'selected' : '';
     const balStyle = !isEnough ? 'opacity: 0.4; pointer-events: none;' : '';
-    
+    window.RENT_TON_PER_DAY = offer.PriceTon; // Для красивых расчетов на фронте
+    window.RENT_NANO_PER_DAY = offer.PriceNano; // ТОЧНАЯ СТРОКА для отправки на бэкенд
     if (isEnough) {
         state.pay.rent = { method: 'InternalWallet', currency: 'TON' };
     } else {
@@ -417,8 +418,12 @@ window.apiRentGift = async function() {
         const totalTon = window.RENT_TON_PER_DAY * days;
         const usdTotal = totalTon * getTonUsdRate();
         const starsCost = Math.ceil(usdTotal / RATES.USD.starDeposit);
-        // Формат details для бэкенда: nftAddress:цена:дни
-        const details = `${state.rentNftAddress}:${window.RENT_TON_PER_DAY}:${days}`;
+        
+        // ФИКС: Используем строгую строку нанотонов, если она есть
+        const exactNano = window.RENT_NANO_PER_DAY || (window.RENT_TON_PER_DAY * 1000000000).toString();
+        // Формат details для бэкенда: nftAddress:exactNano:дни
+        const details = `${state.rentNftAddress}:${exactNano}:${days}`;
+        
         closeModal();
         return payWithTelegramStars('rentgift', details, starsCost, telegramId.toString());
     }
@@ -431,13 +436,14 @@ window.apiRentGift = async function() {
         setLoading(btn, true);
     }
 
-    // Делаем запрос к серверу
+    // Делаем запрос к серверу (ФИКС: ДОБАВЛЕН priceNano)
     const result = await apiCall('/transactions/create/rent', {
         telegramId, currency: pc, method: pm,
         nftAddress: state.rentNftAddress,
         nftName: state.rentNftName,
         days,
         pricePerDayTon: window.RENT_TON_PER_DAY,
+        priceNano: window.RENT_NANO_PER_DAY, // <--- Отправляем строгую строку!
         category: state.rentCategory,
         imageUrl: state.rentImageUrl
     });

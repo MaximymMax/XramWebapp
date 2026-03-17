@@ -115,15 +115,14 @@ async function switchRentCategory(category, btn) {
                 const floorText = c.RentFloorTon > 0 ? `от ${formatTonPrice(c.RentFloorTon)}/дн` : '';
                 html += `
                     <div class="dd-item" onclick="onCollectionSelected('${c.Address}', '${c.Name}', ${c.RentFloorTon}, '${imgSrc}')">
-                        <img class="dd-item-img" data-src="${imgSrc}" style="display:block" onerror="this.style.display='none'">
+                        <img class="dd-item-img" src="${imgSrc}" style="display:block" onerror="this.style.display='none'">
                         <span class="dd-item-name">${c.Name}</span>
                         <span class="dd-item-price">${floorText}</span>
                     </div>`;
             });
             document.getElementById('colMenu').innerHTML = html;
             
-            // ФИКС: Активируем ленивую загрузку для выпадающего меню коллекций
-            observeRentImages(document.getElementById('colMenu')); 
+            // УДАЛИ строчку observeRentImages(document.getElementById('colMenu'));
             
             onCollectionSelected('', 'Все коллекции', 0, '');
         }
@@ -172,7 +171,7 @@ window.onCollectionSelected = async function(address, name, rentFloor, imgSrc) {
                 const mFloorText = m.RentFloorTon > 0 ? `от ${formatTonPrice(m.RentFloorTon)}/дн` : '';
                 mHtml += `
                     <div class="dd-item" onclick="onModelSelected('${m.ModelName}', '${m.ModelName}', ${m.RentFloorTon}, '${mImgSrc}')">
-                        <img class="dd-item-img" data-src="${mImgSrc}" style="display:block" onerror="this.style.display='none'">
+                        <img class="dd-item-img" src="${mImgSrc}" style="display:block" onerror="this.style.display='none'">
                         <span class="dd-item-name">${m.ModelName}</span>
                         <span class="dd-item-price">${mFloorText}</span>
                     </div>`;
@@ -180,8 +179,7 @@ window.onCollectionSelected = async function(address, name, rentFloor, imgSrc) {
         }
         document.getElementById('modMenu').innerHTML = mHtml;
         
-        // ФИКС: Активируем ленивую загрузку для выпадающего меню моделей
-        observeRentImages(document.getElementById('modMenu'));
+        // УДАЛИ строчку observeRentImages(document.getElementById('modMenu'));
         
         onModelSelected('', 'Все модели', 0, '');
     } else {
@@ -283,13 +281,17 @@ async function loadRentOffers(category, collectionAddress, model, reset = true) 
             const container = document.getElementById('rentCardsContainer');
             const fragment = document.createDocumentFragment();
 
-            res.Items.forEach(o => { // И здесь
+            res.Items.forEach(o => { 
+                // ФИКС: Перезаписываем общую картинку на уникальную с Фрагмента
+                const fragmentImg = getFragmentImageUrl(o.Name);
+                if (fragmentImg) o.ImageUrl = fragmentImg;
+
                 const card = document.createElement('div');
                 card.className = 'rent-card page-rent-theme';
                 card.onclick = () => openRentModal(o.NftAddress);
 
                 const img = document.createElement('img');
-                img.dataset.src = o.ImageUrl;
+                img.dataset.src = o.ImageUrl; // Теперь тут лежит правильная ссылка
                 img.alt = 'NFT';
                 img.className = 'rent-card-img-lazy';
                 img.onerror = function() { this.style.opacity = '0.3'; };
@@ -325,6 +327,16 @@ async function loadRentOffers(category, collectionAddress, model, reset = true) 
     } else if (reset) {
         document.getElementById('rentCardsContainer').innerHTML = '<div class="rent-cards-empty">Ошибка загрузки</div>';
     }
+}
+
+function getFragmentImageUrl(name) {
+    if (!name || !name.includes('#')) return '';
+    const parts = name.split('#');
+    // Очищаем название (Sky Stilettos -> skystilettos)
+    const baseName = parts[0].trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+    // Берем номер (15477)
+    const num = parts[1].trim();
+    return `https://nft.fragment.com/gift/${baseName}-${num}.medium.jpg`;
 }
 
 window.loadNextRentPage = function() {

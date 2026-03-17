@@ -27,7 +27,7 @@ const RUB_PER_USD = 95;
 // Дефолтные цены и системные настройки
 window.finalPrices = { star: 0.018, premium3: 14.38, premium6: 19.18, premium12: 34.78 };
 window.selfStatus = { PremiumAvailable: true, StarsAvailable: true, Name: '', Username: '', PhotoUrl: '' };
-window.sysConfig = { isTestMode: false, receivingWallet: '' }; // НОВОЕ
+window.sysConfig = { isTestMode: false, receivingWallet: '', gasFeeTon: 0.06 }; 
 
 const state = {
     stars: 50, starsCustom: false, premium: 3, currency: 'USD', topupAmount: 0, useCustomTopup: true,
@@ -63,11 +63,9 @@ async function apiCall(endpoint, params = {}, method = 'GET') {
         };
 
         if (method === 'GET') {
-            // Для GET склеиваем параметры в URL
             const qs = new URLSearchParams(params).toString();
             if (qs) url += '?' + qs;
         } else {
-            // Для POST/PUT отправляем параметры в теле запроса как JSON
             options.headers['Content-Type'] = 'application/json';
             options.body = JSON.stringify(params);
         }
@@ -249,21 +247,17 @@ window.toggleDropdown = function (id, e) {
     }
 }
 
-// ===== ОБРАБОТКА КАСТОМНЫХ ВЫПАДАЮЩИХ СПИСКОВ =====
 window.toggleSortDropdown = function(e) {
     e.stopPropagation();
     const wrap = e.currentTarget.closest('.sort-dd-wrap');
     
-    // Закрываем все остальные открытые списки, чтобы не накладывались
     document.querySelectorAll('.sort-dd-wrap.open').forEach(el => {
         if (el !== wrap) el.classList.remove('open');
     });
     
-    // Переключаем тот, на который кликнули
     if (wrap) wrap.classList.toggle('open');
 };
 
-// Закрываем списки при клике в любое другое место экрана
 document.addEventListener('click', () => {
     document.querySelectorAll('.sort-dd-wrap.open').forEach(el => el.classList.remove('open'));
 });
@@ -283,12 +277,74 @@ function closeModal() {
     document.getElementById('paymentModal').style.display = 'none';
 }
 
-// Закрытие по клику на фон (скрипт в конце body, DOM уже готов)
 const _modal = document.getElementById('paymentModal');
 if (_modal) _modal.addEventListener('click', (e) => { if (e.target === e.currentTarget) closeModal(); });
 
+window.updateModalBreakdown = function() {
+    const product = window._currentModalProduct;
+    if (!product) return;
 
-// ── Метод оплаты ─────────────────────────────────────────────
+    const methodObj = state.pay[product];
+    if (!methodObj) return;
+    const method = methodObj.method;
+    
+    const baseUsd = window._currentModalBaseUsd || 0;
+    const baseTon = window._currentModalBaseTon || 0;
+    
+    const gasFeeTon = window.sysConfig.gasFeeTon || 0.06;
+    
+    // Если это пополнение кошелька, газ сети боту платить не нужно
+    const hasGas = (product !== 'topup');
+    const gasTon = hasGas ? gasFeeTon : 0;
+    const gasUsd = gasTon * getTonUsdRate();
+
+    let bdPriceStr = "";
+    let bdGasStr = "";
+    let bdTotalStr = "";
+    let btnText = "Подтвердить";
+
+    if (method === 'InternalWallet' || method === 'CryptoTransfer') {
+        let totalTon = baseTon + gasTon;
+
+        bdPriceStr = `${baseTon.toFixed(2)} TON`;
+        bdGasStr = `+ ${gasTon.toFixed(2)} TON`;
+        bdTotalStr = `${totalTon.toFixed(2)} TON`;
+        btnText = `Оплатить ${totalTon.toFixed(2)} TON`;
+    } else if (method === 'BankCard') {
+        let totalUsd = baseUsd + gasUsd;
+        let totalRub = totalUsd * RUB_PER_USD;
+        let gasRub = gasUsd * RUB_PER_USD;
+        let baseRub = baseUsd * RUB_PER_USD;
+        
+        bdPriceStr = `${Math.round(baseRub)} ₽`;
+        bdGasStr = `+ ${Math.round(gasRub)} ₽`;
+        bdTotalStr = `${Math.round(totalRub)} ₽`;
+        btnText = `Оплатить ${Math.round(totalRub)} ₽`;
+    } else if (method === 'TelegramStars') {
+        let starPrice = RATES.USD.perStar;
+        
+        let baseStars = Math.ceil(baseUsd / starPrice);
+        let gasStars = hasGas ? Math.ceil(gasUsd / starPrice) : 0;
+        let totalStars = baseStars + gasStars;
+
+        bdPriceStr = `${baseStars} ⭐️`;
+        bdGasStr = `+ ${gasStars} ⭐️`;
+        bdTotalStr = `${totalStars} ⭐️`;
+        btnText = `Оплатить ${totalStars} ⭐️`;
+    }
+
+    const breakdownEl = document.getElementById('paymentBreakdown');
+    if (breakdownEl) {
+        document.getElementById('bdProductPrice').innerText = bdPriceStr;
+        document.getElementById('bdGasFee').innerText = bdGasStr;
+        document.getElementById('bdTotal').innerText = bdTotalStr;
+        document.getElementById('bdGasRow').style.display = hasGas ? 'flex' : 'none';
+    }
+
+    const confirmBtn = document.getElementById('modalConfirmBtn');
+    if (confirmBtn) confirmBtn.innerText = btnText;
+}
+
 window.selectPayMethod = function (product, element) {
     const container = element.closest('.modal-content') || element.closest('.page');
     if (container) {
@@ -296,11 +352,14 @@ window.selectPayMethod = function (product, element) {
     }
     element.classList.add('selected');
     state.pay[product] = { method: element.dataset.method, currency: element.dataset.currency };
-    if (product === 'rent') updateRentModalPrice();
-    if (product === 'topup') updateTopupModalPrice();
+    
+    // Пересчитываем газ и итог в чеке
+    if (typeof updateModalBreakdown === 'function') updateModalBreakdown();
+
+    if (product === 'rent') { if (typeof updateRentModalPrice === 'function') updateRentModalPrice(); }
+    if (product === 'topup') { if (typeof updateTopupModalPrice === 'function') updateTopupModalPrice(); }
 }
 
-// ── Обновление транзакции вручную ───────────────────────────
 async function checkTx(txId) {
     await fetch(`${API_BASE}/transactions/${txId}/check`, { method: 'POST', headers: { 'Authorization': authHeader } });
     closeModal();
@@ -373,7 +432,6 @@ function getApiTarget(product) {
     return validated;
 }
 
-// ── Проверка юзернейма с дебаунсом ───────────────────────────
 function onUsernameInput(product, inputEl) {
     const raw = inputEl.value.trim().replace('@', '');
     const statusMsg = document.getElementById(`${product}UsernameMsg`);
@@ -381,7 +439,6 @@ function onUsernameInput(product, inputEl) {
 
     if (btn) btn.disabled = true;
     if (statusMsg) statusMsg.innerHTML = '';
-    // Сбрасываем подтверждённый юзернейм при новом вводе
     state._validatedUsername[product] = null;
     if (!raw || raw.length < 3) return;
 
@@ -392,7 +449,6 @@ function onUsernameInput(product, inputEl) {
 
 async function doCheckUsername(product, username) {
     const type = product === 'premium' ? 'premium' : 'stars';
-    // Всегда запрашиваем актуальную информацию с Fragment — без кэша
     const data = await apiCall(`/webapp/recipient/check?username=${username}&type=${type}`);
     applyUsernameResult(product, data?.Success ? data : null, username);
 }
@@ -410,7 +466,6 @@ function applyUsernameResult(product, data, rawUsername) {
             ? `<img src="${data.AvatarUrl}" class="tpc-avatar">`
             : `<div class="tpc-avatar-letter">${letter}</div>`;
 
-        // Сохраняем подтверждённый юзернейм
         state._validatedUsername[product] = rawUsername;
 
         if (statusMsg) {
@@ -440,7 +495,6 @@ function applyUsernameResult(product, data, rawUsername) {
     }
 }
 
-// ── Логика вкладок получателя (для модалок openStarsModal/openPremiumModal) ──
 window.renderTargetSection = function (type) {
     const isSelfAvail = type === 'premium' ? window.selfStatus?.PremiumAvailable : window.selfStatus?.StarsAvailable;
     const selfBtn = `<button class="ttab ${state.target === 'self' ? 'active' : ''}" onclick="switchTarget('self', '${type}')"   ${!isSelfAvail ? 'disabled style="opacity:0.5"' : ''}>Себе</button>`;
@@ -545,12 +599,11 @@ function updateAllPrices() {
         if (el) el.textContent = `≈ ${formatTonPrice(amount)}`;
     });
 
-    updateStarsCustomPrice();
-    updateStarsBtn();
-    updatePremiumBtn();
-    updateTopupBtn();
+    if (typeof updateStarsCustomPrice === 'function') updateStarsCustomPrice();
+    if (typeof updateStarsBtn === 'function') updateStarsBtn();
+    if (typeof updatePremiumBtn === 'function') updatePremiumBtn();
+    if (typeof updateTopupBtn === 'function') updateTopupBtn();
 
-    // Обновляем цены на карточках аренды при смене валюты
     if (_currentTab === 'rent' && window.currentRentOffers.length > 0) {
         document.querySelectorAll('#rentCardsContainer .rent-card-price').forEach((el, index) => {
             if (window.currentRentOffers[index]) {
@@ -574,8 +627,8 @@ function selectPackage(type, value, element) {
     const container = element.closest('.packages-list');
     if (container) container.querySelectorAll('.pkg-btn').forEach(b => b.classList.remove('selected'));
     element.classList.add('selected');
-    if (type === 'stars') updateStarsBtn();
-    if (type === 'premium') updatePremiumBtn();
+    if (type === 'stars' && typeof updateStarsBtn === 'function') updateStarsBtn();
+    if (type === 'premium' && typeof updatePremiumBtn === 'function') updatePremiumBtn();
 }
 
 // --- payment.js ---
@@ -645,6 +698,10 @@ window.openPaymentModal = function (product) {
         usdPrice = tonPrice * getTonUsdRate();
     }
 
+    window._currentModalProduct = product;
+    window._currentModalBaseUsd = usdPrice;
+    window._currentModalBaseTon = tonPrice;
+
     const balNum = tonConnect.balance !== null ? parseFloat(tonConnect.balance) : 0;
     const isEnough = balNum >= tonPrice;
 
@@ -663,19 +720,22 @@ window.openPaymentModal = function (product) {
             <span style="font-size: 16px; font-weight: 800; color: var(--text);">${balNum.toFixed(2)} TON</span>
         </div>`;
 
+    const breakdownHtml = `
+        <div id="paymentBreakdown" class="payment-breakdown">
+            <div class="breakdown-row"><span>Товар:</span> <span id="bdProductPrice">0</span></div>
+            <div class="breakdown-row" id="bdGasRow"><span>Комиссия сети (Gas):</span> <span id="bdGasFee">0</span></div>
+            <div class="breakdown-divider"></div>
+            <div class="breakdown-row total"><span>Итого:</span> <span id="bdTotal">0</span></div>
+        </div>
+    `;
+
     showModal(t('modal_order'), `
         ${balIndicatorHtml}
         <div class="page-${product}-theme" style="margin-top: 10px;">
             <div class="modal-info-row"><span class="modal-info-label">${t('modal_product')}</span><span class="modal-info-value" style="color:var(--${product}-primary)">${productName}</span></div>
             <div class="modal-info-row"><span class="modal-info-label">${t('modal_recipient')}</span><span class="modal-info-value">${targetDisplay}</span></div>
 
-            <div style="display:flex; justify-content:space-between; align-items:center; margin: 18px 0;">
-                <span style="font-size:14px; font-weight:700; color:var(--text-secondary)">${t('modal_total')}</span>
-                <div style="text-align:right">
-                    <div style="font-size:22px; font-weight:800; color:var(--text)">$${usdPrice.toFixed(2)}</div>
-                    <div style="font-size:13px; font-weight:600; color:var(--text-muted)">(≈ ${tonPrice.toFixed(2)} TON)</div>
-                </div>
-            </div>
+            ${breakdownHtml}
 
             <label class="form-label" style="margin-bottom:8px;">${t('modal_pay_method')}</label>
             ${generatePaymentMethodsHtml(product, mode, tonPrice)}
@@ -683,29 +743,38 @@ window.openPaymentModal = function (product) {
             <button class="action-btn ${product}-action-btn" id="modalConfirmBtn" onclick="executePurchase('${product}')" style="width:100%; margin: 16px 0 0">${t('modal_confirm')}</button>
         </div>
     `);
+
+    updateModalBreakdown();
 }
 
 window.executePurchase = async function (product) {
     const target = getApiTarget(product);
     const pm = state.pay[product].method;
     const pc = state.pay[product].currency;
-    const btn = document.getElementById('modalConfirmBtn') || document.getElementById(`modal${product.charAt(0).toUpperCase() + product.slice(1)}Btn`);
+    const btn = document.getElementById('modalConfirmBtn');
 
-    // === ИНТЕГРАЦИЯ ОПЛАТЫ ЗВЕЗДАМИ ===
     if (pm === 'TelegramStars') {
         let starsCost = 0;
         let details = '';
+        
+        const gasFeeTon = window.sysConfig.gasFeeTon || 0.06;
+        const gasUsd = gasFeeTon * getTonUsdRate();
+        const gasStars = Math.ceil(gasUsd / RATES.USD.perStar);
+
         if (product === 'stars') {
             details = state.starsCustom ? parseInt(document.getElementById('starsCustomAmount')?.value) : state.stars;
-            starsCost = details; // Для звезд цена в звездах равна количеству
+            const baseStars = details; 
+            starsCost = baseStars + gasStars;
         } else if (product === 'premium') {
             details = state.premium;
             const usdPrice = details === 12 ? window.finalPrices.premium12 : (details === 6 ? window.finalPrices.premium6 : window.finalPrices.premium3);
-            starsCost = Math.ceil(usdPrice / RATES.USD.perStar);
+            const baseStars = Math.ceil(usdPrice / RATES.USD.perStar);
+            starsCost = baseStars + gasStars;
         }
         closeModal();
         return payWithTelegramStars(product, details, starsCost, target);
     }
+    
     let endpoint = '';
     let payload = { telegramId, currency: pc, method: pm, targetUsername: target };
     let productName = '';
@@ -720,7 +789,6 @@ window.executePurchase = async function (product) {
         productName = `Premium ${payload.months} мес.`;
     }
 
-    // Показываем Lottie-ожидание для внутреннего кошелька
     if (pm === 'InternalWallet') {
         closeModal();
         showTxLoading();
@@ -730,7 +798,6 @@ window.executePurchase = async function (product) {
 
     const result = await apiCall(endpoint, payload);
     
-    // Обработка результата для внутреннего кошелька (Lottie-результат)
     if (pm === 'InternalWallet') {
         if (result && result.Success) {
             if (result.TargetUsername && result.TargetUsername.startsWith('cheque_')) {
@@ -745,9 +812,7 @@ window.executePurchase = async function (product) {
         } else {
             showTxResult(false, "Ошибка оплаты", result?.Error || "Недостаточно средств на балансе", "");
         }
-    }
-    // Стандартная обработка для крипты и Stars
-    else {
+    } else {
         setLoading(btn, false);
         if (result && result.Success) { handleTxFlow(result); }
         else if (result) { safeAlert(t('loading') + ' ' + result.Error); }
@@ -774,33 +839,28 @@ window.handleTxFlow = function(txData) {
             loadProfile();
         }
     } 
-    // ОПЛАТА ЗВЕЗДАМИ
     else if (txData.PaymentMethod === 'TelegramStars') {
         if (window.sysConfig && window.sysConfig.isTestMode) {
             safeAlert(t('stars_test_ok') || 'Тестовая оплата прошла успешно!');
             fetchServerData();
             if (typeof loadProfile === 'function') loadProfile();
         } else {
-            // Ищем ссылку на счет от сервера (обычно это InvoiceLink или PayUrl)
             const invoiceUrl = txData.InvoiceLink || txData.PayUrl || txData.Url || txData.InvoiceUrl;
             
             if (invoiceUrl && tg.openInvoice) {
-                // Открываем платежку прямо внутри WebApp!
                 tg.openInvoice(invoiceUrl, function(status) {
                     if (status === 'paid') {
                         showTxResult(true, "Оплата успешна!", "Звезды успешно списаны.", "", () => {
                             fetchServerData();
                             if (typeof loadProfile === 'function') loadProfile();
-                            switchTab('profile'); // Перекидываем в профиль после успеха
+                            switchTab('profile');
                         });
                     } else if (status === 'failed') {
                         showTxResult(false, "Ошибка оплаты", "Оплата звездами не удалась.", "");
                     } else if (status === 'cancelled') {
-                        // Пользователь просто закрыл окно оплаты, ничего не делаем
                     }
                 });
             } else {
-                // Fallback: Если ссылки нет (старый бекенд), просим оплатить в боте
                 showModal(t('stars_invoice_title') || 'Счет выставлен', `
                     <div style="text-align:center; padding: 10px 0;">
                         <div style="font-size:44px; margin-bottom:12px;">⭐️</div>
@@ -812,7 +872,6 @@ window.handleTxFlow = function(txData) {
             }
         }
     } 
-    // ОПЛАТА КРИПТОЙ (Перевод)
     else if (txData.PaymentMethod === 'CryptoTransfer') {
         showModal(t('crypto_title') || 'Перевод', `
             <p style="color:var(--text-secondary);font-size:13px;margin-bottom:14px">${t('crypto_desc') || 'Переведите по реквизитам ниже:'}</p>
@@ -838,7 +897,6 @@ window.handleTxFlow = function(txData) {
 }
 
 window.payWithTelegramStars = async function(product, details, starsAmount, target = "~") {
-    // Включаем твою Lottie-анимацию ожидания
     if (typeof showTxLoading === 'function') showTxLoading(); 
 
     try {
@@ -850,12 +908,10 @@ window.payWithTelegramStars = async function(product, details, starsAmount, targ
         }, 'POST');
 
         if (res && res.Success && res.InvoiceUrl) {
-            // Прячем анимацию загрузки перед тем, как открыть нативную шторку TG
             document.getElementById('txStatusModal').style.display = 'none';
 
             tg.openInvoice(res.InvoiceUrl, function(status) {
                 if (status === 'paid') {
-                    // Возвращаем модалку и показываем красивую галочку
                     document.getElementById('txStatusModal').style.display = 'flex';
                     showTxResult(true, "Оплата успешна!", "Оплата звездами прошла успешно. Товар скоро будет выдан.", "", () => {
                         if (typeof loadProfile === 'function') loadProfile();
@@ -919,26 +975,6 @@ window.updateTopupAmountInput = function(val) {
     updateTopupBtn();
 }
 
-window.updateTopupModalPrice = function() {
-    let amount = state.useCustomTopup
-        ? parseFloat(document.getElementById('topupAmount').value)
-        : state.topupAmount;
-    if (!amount || amount <= 0) return;
-
-    const usdTotal = amount * getTonUsdRate();
-
-    if (state.pay.topup && state.pay.topup.method === 'TelegramStars') {
-        const starsTotal = Math.ceil(usdTotal / RATES.USD.starDeposit);
-        document.getElementById('modalTopupTotalUsd').textContent = `${starsTotal} ⭐️`;
-        document.getElementById('modalTopupTotalAlt').textContent = `(≈ $${usdTotal.toFixed(2)})`;
-    } else {
-        document.getElementById('modalTopupTotalUsd').textContent = formatUsdPrice(usdTotal);
-        let altTotal = formatTonPrice(amount);
-        if (state.currency === 'USD') altTotal = `${amount.toFixed(2)} TON`;
-        document.getElementById('modalTopupTotalAlt').textContent = `(≈ ${altTotal})`;
-    }
-}
-
 window.apiTopupWallet = function () {
     let amount = state.useCustomTopup
         ? parseFloat(document.getElementById('topupAmount').value)
@@ -946,18 +982,25 @@ window.apiTopupWallet = function () {
     if (!amount || amount < 0.5) return safeAlert('Минимальная сумма пополнения: 0.5 TON');
 
     state.pay.topup = { method: 'CryptoTransfer', currency: 'TON' };
+    
+    window._currentModalProduct = 'topup';
+    window._currentModalBaseTon = amount;
+    window._currentModalBaseUsd = amount * getTonUsdRate();
+
+    const breakdownHtml = `
+        <div id="paymentBreakdown" class="payment-breakdown">
+            <div class="breakdown-row"><span>Пополнение:</span> <span id="bdProductPrice">0</span></div>
+            <div class="breakdown-row" id="bdGasRow" style="display:none;"><span>Комиссия сети (Gas):</span> <span id="bdGasFee">0</span></div>
+            <div class="breakdown-divider"></div>
+            <div class="breakdown-row total"><span>Итого:</span> <span id="bdTotal">0</span></div>
+        </div>
+    `;
 
     showModal(t('modal_topup_title'), `
         <div class="page-wallet-theme" style="margin-top: 10px;">
             <div class="modal-info-row"><span class="modal-info-label">${t('modal_topup_amount')}</span><span class="modal-info-value" style="color:var(--wallet-primary)">${amount} TON</span></div>
 
-            <div style="display:flex; justify-content:space-between; align-items:center; margin: 18px 0;">
-                <span style="font-size:14px; font-weight:700; color:var(--text-secondary)">${t('modal_total')}</span>
-                <div style="text-align:right">
-                    <div style="font-size:22px; font-weight:800; color:var(--text)" id="modalTopupTotalUsd">$0.00</div>
-                    <div style="font-size:13px; font-weight:600; color:var(--text-muted)" id="modalTopupTotalAlt">(≈ 0.00 TON)</div>
-                </div>
-            </div>
+            ${breakdownHtml}
 
             <label class="form-label" style="margin-bottom:8px;">${t('modal_pay_method')}</label>
             <div class="payment-methods">
@@ -966,18 +1009,18 @@ window.apiTopupWallet = function () {
                 <div class="pay-method" style="grid-column: span 2" data-method="TelegramStars" data-currency="Stars" onclick="selectPayMethod('topup', this)">${t('modal_pay_stars')}</div>
             </div>
 
-            <button class="action-btn wallet-action-btn" id="modalConfirmTopupBtn" onclick="executeTopup(${amount})" style="width:100%; margin: 16px 0 0">${t('modal_topup_btn')}</button>
+            <button class="action-btn wallet-action-btn" id="modalConfirmBtn" onclick="executeTopup(${amount})" style="width:100%; margin: 16px 0 0">${t('modal_topup_btn')}</button>
         </div>
     `);
-    updateTopupModalPrice();
+    
+    updateModalBreakdown();
 }
 
 window.executeTopup = async function (amount) {
     const pm = state.pay.topup.method;
     const pc = state.pay.topup.currency;
-    const btn = document.getElementById('modalConfirmTopupBtn');
+    const btn = document.getElementById('modalConfirmBtn');
 
-    // === ИНТЕГРАЦИЯ ОПЛАТЫ ЗВЕЗДАМИ ===
     if (pm === 'TelegramStars') {
         const usdTotal = amount * getTonUsdRate();
         const starsCost = Math.ceil(usdTotal / RATES.USD.starDeposit);
@@ -1009,7 +1052,6 @@ async function apiWithdrawWallet() {
 //  api.js — Получение данных с бэкенда: цены, баланс, init
 // ============================================================
 
-// Дефолтные цены — используются до загрузки с сервера
 window.finalPrices = window.finalPrices || {
     star: 0.015, premium3: 3.99, premium6: 6.99, premium12: 11.99
 };
@@ -1017,17 +1059,17 @@ window.finalPrices = window.finalPrices || {
 async function fetchServerData() {
     const config = await apiCall('/webapp/config/prices');
     if (config && config.Success) {
-        // Забираем системные данные
         window.sysConfig.isTestMode = config.IsTestMode;
         window.sysConfig.receivingWallet = config.ReceivingWalletAddress;
+        
+        // ДОБАВЛЕН УЧЕТ ГАЗА С СЕРВЕРА
+        window.sysConfig.gasFeeTon = config.BlockchainGasFeeTon || 0.06;
 
-        // Забираем курсы
         RATES.USD.tonUsd = config.Rates.TonUsd;
-        RATES.USD.starDeposit = config.Rates.StarDepositUsd; // Курс для аренды в звездах
+        RATES.USD.starDeposit = config.Rates.StarDepositUsd; 
 
-        // Забираем УЖЕ ФИНАЛЬНЫЕ цены с бекенда (наценка уже включена)
         window.finalPrices.star = config.FinalPricesUsd.Star;
-        RATES.USD.perStar = config.FinalPricesUsd.Star; // Синхронизируем базовый курс покупки звезд с сервером
+        RATES.USD.perStar = config.FinalPricesUsd.Star; 
         
         PREMIUM_TON = {
             3: config.FinalPricesUsd.Premium3 / RATES.USD.tonUsd,
@@ -1035,7 +1077,6 @@ async function fetchServerData() {
             12: config.FinalPricesUsd.Premium12 / RATES.USD.tonUsd
         };
 
-        // Включаем красную плашку, если включен тестовый режим
         const testBanner = document.getElementById('testModeBanner');
         if (testBanner) testBanner.style.display = window.sysConfig.isTestMode ? 'block' : 'none';
 
@@ -1049,7 +1090,6 @@ async function fetchServerData() {
         updateHomeBalances();
     }
 
-    // Загружаем предложения по умолчанию, чтобы вкладка Аренды не была пустой
     if (!window.currentRentOffers || window.currentRentOffers.length === 0) {
         await switchRentCategory('gifts');
     }
@@ -1068,7 +1108,6 @@ async function init() {
                 if (btnSelf && btnOther) {
                     btnSelf.disabled = true;
                     btnSelf.style.opacity = '0.4';
-                    // Если сейчас выбрано "Себе", автоматически переключаем на "Другому"
                     if (state[`${prod}RecipientMode`] === 'self') {
                         setRecipientMode(prod, 'other', btnOther);
                     }
@@ -1077,7 +1116,6 @@ async function init() {
         });
     }
 
-    // 1. Получаем персонализированные цены и статус аккаунта с Fragment
     try {
         const initData = await apiCall(`/webapp/init?username=${reqUsername}`);
         if (initData && initData.Success) {
@@ -1091,7 +1129,6 @@ async function init() {
         }
     } catch (e) { console.error("Ошибка инициализации:", e); }
 
-    // 2. Имя и фото: Fragment → Telegram → fallback
     let firstName = 'Вы';
     if (window.selfStatus?.name && window.selfStatus.name.toLowerCase() !== reqUsername.toLowerCase()) {
         firstName = window.selfStatus.name;
@@ -1103,7 +1140,6 @@ async function init() {
     const photoUrl = window.selfStatus?.PhotoUrl;
     const avatarLetter = firstName[0]?.toUpperCase() || 'X';
 
-    // 3. Заполняем карточки "Себе" для Stars/Premium
     ['stars', 'premium'].forEach(prefix => {
         const ava = document.getElementById(`${prefix}AvatarSelf`);
         const name = document.getElementById(`${prefix}NameSelf`);
@@ -1118,13 +1154,11 @@ async function init() {
         if (usr) usr.textContent = usernameDisplay;
     });
 
-    // Ждем загрузки всех основных данных (цены, баланс, аренда, розыгрыши)
     await Promise.all([
         fetchServerData(),
         typeof window.fetchAllGiveaways === 'function' ? window.fetchAllGiveaways() : Promise.resolve()
     ]);
 
-    // Apply saved language
     if (window.currentLang && window.currentLang !== 'ru') {
         switchLang(window.currentLang);
     }
@@ -1132,11 +1166,9 @@ async function init() {
     const startParam = tg.initDataUnsafe?.start_param;
     if (startParam && startParam.startsWith('gw_')) {
         const gwId = startParam.replace('gw_', '');
-        // Не переключаем вкладки, просто открываем модалку поверх всего
         setTimeout(() => openGiveawayJoin(gwId), 300); 
     }
 
-    // ===== ГЛОБАЛЬНЫЙ ТАЙМЕР =====
     setInterval(() => {
         const timers = document.querySelectorAll('.countdown-timer');
         let needsRefresh = false;
@@ -1145,35 +1177,24 @@ async function init() {
             let endsAtStr = timer.getAttribute('data-ends');
             if (!endsAtStr) return;
             
-            // ФИКС: Если сервер не прислал 'Z', добавляем сами, чтобы JS понял, что это UTC
             if (!endsAtStr.endsWith('Z') && !endsAtStr.includes('+')) endsAtStr += 'Z';
             
             const endsAt = new Date(endsAtStr).getTime();
             const diff = endsAt - new Date().getTime();
 
             if (diff <= 0) {
-                // Читаем нужный текст (по умолчанию "Отменена")
                 const timeoutText = timer.getAttribute('data-timeout-text') || "Отменено";
                 timer.textContent = timeoutText;
-                
-                // Затираем инлайн-стили
                 timer.style.cssText = '';
-                
-                // Превращаем таймер в статус-плашку
                 timer.className = 'history-item-status status-cancelled'; 
                 
-                // --- ИСПРАВЛЕНИЕ ДЛЯ ДУБЛИРУЮЩИХСЯ ПЛАШЕК ---
-                // Ищем родительскую карточку транзакции
                 const historyRow = timer.closest('.history-item, .cheque-item');
                 if (historyRow) {
-                    // Находим старый бейдж "Ожидание" и удаляем его из верстки
                     const oldBadge = historyRow.querySelector('.status-pending');
                     if (oldBadge) {
                         oldBadge.remove();
                     }
                 }
-                // -------------------------------------------
-                
                 needsRefresh = true;
             } else {
                 const d = Math.floor(diff / (1000 * 60 * 60 * 24));
@@ -1188,7 +1209,6 @@ async function init() {
             }
         });
 
-        // Если хоть один таймер дошел до 0, обновляем данные с бэкенда
         if (needsRefresh) {
             if (typeof fetchServerData === 'function') fetchServerData();
             if (document.getElementById('gwTabParticipating')?.style.display === 'block' && typeof loadGiveawaysList === 'function') loadGiveawaysList('participating', false);
@@ -1196,58 +1216,56 @@ async function init() {
         }
     }, 1000);
 
-    // СРЫВАЕМ ЭКРАН ЗАГРУЗКИ ПОСЛЕ ПОЛНОЙ ГОТОВНОСТИ
     const loader = document.getElementById('appLoader');
     if (loader) {
         loader.classList.add('hidden');
-        // Через 300мс (когда закончится анимация затухания CSS) удаляем его из памяти
         setTimeout(() => loader.remove(), 300);
     }
 
     let _txModalCloseCallback = null;
 
     window.showTxLoading = function() {
-    const modal = document.getElementById('txStatusModal');
-    if(!modal) return;
-    document.getElementById('txLoadingState').style.display = 'block';
-    document.getElementById('txResultState').style.display = 'none';
-    modal.style.display = 'flex';
-}
-
-window.showTxResult = function(isSuccess, title, message, detailsHtml, onCloseCallback = null) {
-    document.getElementById('txLoadingState').style.display = 'none';
-    
-    const lottiePlayer = document.getElementById('txLottiePlayer');
-    const titleEl = document.getElementById('txResultTitle');
-    const messageEl = document.getElementById('txResultMessage');
-    const detailsEl = document.getElementById('txResultDetails');
-    const closeBtn = document.getElementById('txStatusCloseBtn'); // Берем кнопку по новому ID
-
-    if (isSuccess) {
-        lottiePlayer.load("https://cdn.changes.tg/gifts/models/Victory%20Medal/lottie/Dealmaker.json");
-        titleEl.style.color = 'var(--rent-primary)';
-    } else {
-        lottiePlayer.load("https://cdn.changes.tg/gifts/models/Input%20Key/lottie/End%20Game.json");
-        titleEl.style.color = '#f07070';
+        const modal = document.getElementById('txStatusModal');
+        if(!modal) return;
+        document.getElementById('txLoadingState').style.display = 'block';
+        document.getElementById('txResultState').style.display = 'none';
+        modal.style.display = 'flex';
     }
 
-    titleEl.innerText = title;
-    messageEl.innerText = message;
-    
-    if (detailsHtml) {
-        detailsEl.innerHTML = detailsHtml;
-        detailsEl.style.display = 'block';
-    } else {
-        detailsEl.style.display = 'none';
+    window.showTxResult = function(isSuccess, title, message, detailsHtml, onCloseCallback = null) {
+        document.getElementById('txLoadingState').style.display = 'none';
+        
+        const lottiePlayer = document.getElementById('txLottiePlayer');
+        const titleEl = document.getElementById('txResultTitle');
+        const messageEl = document.getElementById('txResultMessage');
+        const detailsEl = document.getElementById('txResultDetails');
+        const closeBtn = document.getElementById('txStatusCloseBtn');
+
+        if (isSuccess) {
+            lottiePlayer.load("https://cdn.changes.tg/gifts/models/Victory%20Medal/lottie/Dealmaker.json");
+            titleEl.style.color = 'var(--rent-primary)';
+        } else {
+            lottiePlayer.load("https://cdn.changes.tg/gifts/models/Input%20Key/lottie/End%20Game.json");
+            titleEl.style.color = '#f07070';
+        }
+
+        titleEl.innerText = title;
+        messageEl.innerText = message;
+        
+        if (detailsHtml) {
+            detailsEl.innerHTML = detailsHtml;
+            detailsEl.style.display = 'block';
+        } else {
+            detailsEl.style.display = 'none';
+        }
+
+        _txModalCloseCallback = onCloseCallback;
+        
+        closeBtn.onclick = () => {
+            document.getElementById('txStatusModal').style.display = 'none';
+            if (_txModalCloseCallback) _txModalCloseCallback(); 
+        };
+
+        document.getElementById('txResultState').style.display = 'block';
     }
-
-    _txModalCloseCallback = onCloseCallback;
-    
-    closeBtn.onclick = () => {
-        document.getElementById('txStatusModal').style.display = 'none';
-        if (_txModalCloseCallback) _txModalCloseCallback(); // Если есть редирект - выполняем
-    };
-
-    document.getElementById('txResultState').style.display = 'block';
-}
 }

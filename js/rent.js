@@ -596,4 +596,132 @@ window.submitTonConnectUri = async function(nftAddress) {
         if (typeof setLoading === 'function') setLoading(btn, false);
         showSuccessModal('Ошибка', 'Не удалось связаться с сервером.', 'Понятно', true);
     }
+
+    // Функция-помощник для поллинга (добавь в core.js или rent.js)
+async function waitForTransactionCompletion(txId, onSuccess, onFail) {
+    let attempts = 0;
+    const maxAttempts = 30; // Ждем до 90 секунд (30 раз по 3 сек)
+
+    const interval = setInterval(async () => {
+        attempts++;
+        try {
+            // Запрашиваем статус у твоего API
+            const res = await apiFetch(`/transactions/${txId}`, 'GET');
+            if (res && res.Success && res.Transaction) {
+                const status = res.Transaction.Status;
+                
+                if (status === 'Completed') {
+                    clearInterval(interval);
+                    onSuccess();
+                } else if (status === 'Failed' || status === 'Cancelled') {
+                    clearInterval(interval);
+                    onFail(res.Transaction.ProductDetails || 'Транзакция отменена или завершилась с ошибкой.');
+                }
+            }
+        } catch (e) { console.error("Ошибка поллинга:", e); }
+
+        if (attempts >= maxAttempts) {
+            clearInterval(interval);
+            onFail('Превышено время ожидания сети TON. NFT появится в вашем профиле чуть позже.');
+        }
+    }, 3000); // Каждые 3 секунды
+}
+
+// Твоя логика оплаты в rent.js:
+async function processStarsPayment(productData) {
+    showLoading("Формируем счет..."); // Показываем лоадер для "ускорения" UX
+    
+    const res = await apiFetch('/webapp/pay/stars/create', 'POST', productData);
+    hideLoading();
+
+    if (res.Success && res.InvoiceUrl) {
+        tg.openInvoice(res.InvoiceUrl, (status) => {
+            if (status === 'paid') {
+                // ВАЖНО: Тут мы меняем логику!
+                showLoading("Оплата получена! Выполняем смарт-контракт в сети TON (до 1-2 минут)...");
+                
+                waitForTransactionCompletion(res.TransactionId, 
+                    () => {
+                        hideLoading();
+                        showNotification("Успешно! NFT добавлено в раздел 'Моя аренда'");
+                        closeModal('rentModal');
+                        // Сразу перезагружаем список и перекидываем юзера
+                        loadMyRentals(); 
+                        document.getElementById('tab-btn-my-rent').click(); 
+                    },
+                    (errorMsg) => {
+                        hideLoading();
+                        showNotification("Ошибка: " + errorMsg, "error");
+                    }
+                );
+            } else {
+                showNotification("Оплата отменена", "error");
+            }
+        });
+    } else {
+        showNotification(res.Error || "Ошибка создания счета", "error");
+    }
+}
+
+// Глобальная переменная для хранения загруженных аренд
+window.currentMyRentals = [];
+
+// Функция отрисовки списка
+function renderMyRentals(rentals) {
+    const container = document.getElementById('my-rent-list-container'); // Твой контейнер
+    window.currentMyRentals = rentals; // Сохраняем для модалки
+
+    if (!rentals || rentals.length === 0) {
+        container.innerHTML = '<p style="text-align:center; margin-top: 20px;">У вас пока нет активной аренды.</p>';
+        return;
+    }
+
+    let html = '<div class="my-rent-grid">';
+    rentals.forEach(r => {
+        const expireDate = new Date(r.ExpiresAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+        html += `
+            <div class="my-rent-card" onclick="openMyRentDetails('${r.Id}')">
+                <img src="${r.ImageUrl}" alt="NFT">
+                <div class="title">${r.Name}</div>
+                <div class="expire">До ${expireDate}</div>
+            </div>
+        `;
+    });
+    html += '</div>';
+    
+    container.innerHTML = html;
+}
+
+// Функция открытия модалки
+function openMyRentDetails(rentalId) {
+    const rental = window.currentMyRentals.find(r => r.Id === rentalId);
+    if (!rental) return;
+
+    document.getElementById('myRentModalImg').src = rental.ImageUrl;
+    document.getElementById('myRentModalTitle').innerText = rental.Name;
+    
+    const expireStr = new Date(rental.ExpiresAt).toLocaleString('ru-RU', { 
+        day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute:'2-digit' 
+    });
+    document.getElementById('myRentModalExpire').innerText = 'Арендовано до: ' + expireStr;
+
+    const connectBtn = document.getElementById('myRentModalConnectBtn');
+    if (rental.IsConnected) {
+        connectBtn.innerText = 'Уже подключено';
+        connectBtn.disabled = true;
+        connectBtn.style.opacity = '0.5';
+        connectBtn.onclick = null;
+    } else {
+        connectBtn.innerText = 'Подключить к Telegram (Ton Connect)';
+        connectBtn.disabled = false;
+        connectBtn.style.opacity = '1';
+        connectBtn.onclick = () => {
+            closeModal('myRentDetailsModal');
+            startTonConnectFlow(rental.NftAddress); // Твоя функция вызова TonConnect
+        };
+    }
+
+    // Открываем саму модалку
+    document.getElementById('myRentDetailsModal').style.display = 'block';
+}
 }

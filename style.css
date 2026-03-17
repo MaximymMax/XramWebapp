@@ -532,3 +532,44 @@ img.lazy-loaded {
     opacity: 1 !important;
     transition: opacity 0.3s ease-in-out; /* Плавное проявление картинки */
 }
+
+.my-rent-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* 2 колонки, чтобы были маленькими */
+    gap: 12px;
+    padding: 10px 0;
+}
+
+.my-rent-card {
+    background: var(--tg-theme-bg-color, #fff);
+    border: 1px solid var(--tg-theme-hint-color, #ccc);
+    border-radius: 12px;
+    padding: 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+
+.my-rent-card:active { transform: scale(0.96); }
+
+.my-rent-card img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.my-rent-card .title {
+    font-size: 13px;
+    font-weight: 600;
+    margin: 8px 0 4px;
+    color: var(--tg-theme-text-color, #000);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.my-rent-card .expire {
+    font-size: 11px;
+    color: var(--tg-theme-hint-color, #888);
+}

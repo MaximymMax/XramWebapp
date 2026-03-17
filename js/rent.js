@@ -461,13 +461,47 @@ window.apiRentGift = async function() {
         const usdTotal = totalTon * getTonUsdRate();
         const starsCost = Math.ceil(usdTotal / RATES.USD.starDeposit);
         
-        // ФИКС: Используем строгую строку нанотонов, если она есть
         const exactNano = window.RENT_NANO_PER_DAY || (window.RENT_TON_PER_DAY * 1000000000).toString();
-        // Формат details для бэкенда: nftAddress:exactNano:дни
-        const details = `${state.rentNftAddress}:${exactNano}:${days}`;
+        
+        // ФИКС 1: Упаковываем реальное название и картинку, чтобы в профиле не было 88888!
+        const encodedName = encodeURIComponent(state.rentNftName);
+        const encodedImg = encodeURIComponent(state.rentImageUrl);
+        const details = `${state.rentNftAddress}:${exactNano}:${days}:${encodedName}:${encodedImg}`;
         
         closeModal();
-        return payWithTelegramStars('rentgift', details, starsCost, telegramId.toString());
+        
+        // ФИКС 2: Включаем красивый экран загрузки ПЕРЕД созданием счета
+        showTxLoading();
+        
+        // Сами запрашиваем счет у сервера
+        const res = await apiCall('/webapp/pay/stars/create', {
+            product: 'rentgift',
+            details: details,
+            target: telegramId.toString()
+        }, 'POST');
+
+        if (res && res.Success && res.InvoiceUrl) {
+            // Открываем окно оплаты Telegram и ждем результат
+            tg.openInvoice(res.InvoiceUrl, function(status) {
+                if (status === 'paid') {
+                    // Если оплатил - показываем успешную анимацию!
+                    showTxResult(true, "Аренда оформлена!", `Вы успешно оплатили аренду на ${days} дн. звездами.`, `<div style="text-align:center">Нажмите «Закрыть», чтобы перейти к установке NFT.</div>`, () => {
+                        switchTab('profile');
+                        setTimeout(() => switchProfileTab('rentals', document.querySelectorAll('#page-profile .ptab')[2]), 50);
+                    });
+                    fetchServerData();
+                    loadProfile();
+                } else if (status === 'failed') {
+                    showTxResult(false, "Ошибка оплаты", "Списание звезд не удалось.", "");
+                } else {
+                    // Если просто закрыл счет не оплатив - убираем загрузку
+                    document.getElementById('txLoadingState').style.display = 'none';
+                }
+            });
+        } else {
+            showTxResult(false, "Сбой создания счета", res?.Error || "Сервер не смог создать счет", "");
+        }
+        return;
     }
 
     // Если внутренний кошелек, показываем Lottie-загрузку сразу

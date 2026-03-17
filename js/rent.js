@@ -53,9 +53,7 @@ function getBaseCollectionName(name) {
     return name;
 }
 
-// ── Кастомные дропдауны (коллекции / модели) ─────────────────
-// Логика перенесена в core.js
-
+// ── Сортировка ─────────────────────────────────────────────────
 window.selectSortOption = function(el) {
     const value = el.dataset.value;
     const label = el.querySelector('.sort-item-label').textContent;
@@ -69,11 +67,11 @@ window.selectSortOption = function(el) {
 
     document.getElementById('sortDropdown').classList.remove('open');
     loadRentOffers(state.rentCategory, state.currentCollection, state.currentModel, true);
-}
+};
 
 window.onRentSortChange = function() {
     loadRentOffers(state.rentCategory, state.currentCollection, state.currentModel, true);
-}
+};
 
 // ── Категории ─────────────────────────────────────────────────
 async function switchRentCategory(category, btn) {
@@ -121,9 +119,6 @@ async function switchRentCategory(category, btn) {
                     </div>`;
             });
             document.getElementById('colMenu').innerHTML = html;
-            
-            // УДАЛИ строчку observeRentImages(document.getElementById('colMenu'));
-            
             onCollectionSelected('', 'Все коллекции', 0, '');
         }
     } else {
@@ -178,15 +173,12 @@ window.onCollectionSelected = async function(address, name, rentFloor, imgSrc) {
             });
         }
         document.getElementById('modMenu').innerHTML = mHtml;
-        
-        // УДАЛИ строчку observeRentImages(document.getElementById('modMenu'));
-        
         onModelSelected('', 'Все модели', 0, '');
     } else {
         modWrap.style.display = 'none';
         await loadRentOffers(state.rentCategory, '', null, true);
     }
-}
+};
 
 window.onModelSelected = async function(modelId, modelName, rentFloor, imgSrc) {
     document.getElementById('modelDropdown').classList.remove('open');
@@ -202,52 +194,54 @@ window.onModelSelected = async function(modelId, modelName, rentFloor, imgSrc) {
 
     state.currentModel = modelId;
     await loadRentOffers(state.rentCategory, state.currentCollection, state.currentModel, true);
-}
+};
 
 // ── Lazy Load Observer ────────────────────────────────────────
-const _rentImgObserver = new IntersectionObserver((entries, observer) => {
+let _rentImgObserver = new IntersectionObserver((entries, observer) => {
     entries.forEach(entry => {
         if (entry.isIntersecting) {
             const img = entry.target;
             if (img.dataset.src) {
                 img.src = img.dataset.src;
-                // Как только картинка загрузилась - добавляем класс для плавного появления
-                img.onload = () => img.classList.add('lazy-loaded'); 
+                img.onload = () => img.classList.add('lazy-loaded');
                 img.removeAttribute('data-src');
-                observer.unobserve(img); // Перестаем следить за загруженной
+                observer.unobserve(img);
             }
         }
     });
-}, { 
-    // Начинаем грузить за 250px до того, как картинка появится на экране (чтобы не было видно подгрузок)
-    rootMargin: '250px 0px', 
-    threshold: 0.01 
-});
+}, { rootMargin: '250px 0px', threshold: 0.01 });
 
 function observeRentImages(container) {
     if (!container) return;
     container.querySelectorAll('img[data-src]').forEach(img => _rentImgObserver.observe(img));
 }
 
-function initRentImageObserver() {
-    if (_rentImgObserver) _rentImgObserver.disconnect();
-    _rentImgObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const img = entry.target;
-                if (img.dataset.src) {
-                    img.src = img.dataset.src;
-                    img.removeAttribute('data-src');
-                    _rentImgObserver.unobserve(img);
-                }
-            }
-        });
-    }, { rootMargin: '100px 0px', threshold: 0.01 });
+// ── Получить URL картинки для карточки аренды ─────────────────
+function getFragmentImageUrl(name) {
+    if (!name) return '';
+    // Подарок: "Santa Hat #12345"
+    if (name.includes('#')) {
+        const parts = name.split('#');
+        const baseName = parts[0].trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+        const num = parts[1].trim();
+        return `https://nft.fragment.com/gift/${baseName}-${num}.medium.jpg`;
+    }
+    return '';
 }
 
-function observeRentImages(container) {
-    if (!_rentImgObserver) initRentImageObserver();
-    container.querySelectorAll('img[data-src]').forEach(img => _rentImgObserver.observe(img));
+// Для username/number в карточке аренды
+function getFragmentRentCardImage(offer) {
+    const cat = state.rentCategory;
+    const name = offer.Name || '';
+    if (cat === 'usernames') {
+        const clean = name.replace(/^@/, '').trim().toLowerCase();
+        return { type: 'username', text: name };
+    }
+    if (cat === 'numbers') {
+        return { type: 'number', text: name };
+    }
+    const fragmentImg = getFragmentImageUrl(name);
+    return { type: 'img', url: fragmentImg || offer.ImageUrl };
 }
 
 // ── Загрузка карточек ─────────────────────────────────────────
@@ -275,26 +269,33 @@ async function loadRentOffers(category, collectionAddress, model, reset = true) 
     if (res && res.Success) {
         if (reset) document.getElementById('rentCardsContainer').innerHTML = '';
 
-        // ФИКС: Меняем res.Offers на res.Items
         if (res.Items && res.Items.length > 0) {
-            window.currentRentOffers.push(...res.Items); // И здесь
+            window.currentRentOffers.push(...res.Items);
             const container = document.getElementById('rentCardsContainer');
             const fragment = document.createDocumentFragment();
 
-            res.Items.forEach(o => { 
-                // ФИКС: Перезаписываем общую картинку на уникальную с Фрагмента
-                const fragmentImg = getFragmentImageUrl(o.Name);
-                if (fragmentImg) o.ImageUrl = fragmentImg;
-
+            res.Items.forEach(o => {
                 const card = document.createElement('div');
                 card.className = 'rent-card page-rent-theme';
                 card.onclick = () => openRentModal(o.NftAddress);
 
-                const img = document.createElement('img');
-                img.dataset.src = o.ImageUrl; // Теперь тут лежит правильная ссылка
-                img.alt = 'NFT';
-                img.className = 'rent-card-img-lazy';
-                img.onerror = function() { this.style.opacity = '0.3'; };
+                const visual = getFragmentRentCardImage(o);
+
+                if (visual.type === 'username' || visual.type === 'number') {
+                    // Для username/number — градиентный блок
+                    const gradientDiv = document.createElement('div');
+                    gradientDiv.className = 'rent-card-gradient-block';
+                    gradientDiv.textContent = visual.text;
+                    card.appendChild(gradientDiv);
+                } else {
+                    const imgUrl = visual.url;
+                    const img = document.createElement('img');
+                    img.dataset.src = imgUrl;
+                    img.alt = 'NFT';
+                    img.className = 'rent-card-img-lazy';
+                    img.onerror = function() { this.style.opacity = '0.3'; };
+                    card.appendChild(img);
+                }
 
                 const content = document.createElement('div');
                 content.className = 'rent-card-content';
@@ -302,7 +303,6 @@ async function loadRentOffers(category, collectionAddress, model, reset = true) 
                     <div class="rent-card-name">${o.Name}</div>
                     <div class="rent-card-price" data-nft="${o.NftAddress}">~${formatTonPrice(o.PriceTon)} / дн</div>`;
 
-                card.appendChild(img);
                 card.appendChild(content);
                 fragment.appendChild(card);
             });
@@ -329,19 +329,9 @@ async function loadRentOffers(category, collectionAddress, model, reset = true) 
     }
 }
 
-function getFragmentImageUrl(name) {
-    if (!name || !name.includes('#')) return '';
-    const parts = name.split('#');
-    // Очищаем название (Sky Stilettos -> skystilettos)
-    const baseName = parts[0].trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-    // Берем номер (15477)
-    const num = parts[1].trim();
-    return `https://nft.fragment.com/gift/${baseName}-${num}.medium.jpg`;
-}
-
 window.loadNextRentPage = function() {
     if (state.nextCursor) loadRentOffers(state.rentCategory, state.currentCollection, state.currentModel, false);
-}
+};
 
 // ── Модальное окно аренды ─────────────────────────────────────
 window.openRentModal = function(address) {
@@ -354,6 +344,7 @@ window.openRentModal = function(address) {
     state.rentMaxDays = offer.MaxDays;
     state.rentImageUrl = offer.ImageUrl;
     window.RENT_TON_PER_DAY = offer.PriceTon;
+    window.RENT_NANO_PER_DAY = offer.PriceNano;
     state.rentDays = offer.MinDays;
     const totalTon = window.RENT_TON_PER_DAY * state.rentDays;
     const balNum = tonConnect.balance !== null ? parseFloat(tonConnect.balance) : 0;
@@ -361,12 +352,20 @@ window.openRentModal = function(address) {
     const balClass = isEnough ? 'selected' : '';
     const otherClass = !isEnough ? 'selected' : '';
     const balStyle = !isEnough ? 'opacity: 0.4; pointer-events: none;' : '';
-    window.RENT_TON_PER_DAY = offer.PriceTon; // Для красивых расчетов на фронте
-    window.RENT_NANO_PER_DAY = offer.PriceNano; // ТОЧНАЯ СТРОКА для отправки на бэкенд
+
     if (isEnough) {
         state.pay.rent = { method: 'InternalWallet', currency: 'TON' };
     } else {
         state.pay.rent = { method: 'TelegramStars', currency: 'Stars' };
+    }
+
+    // Определяем картинку для модалки
+    const visual = getFragmentRentCardImage(offer);
+    let imgHtml;
+    if (visual.type === 'username' || visual.type === 'number') {
+        imgHtml = `<div style="width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,#2AABEE,#229ED9);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:11px;padding:4px;word-break:break-all;text-align:center;flex-shrink:0;">${visual.text}</div>`;
+    } else {
+        imgHtml = `<img src="${visual.url || offer.ImageUrl}" style="width:64px;height:64px;border-radius:12px;object-fit:cover;background:var(--surface-3);flex-shrink:0;" onerror="this.style.display='none'">`;
     }
 
     const balIndicatorHtml = `
@@ -381,7 +380,7 @@ window.openRentModal = function(address) {
     showModal('Аренда NFT', `
         ${balIndicatorHtml}
         <div style="display:flex; gap:14px; margin-bottom:16px; align-items:center; margin-top:10px" class="page-rent-theme">
-            <img src="${offer.ImageUrl}" style="width:64px;height:64px;border-radius:12px;object-fit:cover;background:var(--surface-3)" onerror="this.style.display='none'">
+            ${imgHtml}
             <div style="min-width:0; flex:1">
                 <div style="font-weight:800; font-size:16px; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis">${offer.Name}</div>
                 <a href="${offer.TelegramUrl}" target="_blank" style="color:var(--rent-primary); font-size:12px; font-weight:600; text-decoration:none;">🔗 Открыть в Telegram</a>
@@ -417,13 +416,13 @@ window.openRentModal = function(address) {
     `);
 
     updateRentModalPrice();
-}
+};
 
 window.updateRentModalPrice = function() {
     const input = document.getElementById('modalRentDays');
     const errorMsg = document.getElementById('modalRentError');
     const btn = document.getElementById('modalRentBtn');
-    
+
     let days = parseInt(input.value);
     if (isNaN(days)) days = 0;
     state.rentDays = days;
@@ -433,12 +432,11 @@ window.updateRentModalPrice = function() {
         errorMsg.style.display = 'block'; btn.disabled = true; btn.style.opacity = '0.5';
     } else {
         errorMsg.style.display = 'none'; btn.disabled = false; btn.style.opacity = '1';
-        
+
         const totalTon = window.RENT_TON_PER_DAY * days;
         const usdTotal = totalTon * getTonUsdRate();
-        
+
         if (state.pay.rent && state.pay.rent.method === 'TelegramStars') {
-            // ИСПОЛЬЗУЕМ НОВЫЙ КУРС ПРИЕМА ЗВЕЗД (RATES.USD.starDeposit)
             document.getElementById('modalRentTotalUsd').textContent = `${Math.ceil(usdTotal / RATES.USD.starDeposit)} ⭐️`;
             document.getElementById('modalRentTotalAlt').textContent = `(≈ $${usdTotal.toFixed(2)})`;
         } else {
@@ -446,7 +444,7 @@ window.updateRentModalPrice = function() {
             document.getElementById('modalRentTotalAlt').textContent = `(≈ ${formatTonPrice(totalTon)})`;
         }
     }
-}
+};
 
 window.apiRentGift = async function() {
     const days = state.rentDays;
@@ -455,7 +453,6 @@ window.apiRentGift = async function() {
     const pc = state.pay.rent.currency;
     const btn = document.getElementById('modalRentBtn');
 
-    // ФИКС: Создаем "фантомную" карточку для моментального отображения
     const fakePendingRental = {
         Id: 'pending-' + Date.now(),
         Name: state.rentNftName,
@@ -464,23 +461,22 @@ window.apiRentGift = async function() {
         ImageUrl: state.rentImageUrl,
         ExpiresAt: new Date(Date.now() + days * 86400000).toISOString(),
         IsConnected: false,
-        IsPending: true // Флаг, что она еще обрабатывается
+        IsPending: true
     };
 
-    // === ИНТЕГРАЦИЯ ОПЛАТЫ ЗВЕЗДАМИ ===
     if (pm === 'TelegramStars') {
         const totalTon = window.RENT_TON_PER_DAY * days;
         const usdTotal = totalTon * getTonUsdRate();
         const starsCost = Math.ceil(usdTotal / RATES.USD.starDeposit);
-        
+
         const exactNano = window.RENT_NANO_PER_DAY || (window.RENT_TON_PER_DAY * 1000000000).toString();
         const encodedName = encodeURIComponent(state.rentNftName);
         const encodedImg = encodeURIComponent(state.rentImageUrl);
         const details = `${state.rentNftAddress}:${exactNano}:${days}:${encodedName}:${encodedImg}`;
-        
+
         closeModal();
         showTxLoading();
-        
+
         const res = await apiCall('/webapp/pay/stars/create', {
             product: 'rentgift',
             details: details,
@@ -490,22 +486,21 @@ window.apiRentGift = async function() {
         if (res && res.Success && res.InvoiceUrl) {
             tg.openInvoice(res.InvoiceUrl, function(status) {
                 if (status === 'paid') {
-                    window.pendingRental = fakePendingRental; // Сохраняем фантомку
-                    showTxResult(true, "Аренда оформлена!", `Вы успешно оплатили аренду на ${days} дн. звездами.`, `<div style="text-align:center">Нажмите «Закрыть», чтобы перейти к установке NFT.</div>`, () => {
+                    window.pendingRental = fakePendingRental;
+                    showTxResult(true, "Аренда оформлена!", `Вы успешно оплатили аренду на ${days} дн. звёздами.`, `<div style="text-align:center">Нажмите «Закрыть», чтобы перейти к установке NFT.</div>`, () => {
                         switchTab('profile');
-                        // Обновляем профиль ТОЛЬКО после клика "Закрыть", давая серверу фору в пару секунд
                         fetchServerData();
-                        loadProfile(); 
+                        loadProfile();
                         setTimeout(() => switchProfileTab('rentals', document.querySelectorAll('#page-profile .ptab')[2]), 50);
                     });
                 } else if (status === 'failed') {
-                    showTxResult(false, "Ошибка оплаты", "Списание звезд не удалось.", "");
+                    showTxResult(false, "Ошибка оплаты", "Списание звёзд не удалось.", "");
                 } else {
                     document.getElementById('txLoadingState').style.display = 'none';
                 }
             });
         } else {
-            showTxResult(false, "Сбой создания счета", res?.Error || "Сервер не смог создать счет", "");
+            showTxResult(false, "Сбой создания счёта", res?.Error || "Сервер не смог создать счёт", "");
         }
         return;
     }
@@ -520,17 +515,17 @@ window.apiRentGift = async function() {
     const result = await apiCall('/webapp/transactions/create/rent', {
         telegramId, currency: pc, method: pm,
         nftAddress: state.rentNftAddress, nftName: state.rentNftName,
-        days, pricePerDayTon: window.RENT_TON_PER_DAY, priceNano: window.RENT_NANO_PER_DAY, 
+        days, pricePerDayTon: window.RENT_TON_PER_DAY, priceNano: window.RENT_NANO_PER_DAY,
         category: state.rentCategory, imageUrl: state.rentImageUrl
     }, 'POST');
 
     if (pm === 'InternalWallet') {
         if (result && result.Success) {
-            window.pendingRental = fakePendingRental; // Сохраняем фантомку
+            window.pendingRental = fakePendingRental;
             showTxResult(true, "Аренда оформлена!", `Вы успешно арендовали NFT на ${days} дн.`, `<div style="text-align:center">Нажмите «Закрыть», чтобы перейти к установке NFT.</div>`, () => {
                 switchTab('profile');
                 fetchServerData();
-                loadProfile(); 
+                loadProfile();
                 setTimeout(() => switchProfileTab('rentals', document.querySelectorAll('#page-profile .ptab')[2]), 50);
             });
         } else {
@@ -538,11 +533,10 @@ window.apiRentGift = async function() {
         }
     } else {
         setLoading(btn, false);
-        if (result && result.Success) { 
-            closeModal(); handleTxFlow(result); 
-        } else if (result) { safeAlert('Ошибка: ' + result.Error); }
+        if (result && result.Success) { closeModal(); handleTxFlow(result); }
+        else if (result) { safeAlert('Ошибка: ' + result.Error); }
     }
-}
+};
 
 // ── TonConnect (установка NFT) ────────────────────────────────
 window.openTonConnectModal = function(nftAddress) {
@@ -555,12 +549,12 @@ window.openTonConnectModal = function(nftAddress) {
         <input type="text" id="tcUriInput" class="form-input" placeholder="tc://..." style="margin-bottom: 14px">
         <button class="action-btn rent-action-btn" onclick="submitTonConnectUri('${nftAddress}')" style="width:100%; margin:0">Подключить</button>
     `);
-}
+};
 
 window.submitTonConnectUri = async function(nftAddress) {
     const uri = document.getElementById('tcUriInput').value.trim();
     if (!uri.startsWith('tc://')) {
-        return showSuccessModal('Ошибка', 'Ссылка должна начинаться с tc://', 'Понятно', true);
+        return safeAlert('\u041e\u0448\u0438\u0431\u043a\u0430: \u0421\u0441\u044b\u043b\u043a\u0430 \u0434\u043e\u043b\u0436\u043d\u0430 \u043d\u0430\u0447\u0438\u043d\u0430\u0442\u044c\u0441\u044f \u0441 tc://');
     }
 
     const btn = document.querySelector('.rent-action-btn');
@@ -569,225 +563,24 @@ window.submitTonConnectUri = async function(nftAddress) {
     try {
         const response = await fetch(`${API_BASE}/webapp/rent/connect`, {
             method: 'POST',
-            headers: { 
-                'Authorization': authHeader,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ 
-                nftAddress: nftAddress, 
-                uri: uri 
-            })
+            headers: { 'Authorization': authHeader, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nftAddress, uri })
         });
-        
+
         const res = await response.json();
         if (typeof setLoading === 'function') setLoading(btn, false);
 
         if (res && res.Success) {
-            closeModal(); // Закрываем окно ввода ссылки
-            showSuccessModal('Успешно!', 'Кошелек подключен. NFT скоро обновит статус в профиле.', 'Отлично');
-            if (typeof loadProfile === 'function') loadProfile(); // Обновляем данные профиля
+            closeModal();
+            showModal('\u0423\u0441\u043f\u0435\u0448\u043d\u043e!', '<p style="color:var(--rent-primary); text-align:center; font-size:15px; padding:10px 0;">\u041a\u043e\u0448\u0435\u043b\u0451\u043a \u043f\u043e\u0434\u043a\u043b\u044e\u0447\u0451\u043d. NFT \u0441\u043a\u043e\u0440\u043e \u043e\u0431\u043d\u043e\u0432\u0438\u0442 \u0441\u0442\u0430\u0442\u0443\u0441 \u0432 \u043f\u0440\u043e\u0444\u0438\u043b\u0435.</p><button class="action-btn rent-action-btn" onclick="closeModal()" style="width:100%;margin:0">\u041e\u0442\u043b\u0438\u0447\u043d\u043e</button>');
+            if (typeof loadProfile === 'function') loadProfile();
         } else {
             let errorMsg = res?.Error || JSON.stringify(res);
-            // Делаем вывод системных ошибок более понятным
-            if (errorMsg.includes('forbidden')) errorMsg = "Доступ запрещен. Убедитесь, что арендовали этот NFT.";
-            showSuccessModal('Ошибка', errorMsg, 'Понятно', true);
+            if (errorMsg.includes('forbidden')) errorMsg = "Доступ запрещён. Убедитесь, что арендовали этот NFT.";
+            safeAlert('\u041e\u0448\u0438\u0431\u043a\u0430: ' + errorMsg);
         }
     } catch (e) {
         if (typeof setLoading === 'function') setLoading(btn, false);
-        showSuccessModal('Ошибка', 'Не удалось связаться с сервером.', 'Понятно', true);
+        safeAlert('\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0441\u0432\u044f\u0437\u0430\u0442\u044c\u0441\u044f \u0441 \u0441\u0435\u0440\u0432\u0435\u0440\u043e\u043c.');
     }
-
-    // Функция-помощник для поллинга (добавь в core.js или rent.js)
-async function waitForTransactionCompletion(txId, onSuccess, onFail) {
-    let attempts = 0;
-    const maxAttempts = 30; // Ждем до 90 секунд (30 раз по 3 сек)
-
-    const interval = setInterval(async () => {
-        attempts++;
-        try {
-            // Запрашиваем статус у твоего API
-            const res = await apiFetch(`/transactions/${txId}`, 'GET');
-            if (res && res.Success && res.Transaction) {
-                const status = res.Transaction.Status;
-                
-                if (status === 'Completed') {
-                    clearInterval(interval);
-                    onSuccess();
-                } else if (status === 'Failed' || status === 'Cancelled') {
-                    clearInterval(interval);
-                    onFail(res.Transaction.ProductDetails || 'Транзакция отменена или завершилась с ошибкой.');
-                }
-            }
-        } catch (e) { console.error("Ошибка поллинга:", e); }
-
-        if (attempts >= maxAttempts) {
-            clearInterval(interval);
-            onFail('Превышено время ожидания сети TON. NFT появится в вашем профиле чуть позже.');
-        }
-    }, 3000); // Каждые 3 секунды
-}
-
-// Твоя логика оплаты в rent.js:
-async function processStarsPayment(productData) {
-    showLoading("Формируем счет..."); // Показываем лоадер для "ускорения" UX
-    
-    const res = await apiFetch('/webapp/pay/stars/create', 'POST', productData);
-    hideLoading();
-
-    if (res.Success && res.InvoiceUrl) {
-        tg.openInvoice(res.InvoiceUrl, (status) => {
-            if (status === 'paid') {
-                // ВАЖНО: Тут мы меняем логику!
-                showLoading("Оплата получена! Выполняем смарт-контракт в сети TON (до 1-2 минут)...");
-                
-                waitForTransactionCompletion(res.TransactionId, 
-                    () => {
-                        hideLoading();
-                        showNotification("Успешно! NFT добавлено в раздел 'Моя аренда'");
-                        closeModal('rentModal');
-                        // Сразу перезагружаем список и перекидываем юзера
-                        loadMyRentals(); 
-                        document.getElementById('tab-btn-my-rent').click(); 
-                    },
-                    (errorMsg) => {
-                        hideLoading();
-                        showNotification("Ошибка: " + errorMsg, "error");
-                    }
-                );
-            } else {
-                showNotification("Оплата отменена", "error");
-            }
-        });
-    } else {
-        showNotification(res.Error || "Ошибка создания счета", "error");
-    }
-}
-
-// Глобальная переменная для хранения загруженных аренд
-window.currentMyRentals = [];
-
-// Функция отрисовки списка
-function renderMyRentals(rentals) {
-    const container = document.getElementById('my-rent-list-container'); // Твой контейнер
-    window.currentMyRentals = rentals; // Сохраняем для модалки
-
-    if (!rentals || rentals.length === 0) {
-        container.innerHTML = '<p style="text-align:center; margin-top: 20px;">У вас пока нет активной аренды.</p>';
-        return;
-    }
-
-    let html = '<div class="my-rent-grid">';
-    rentals.forEach(r => {
-        const expireDate = new Date(r.ExpiresAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
-        html += `
-            <div class="my-rent-card" onclick="openMyRentDetails('${r.Id}')">
-                <img src="${r.ImageUrl}" alt="NFT">
-                <div class="title">${r.Name}</div>
-                <div class="expire">До ${expireDate}</div>
-            </div>
-        `;
-    });
-    html += '</div>';
-    
-    container.innerHTML = html;
-}
-
-// Глобальная переменная для хранения загруженных аренд
-window.currentMyRentals = [];
-
-// Основная функция загрузки
-async function loadMyRentals() {
-    const container = document.getElementById('myRentalsList');
-    if (!container) return;
-    
-    container.innerHTML = '<p style="text-align:center; margin-top: 20px;">Загрузка...</p>';
-    
-    try {
-        const res = await apiFetch('/webapp/rent/my', 'GET');
-        if (res && res.Success) {
-            renderMyRentalsGrid(res.Rentals, container);
-        } else {
-            container.innerHTML = '<p style="text-align:center;">Не удалось загрузить аренду.</p>';
-        }
-    } catch (e) {
-        container.innerHTML = '<p style="text-align:center;">Ошибка сети.</p>';
-    }
-}
-
-// Функция отрисовки красивой сетки
-function renderMyRentalsGrid(rentals, container) {
-    window.currentMyRentals = rentals;
-
-    if (!rentals || rentals.length === 0) {
-        container.innerHTML = '<p style="text-align:center; margin-top: 20px; color: var(--tg-theme-hint-color);">У вас пока нет активной аренды.</p>';
-        return;
-    }
-
-    let html = '<div class="my-rent-grid">';
-    
-    rentals.forEach(r => {
-        const expireDate = new Date(r.ExpiresAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
-        
-        // ФИКС КАРТИНОК: Если юзернейм или номер — рисуем градиент в стиле Fragment, если подарок — берем фото
-        let visualHtml = '';
-        if (r.Category === 'usernames' || r.Category === 'numbers') {
-            visualHtml = `<div class="fragment-gradient-block">${r.Name}</div>`;
-        } else {
-            // Если фото битое, ставим дефолтную иконку
-            visualHtml = `<img src="${r.ImageUrl}" class="rent-item-img" alt="NFT" onerror="this.src='https://fragment.com/img/logo.svg'; this.style.objectFit='contain'; this.style.padding='10px';">`;
-        }
-
-        html += `
-            <div class="my-rent-card" onclick="openMyRentDetails('${r.Id}')">
-                ${visualHtml}
-                <div class="title">${r.Name}</div>
-                <div class="expire">До ${expireDate}</div>
-            </div>
-        `;
-    });
-    
-    html += '</div>';
-    container.innerHTML = html;
-}
-
-// Функция открытия модалки
-function openMyRentDetails(rentalId) {
-    const rental = window.currentMyRentals.find(r => r.Id === rentalId);
-    if (!rental) return;
-
-    const visualContainer = document.getElementById('myRentModalVisual');
-    
-    // В модалку тоже подставляем либо градиент, либо фото
-    if (rental.Category === 'usernames' || rental.Category === 'numbers') {
-        visualContainer.innerHTML = `<div class="fragment-gradient-block" style="font-size: 24px; border-radius: 12px;">${rental.Name}</div>`;
-    } else {
-        visualContainer.innerHTML = `<img src="${rental.ImageUrl}" style="width:100%; aspect-ratio:1; object-fit:cover; border-radius:12px;" alt="NFT" onerror="this.src='https://fragment.com/img/logo.svg'; this.style.objectFit='contain';">`;
-    }
-
-    document.getElementById('myRentModalTitle').innerText = rental.Name;
-    
-    const expireStr = new Date(rental.ExpiresAt).toLocaleString('ru-RU', { 
-        day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute:'2-digit' 
-    });
-    document.getElementById('myRentModalExpire').innerText = 'Действует до: ' + expireStr;
-
-    const connectBtn = document.getElementById('myRentModalConnectBtn');
-    if (rental.IsConnected) {
-        connectBtn.innerText = 'Уже подключено';
-        connectBtn.disabled = true;
-        connectBtn.style.opacity = '0.5';
-        connectBtn.onclick = null;
-    } else {
-        connectBtn.innerText = 'Подключить к Telegram';
-        connectBtn.disabled = false;
-        connectBtn.style.opacity = '1';
-        connectBtn.onclick = () => {
-            closeModal('myRentDetailsModal');
-            // Убедись, что эта функция у тебя существует и вызывает нужный флоу Ton Connect
-            startTonConnectFlow(rental.NftAddress); 
-        };
-    }
-
-    document.getElementById('myRentDetailsModal').style.display = 'block';
-}
-}
+};

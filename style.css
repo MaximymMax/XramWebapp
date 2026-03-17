@@ -533,59 +533,87 @@ img.lazy-loaded {
     transition: opacity 0.3s ease-in-out; /* Плавное проявление картинки */
 }
 
-.my-rent-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
+/* ===== КАРТОЧКИ АРЕНДЫ В ПРОФИЛЕ ===== */
+.rental-card {
+    display: flex;
+    align-items: center;
     gap: 12px;
-}
-
-.my-rent-card {
-    background: var(--tg-theme-bg-color, #fff);
-    border: 1px solid var(--tg-theme-hint-color, #ccc);
-    border-radius: 12px;
-    padding: 8px;
-    text-align: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    padding: 12px;
     cursor: pointer;
-    transition: transform 0.1s;
+    transition: border-color var(--ease), transform 0.12s ease;
+    position: relative;
 }
-
-.my-rent-card:active { transform: scale(0.96); }
-
-.rent-item-img {
-    width: 100%;
-    aspect-ratio: 1;
+.rental-card:active { transform: scale(0.985); }
+.rental-card-visual {
+    position: relative;
+    flex-shrink: 0;
+    width: 68px;
+    height: 68px;
+}
+.rental-card-img {
+    width: 68px;
+    height: 68px;
+    border-radius: 12px;
     object-fit: cover;
-    border-radius: 8px;
+    background: var(--surface-3);
+    display: block;
 }
-
-/* Красивый блок в стиле Fragment для номеров и юзернеймов */
-.fragment-gradient-block {
-    width: 100%;
-    aspect-ratio: 1;
-    border-radius: 8px;
+.rental-card-gradient {
+    width: 68px;
+    height: 68px;
+    border-radius: 12px;
     background: linear-gradient(135deg, #2AABEE, #229ED9);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
-    font-weight: bold;
-    font-size: 13px;
+    color: #fff;
+    font-weight: 800;
+    font-size: 11px;
     word-break: break-all;
     padding: 5px;
     box-sizing: border-box;
+    text-align: center;
 }
-
-.my-rent-card .title {
-    font-size: 13px;
-    font-weight: 600;
-    margin: 8px 0 4px;
-    color: var(--tg-theme-text-color, #000);
+.rental-badge-wrap {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+}
+.rental-badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 6px;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+}
+.rental-badge-pending { background: rgba(245,197,24,0.15); color: var(--stars-primary); }
+.rental-badge-active  { background: rgba(110,207,207,0.13); color: var(--rent-primary); }
+.rental-badge-expired { background: rgba(255,80,80,0.12); color: #f07070; }
+.rental-card-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.rental-card-name { font-size: 14px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rental-card-date { font-size: 12px; color: var(--text-secondary); }
+.rental-card-actions { display: flex; gap: 6px; margin-top: 4px; }
+.rental-btn { flex: 1; margin: 0 !important; padding: 8px 10px !important; font-size: 12px !important; min-width: 0; }
+
+/* Градиентный блок для username/number в карточке аренды */
+.rent-card-gradient-block {
+    width: 100%;
+    aspect-ratio: 1;
+    background: linear-gradient(135deg, #2AABEE, #229ED9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 800;
+    font-size: 12px;
+    word-break: break-all;
+    padding: 6px;
+    box-sizing: border-box;
+    text-align: center;
+    border-radius: 0;
 }
 
-.my-rent-card .expire {
-    font-size: 11px;
-    color: var(--tg-theme-hint-color, #888);
-}
+/* Убираем устаревшие классы my-rent-* — они заменены rental-* */

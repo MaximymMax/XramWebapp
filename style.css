@@ -535,9 +535,8 @@ img.lazy-loaded {
 
 .my-rent-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr); /* 2 колонки, чтобы были маленькими */
+    grid-template-columns: repeat(2, 1fr);
     gap: 12px;
-    padding: 10px 0;
 }
 
 .my-rent-card {
@@ -552,11 +551,28 @@ img.lazy-loaded {
 
 .my-rent-card:active { transform: scale(0.96); }
 
-.my-rent-card img {
+.rent-item-img {
     width: 100%;
     aspect-ratio: 1;
     object-fit: cover;
     border-radius: 8px;
+}
+
+/* Красивый блок в стиле Fragment для номеров и юзернеймов */
+.fragment-gradient-block {
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #2AABEE, #229ED9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 13px;
+    word-break: break-all;
+    padding: 5px;
+    box-sizing: border-box;
 }
 
 .my-rent-card .title {

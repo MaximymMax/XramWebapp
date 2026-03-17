@@ -692,18 +692,84 @@ function renderMyRentals(rentals) {
     container.innerHTML = html;
 }
 
+// Глобальная переменная для хранения загруженных аренд
+window.currentMyRentals = [];
+
+// Основная функция загрузки
+async function loadMyRentals() {
+    const container = document.getElementById('myRentalsList');
+    if (!container) return;
+    
+    container.innerHTML = '<p style="text-align:center; margin-top: 20px;">Загрузка...</p>';
+    
+    try {
+        const res = await apiFetch('/webapp/rent/my', 'GET');
+        if (res && res.Success) {
+            renderMyRentalsGrid(res.Rentals, container);
+        } else {
+            container.innerHTML = '<p style="text-align:center;">Не удалось загрузить аренду.</p>';
+        }
+    } catch (e) {
+        container.innerHTML = '<p style="text-align:center;">Ошибка сети.</p>';
+    }
+}
+
+// Функция отрисовки красивой сетки
+function renderMyRentalsGrid(rentals, container) {
+    window.currentMyRentals = rentals;
+
+    if (!rentals || rentals.length === 0) {
+        container.innerHTML = '<p style="text-align:center; margin-top: 20px; color: var(--tg-theme-hint-color);">У вас пока нет активной аренды.</p>';
+        return;
+    }
+
+    let html = '<div class="my-rent-grid">';
+    
+    rentals.forEach(r => {
+        const expireDate = new Date(r.ExpiresAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+        
+        // ФИКС КАРТИНОК: Если юзернейм или номер — рисуем градиент в стиле Fragment, если подарок — берем фото
+        let visualHtml = '';
+        if (r.Category === 'usernames' || r.Category === 'numbers') {
+            visualHtml = `<div class="fragment-gradient-block">${r.Name}</div>`;
+        } else {
+            // Если фото битое, ставим дефолтную иконку
+            visualHtml = `<img src="${r.ImageUrl}" class="rent-item-img" alt="NFT" onerror="this.src='https://fragment.com/img/logo.svg'; this.style.objectFit='contain'; this.style.padding='10px';">`;
+        }
+
+        html += `
+            <div class="my-rent-card" onclick="openMyRentDetails('${r.Id}')">
+                ${visualHtml}
+                <div class="title">${r.Name}</div>
+                <div class="expire">До ${expireDate}</div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+}
+
 // Функция открытия модалки
 function openMyRentDetails(rentalId) {
     const rental = window.currentMyRentals.find(r => r.Id === rentalId);
     if (!rental) return;
 
-    document.getElementById('myRentModalImg').src = rental.ImageUrl;
+    const visualContainer = document.getElementById('myRentModalVisual');
+    
+    // В модалку тоже подставляем либо градиент, либо фото
+    if (rental.Category === 'usernames' || rental.Category === 'numbers') {
+        visualContainer.innerHTML = `<div class="fragment-gradient-block" style="font-size: 24px; border-radius: 12px;">${rental.Name}</div>`;
+    } else {
+        visualContainer.innerHTML = `<img src="${rental.ImageUrl}" style="width:100%; aspect-ratio:1; object-fit:cover; border-radius:12px;" alt="NFT" onerror="this.src='https://fragment.com/img/logo.svg'; this.style.objectFit='contain';">`;
+    }
+
     document.getElementById('myRentModalTitle').innerText = rental.Name;
     
     const expireStr = new Date(rental.ExpiresAt).toLocaleString('ru-RU', { 
         day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute:'2-digit' 
     });
-    document.getElementById('myRentModalExpire').innerText = 'Арендовано до: ' + expireStr;
+    document.getElementById('myRentModalExpire').innerText = 'Действует до: ' + expireStr;
 
     const connectBtn = document.getElementById('myRentModalConnectBtn');
     if (rental.IsConnected) {
@@ -712,16 +778,16 @@ function openMyRentDetails(rentalId) {
         connectBtn.style.opacity = '0.5';
         connectBtn.onclick = null;
     } else {
-        connectBtn.innerText = 'Подключить к Telegram (Ton Connect)';
+        connectBtn.innerText = 'Подключить к Telegram';
         connectBtn.disabled = false;
         connectBtn.style.opacity = '1';
         connectBtn.onclick = () => {
             closeModal('myRentDetailsModal');
-            startTonConnectFlow(rental.NftAddress); // Твоя функция вызова TonConnect
+            // Убедись, что эта функция у тебя существует и вызывает нужный флоу Ton Connect
+            startTonConnectFlow(rental.NftAddress); 
         };
     }
 
-    // Открываем саму модалку
     document.getElementById('myRentDetailsModal').style.display = 'block';
 }
 }

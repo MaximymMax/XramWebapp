@@ -829,11 +829,13 @@
     </div>
 
     <div id="myRentDetailsModal" class="modal">
-        <div class="modal-content">
+        <div class="modal-content" style="text-align: center;">
             <span class="close-btn" onclick="closeModal('myRentDetailsModal')">&times;</span>
-            <img id="myRentModalImg" src="" style="width:100%; border-radius:12px; margin-bottom: 15px;">
-            <h3 id="myRentModalTitle" style="margin-bottom: 5px;"></h3>
-            <p id="myRentModalExpire" style="color: var(--tg-theme-hint-color); font-size: 14px; margin-bottom: 20px;"></p>
+            
+            <div id="myRentModalVisual" style="margin-bottom: 15px;"></div>
+            
+            <h3 id="myRentModalTitle" style="margin-bottom: 5px; font-size: 18px;"></h3>
+            <p id="myRentModalExpire" style="color: var(--tg-theme-hint-color); font-size: 13px; margin-bottom: 20px;"></p>
             
             <button class="tg-btn" id="myRentModalConnectBtn" style="width: 100%;">Подключить к Telegram</button>
         </div>

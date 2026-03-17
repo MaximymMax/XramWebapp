@@ -455,6 +455,18 @@ window.apiRentGift = async function() {
     const pc = state.pay.rent.currency;
     const btn = document.getElementById('modalRentBtn');
 
+    // ФИКС: Создаем "фантомную" карточку для моментального отображения
+    const fakePendingRental = {
+        Id: 'pending-' + Date.now(),
+        Name: state.rentNftName,
+        Category: state.rentCategory,
+        NftAddress: state.rentNftAddress,
+        ImageUrl: state.rentImageUrl,
+        ExpiresAt: new Date(Date.now() + days * 86400000).toISOString(),
+        IsConnected: false,
+        IsPending: true // Флаг, что она еще обрабатывается
+    };
+
     // === ИНТЕГРАЦИЯ ОПЛАТЫ ЗВЕЗДАМИ ===
     if (pm === 'TelegramStars') {
         const totalTon = window.RENT_TON_PER_DAY * days;
@@ -462,18 +474,13 @@ window.apiRentGift = async function() {
         const starsCost = Math.ceil(usdTotal / RATES.USD.starDeposit);
         
         const exactNano = window.RENT_NANO_PER_DAY || (window.RENT_TON_PER_DAY * 1000000000).toString();
-        
-        // ФИКС 1: Упаковываем реальное название и картинку, чтобы в профиле не было 88888!
         const encodedName = encodeURIComponent(state.rentNftName);
         const encodedImg = encodeURIComponent(state.rentImageUrl);
         const details = `${state.rentNftAddress}:${exactNano}:${days}:${encodedName}:${encodedImg}`;
         
         closeModal();
-        
-        // ФИКС 2: Включаем красивый экран загрузки ПЕРЕД созданием счета
         showTxLoading();
         
-        // Сами запрашиваем счет у сервера
         const res = await apiCall('/webapp/pay/stars/create', {
             product: 'rentgift',
             details: details,
@@ -481,20 +488,19 @@ window.apiRentGift = async function() {
         }, 'POST');
 
         if (res && res.Success && res.InvoiceUrl) {
-            // Открываем окно оплаты Telegram и ждем результат
             tg.openInvoice(res.InvoiceUrl, function(status) {
                 if (status === 'paid') {
-                    // Если оплатил - показываем успешную анимацию!
+                    window.pendingRental = fakePendingRental; // Сохраняем фантомку
                     showTxResult(true, "Аренда оформлена!", `Вы успешно оплатили аренду на ${days} дн. звездами.`, `<div style="text-align:center">Нажмите «Закрыть», чтобы перейти к установке NFT.</div>`, () => {
                         switchTab('profile');
+                        // Обновляем профиль ТОЛЬКО после клика "Закрыть", давая серверу фору в пару секунд
+                        fetchServerData();
+                        loadProfile(); 
                         setTimeout(() => switchProfileTab('rentals', document.querySelectorAll('#page-profile .ptab')[2]), 50);
                     });
-                    fetchServerData();
-                    loadProfile();
                 } else if (status === 'failed') {
                     showTxResult(false, "Ошибка оплаты", "Списание звезд не удалось.", "");
                 } else {
-                    // Если просто закрыл счет не оплатив - убираем загрузку
                     document.getElementById('txLoadingState').style.display = 'none';
                 }
             });
@@ -504,7 +510,6 @@ window.apiRentGift = async function() {
         return;
     }
 
-    // Если внутренний кошелек, показываем Lottie-загрузку сразу
     if (pm === 'InternalWallet') {
         closeModal();
         showTxLoading();
@@ -512,39 +517,30 @@ window.apiRentGift = async function() {
         setLoading(btn, true);
     }
 
-    // Делаем запрос к серверу (ФИКС: ДОБАВЛЕН priceNano)
     const result = await apiCall('/webapp/transactions/create/rent', {
-        telegramId, 
-        currency: pc, 
-        method: pm,
-        nftAddress: state.rentNftAddress,
-        nftName: state.rentNftName,
-        days,
-        pricePerDayTon: window.RENT_TON_PER_DAY,
-        priceNano: window.RENT_NANO_PER_DAY, 
-        category: state.rentCategory,
-        imageUrl: state.rentImageUrl
-    }, 'POST'); // <--- ОБЯЗАТЕЛЬНО ДОБАВИТЬ 'POST' СЮДА
+        telegramId, currency: pc, method: pm,
+        nftAddress: state.rentNftAddress, nftName: state.rentNftName,
+        days, pricePerDayTon: window.RENT_TON_PER_DAY, priceNano: window.RENT_NANO_PER_DAY, 
+        category: state.rentCategory, imageUrl: state.rentImageUrl
+    }, 'POST');
 
-    // Обрабатываем ответ
     if (pm === 'InternalWallet') {
         if (result && result.Success) {
+            window.pendingRental = fakePendingRental; // Сохраняем фантомку
             showTxResult(true, "Аренда оформлена!", `Вы успешно арендовали NFT на ${days} дн.`, `<div style="text-align:center">Нажмите «Закрыть», чтобы перейти к установке NFT.</div>`, () => {
                 switchTab('profile');
+                fetchServerData();
+                loadProfile(); 
                 setTimeout(() => switchProfileTab('rentals', document.querySelectorAll('#page-profile .ptab')[2]), 50);
             });
-            fetchServerData();
-            loadProfile();
         } else {
             showTxResult(false, "Сбой аренды", result?.Error || "Ошибка списания средств", "");
         }
     } else {
         setLoading(btn, false);
         if (result && result.Success) { 
-            closeModal(); 
-            handleTxFlow(result); 
-        }
-        else if (result) { safeAlert('Ошибка: ' + result.Error); }
+            closeModal(); handleTxFlow(result); 
+        } else if (result) { safeAlert('Ошибка: ' + result.Error); }
     }
 }
 

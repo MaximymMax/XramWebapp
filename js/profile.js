@@ -8,16 +8,25 @@ async function loadProfile() {
 
     const data = await apiCall('/webapp/user/history');
     if (data && data.Success) {
-        // ФИКС: Сервер отдает ключ History, а не Transactions!
         const txs = data.History || [];
-        
         if (typeof renderServerHistory === 'function') renderServerHistory(txs);
         if (typeof renderServerCheques === 'function') renderServerCheques(txs.filter(h => h.IsCheque && !h.IsChequeActivated && h.Status === 'Completed'));
     }
 
     const rentData = await apiCall('/webapp/rent/my');
     if (rentData && rentData.Success) {
-        if (typeof renderServerRentals === 'function') renderServerRentals(rentData.Rentals || []);
+        let rentals = rentData.Rentals || [];
+        
+        // ФИКС: Подставляем ожидающую аренду в начало списка, пока блокчейн TON подтверждает транзакцию
+        if (window.pendingRental) {
+            if (!rentals.find(r => r.NftAddress === window.pendingRental.NftAddress)) {
+                rentals.unshift(window.pendingRental);
+            } else {
+                window.pendingRental = null; // Сервер догнал, удаляем фантомку
+            }
+        }
+
+        if (typeof renderServerRentals === 'function') renderServerRentals(rentals);
     }
 }
 
@@ -54,44 +63,34 @@ function renderServerCheques(cheques) {
 function renderServerRentals(rentals) {
     const list = document.getElementById('rentalsList');
     if (!list) return;
-    if (!rentals || !rentals.length) { list.innerHTML = `<div class="profile-empty"><p>У вас пока нет арендованных NFT</p></div>`; return; }
+    if (!rentals.length) { list.innerHTML = `<div class="profile-empty"><p>Нет активной аренды</p></div>`; return; }
 
     list.innerHTML = rentals.map(r => {
-        let img = r.ImageUrl;
-        
-        if (img && img !== 'null' && img !== 'undefined') {
-            try { img = decodeURIComponent(img); } catch(e) {}
-        }
-        
-        if (!img || img === 'null' || img === 'undefined' || !img.startsWith('http')) {
-            let rawName = r.Name || '';
-            if (r.Category === 'usernames') {
-                let safeName = rawName.toLowerCase().replace('.t.me', '').replace('@', '').trim();
-                img = `https://nft.fragment.com/username/${safeName}.webp`;
-            } else if (r.Category === 'numbers') {
-                let safeName = rawName.replace('+888', '').replace(/[\s-]/g, '').trim();
-                img = `https://nft.fragment.com/number/${safeName}.webp`;
-            } else {
-                let safeName = rawName.replace(/[\s\-']/g, ''); // Удаляем только пробелы, дефисы и апострофы
-                img = `https://nft.fragment.com/gift/${safeName}.medium.jpg`;
-            }
-        }
+        const isExpired = new Date((r.ExpiresAt.endsWith('Z') ? r.ExpiresAt : r.ExpiresAt + 'Z')).getTime() < Date.now();
+        const address = r.NftAddress;
+        const link = `https://t.me/nft/${address}`;
+        const endsAt = new Date((r.ExpiresAt.endsWith('Z') ? r.ExpiresAt : r.ExpiresAt + 'Z')).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 
-        let name = r.Name || 'NFT';
-        let endsAtStr = r.ExpiresAt;
-        if (endsAtStr && !endsAtStr.endsWith('Z')) endsAtStr += 'Z';
+        let cleanImg = r.ImageUrl || '';
+        if (cleanImg.includes(' [')) cleanImg = cleanImg.split(' [')[0].trim();
+        try { cleanImg = decodeURIComponent(cleanImg); } catch(e) {}
 
-        const exp = new Date(endsAtStr);
-        const isExpired = exp < new Date();
-        const expStr = exp.toLocaleString('ru-RU', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
-
-        // Выводим карточку без статуса
         return `
-        <div class="history-item" style="opacity: ${isExpired ? 0.6 : 1}; cursor:pointer;" onclick="openRentalModal('${r.NftAddress}', '${name}', '${img}', '${expStr}', ${isExpired})">
-            <img src="${img}" style="width:40px;height:40px;border-radius:10px;object-fit:cover;background:#2c2c2e; border:1px solid rgba(255,255,255,0.05);" onerror="this.src='https://nft.fragment.com/number/8888888.webp'">
-            <div class="history-item-left" style="flex:1; margin-left:12px;">
-                <div class="history-item-title">${name}</div>
-                <div class="history-item-meta">До: ${expStr}</div>
+        <div class="rent-card page-rent-theme" style="margin-bottom:12px; cursor:default; ${isExpired ? 'opacity:0.6' : ''}">
+            <div style="position:relative">
+                <img src="${cleanImg}" alt="NFT" style="width:100%; height:160px; object-fit:cover; border-radius: var(--r-md) var(--r-md) 0 0; background:var(--surface-3)">
+                ${r.IsPending ? '<div style="position:absolute; top:8px; right:8px; background:var(--stars-primary); color:#000; font-size:11px; font-weight:700; padding:4px 8px; border-radius:8px;">⏳ Выдается...</div>' : ''}
+                ${r.IsConnected && !r.IsPending ? '<div style="position:absolute; top:8px; right:8px; background:var(--rent-primary); color:#fff; font-size:11px; font-weight:700; padding:4px 8px; border-radius:8px;">✅ Установлен</div>' : ''}
+            </div>
+            <div class="rent-card-content" style="padding:12px">
+                <div class="rent-card-name" style="font-size:16px; margin-bottom:4px">${r.Name}</div>
+                <div style="font-size:12px; color:var(--text-secondary); margin-bottom:12px">Аренда до: <span style="color:var(--text); font-weight:600">${endsAt}</span></div>
+                
+                <div style="display:flex; gap:8px;">
+                    <a href="${link}" target="_blank" class="action-btn outline-action-btn" style="flex:1; margin:0; padding:12px; font-size:14px; text-decoration:none; display:flex; justify-content:center; align-items:center;">🔗 Просмотр</a>
+                    <button class="action-btn rent-action-btn" style="flex:1; margin:0; padding:12px; font-size:14px; opacity: ${isExpired || r.IsPending ? '0.5' : '1'}" onclick="${isExpired || r.IsPending ? "safeAlert('NFT еще отправляется в блокчейне TON. Пожалуйста, подождите 10 секунд и обновите профиль для установки.')" : `openTonConnectModal('${address}')`}">${r.IsPending ? 'Выдается' : 'Установить'}</button>
+                </div>
+                ${isExpired && !r.IsPending ? '<div style="font-size:11px; color:var(--text-muted); text-align:center; margin-top:12px">Срок аренды истек. Установка недоступна.</div>' : ''}
             </div>
         </div>`;
     }).join('');

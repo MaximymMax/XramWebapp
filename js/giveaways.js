@@ -114,20 +114,34 @@ window.updateGwCreatePrice = function() {
     const type = document.getElementById('gwPrizeType').value;
     const winners = parseInt(document.getElementById('gwWinnersCount').value) || 1;
     let usdPricePerWinner = 0;
+    
+    // Получаем наценку (по умолчанию 20%) и комиссию сети в USD
+    const markupPercentage = window.sysConfig?.globalMarkupPercentage || 20;
+    const markupMult = 1 + (markupPercentage / 100);
+    const gasFeeUsd = (window.sysConfig?.blockchainGasFeeTon || 0.06) * getTonUsdRate();
 
     if (type === 'TelegramStars') {
         const amount = parseFloat(document.getElementById('gwPrizeStars').value) || 0;
-        usdPricePerWinner = amount * RATES.USD.perStar;
+        // Себестоимость * наценку + газ
+        const baseStarUsd = window.RATES?.USD?.perStar || 0.014;
+        usdPricePerWinner = ((amount * baseStarUsd) * markupMult) + gasFeeUsd;
+        
     } else if (type === 'TonTransfer') {
         const amount = parseFloat(document.getElementById('gwPrizeTon').value) || 0;
-        usdPricePerWinner = amount * getTonUsdRate();
+        // TON * наценку + газ
+        usdPricePerWinner = ((amount * getTonUsdRate()) * markupMult) + gasFeeUsd;
+        
     } else if (type === 'Premium') {
         const months = parseInt(document.getElementById('gwPrizePremium').value) || 3;
-        if (months === 12) usdPricePerWinner = window.sysConfig?.finalPricesUsd?.premium12 || 35.99;
-        else if (months === 6) usdPricePerWinner = window.sysConfig?.finalPricesUsd?.premium6 || 15.99;
-        else usdPricePerWinner = window.sysConfig?.finalPricesUsd?.premium3 || 11.99;
+        // Берем готовые цены с наценкой из конфига + добавляем газ
+        let premUsd = window.sysConfig?.finalPricesUsd?.premium3 || (11.99 * markupMult);
+        if (months === 12) premUsd = window.sysConfig?.finalPricesUsd?.premium12 || (35.99 * markupMult);
+        else if (months === 6) premUsd = window.sysConfig?.finalPricesUsd?.premium6 || (15.99 * markupMult);
+        
+        usdPricePerWinner = premUsd + gasFeeUsd;
+        
     } else if (type === 'DefaultGift') {
-        // Берем уже посчитанную бекендом финальную цену в USD
+        // У подарков цена УЖЕ посчитана с наценкой и газом на бэкенде, просто берем её
         const giftUsd = parseFloat(document.getElementById('gwPrizeGiftPrice').dataset.usd) || 0;
         usdPricePerWinner = giftUsd;
     }

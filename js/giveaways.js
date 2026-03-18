@@ -38,18 +38,24 @@ window.selectGwPrize = function(val, elem) {
     updateGwCreatePrice();
 }
 
-// ── Подарки для розыгрыша ────────────────────────────────────
-const GW_GIFTS = [
-    { id: "5983471780763796287", name: "Santa Hat", price: 50 },
-    { id: "5936085638515261992", name: "Signet Ring", price: 50 },
-    { id: "5933671725160989227", name: "Precious Peach", price: 50 },
-    { id: "5936013938331222567", name: "Plush Pepe", price: 50 },
-    { id: "5913442287462908725", name: "Spiced Wine", price: 50 },
-    { id: "5915502858152706668", name: "Jelly Bunny", price: 50 },
-    { id: "5915521180483191380", name: "Durov's Cap", price: 50 },
-    { id: "5913517067138499193", name: "Perfume Bottle", price: 50 },
-    { id: "5882125812596999035", name: "Eternal Rose", price: 50 }
-];
+window.selectGwPremium = function(val, elem) {
+    // Меняем скрытое значение
+    document.getElementById('gwPrizePremium').value = val;
+    // Меняем текст на кнопке
+    document.getElementById('gwPremiumLabel').textContent = elem.querySelector('.sort-item-label').textContent;
+    
+    // Убираем класс active у других элементов и добавляем текущему
+    elem.closest('.sort-dd-menu').querySelectorAll('.sort-dd-item').forEach(el => el.classList.remove('active'));
+    elem.classList.add('active');
+    
+    // Закрываем меню
+    elem.closest('.sort-dd-menu').classList.remove('show');
+    
+    // Пересчитываем итоговую цену!
+    if (typeof window.updateGwCreatePrice === 'function') {
+        window.updateGwCreatePrice();
+    }
+}
 
 async function initGwGifts() {
     const menu = document.getElementById('gwGiftMenu');
@@ -62,10 +68,16 @@ async function initGwGifts() {
     
     if (res && res.Success && res.Gifts) {
         menu.innerHTML = res.Gifts.map(g => `
-            <div class="sort-dd-item" onclick="selectGwGift('${g.Id}', '${g.Name}', ${g.PriceStars || g.Price}, this)">
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <img src="https://cdn.changes.tg/gifts/originals/${g.Id}/Original.png" style="width:24px; height:24px;">
-                    <span class="sort-item-label">${g.Name} (${g.PriceStars || g.Price} ⭐️)</span>
+            <div class="sort-dd-item" onclick="selectGwGift('${g.Id}', '${g.Name}', ${g.PriceStars}, ${g.PriceTon}, ${g.PriceUsd}, this)">
+                <div style="display:flex; align-items:center; justify-content: space-between; width: 100%;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <img src="https://cdn.changes.tg/gifts/originals/${g.Id}/Original.png" style="width:24px; height:24px;">
+                        <span class="sort-item-label">${g.Name}</span>
+                    </div>
+                    <div style="text-align: right; line-height: 1.2;">
+                        <div style="font-size: 13px; font-weight: 700; color: var(--text);">${g.PriceTon.toFixed(2)} TON</div>
+                        <div style="font-size: 11px; font-weight: 600; color: var(--text-muted);">≈ $${g.PriceUsd.toFixed(2)}</div>
+                    </div>
                 </div>
             </div>
         `).join('');
@@ -75,10 +87,19 @@ async function initGwGifts() {
 }
 setTimeout(initGwGifts, 300);
 
-window.selectGwGift = function(id, name, price, elem) {
+window.selectGwGift = function(id, name, priceStars, priceTon, priceUsd, elem) {
     document.getElementById('gwPrizeGiftId').value = id;
-    document.getElementById('gwPrizeGiftPrice').value = price;
-    document.getElementById('gwGiftLabel').textContent = `${name} (${price} ⭐️)`;
+    
+    // Сохраняем значения для калькулятора
+    const priceInput = document.getElementById('gwPrizeGiftPrice');
+    priceInput.value = priceStars; 
+    priceInput.dataset.usd = priceUsd; // Сохраняем готовую цену в USD с бекенда
+    
+    // Красиво оформляем текст на выбранной кнопке
+    document.getElementById('gwGiftLabel').innerHTML = `
+        <span style="color:var(--text);">${name}</span>
+        <span style="color:var(--text-muted); font-size:13px; margin-left:6px;">${priceTon.toFixed(2)} TON</span>
+    `;
     
     const img = document.getElementById('gwGiftImg');
     img.src = `https://cdn.changes.tg/gifts/originals/${id}/Original.png`;
@@ -106,9 +127,9 @@ window.updateGwCreatePrice = function() {
         else if (months === 6) usdPricePerWinner = window.sysConfig?.finalPricesUsd?.premium6 || 15.99;
         else usdPricePerWinner = window.sysConfig?.finalPricesUsd?.premium3 || 11.99;
     } else if (type === 'DefaultGift') {
-        const price = parseFloat(document.getElementById('gwPrizeGiftPrice').value) || 0;
-        const gasFeeUsd = (window.sysConfig?.blockchainGasFeeTon || 0.06) * getTonUsdRate();
-        usdPricePerWinner = (price * RATES.USD.perStar) + gasFeeUsd;
+        // Берем уже посчитанную бекендом финальную цену в USD
+        const giftUsd = parseFloat(document.getElementById('gwPrizeGiftPrice').dataset.usd) || 0;
+        usdPricePerWinner = giftUsd;
     }
 
     const totalUsd = usdPricePerWinner * winners;

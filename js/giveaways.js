@@ -113,8 +113,19 @@ window.updateGwCreatePrice = function() {
 
     const totalUsd = usdPricePerWinner * winners;
     const totalTon = totalUsd / getTonUsdRate();
+    const tonPerWinner = usdPricePerWinner / getTonUsdRate();
 
-    // ИСПРАВЛЕНО: gwSubmitBtn вместо gwCreateBtn
+    // ОБНОВЛЯЕМ ЭЛЕМЕНТЫ В ИНТЕРФЕЙСЕ
+    const perWinnerEl = document.getElementById('gwPerWinnerInfo');
+    const multiplierEl = document.getElementById('gwMultiplier');
+    const usdEl = document.getElementById('gwTotalCostUsd');
+    const tonEl = document.getElementById('gwTotalCostTon');
+    
+    if (perWinnerEl) perWinnerEl.textContent = `${tonPerWinner.toFixed(2)} TON`;
+    if (multiplierEl) multiplierEl.textContent = `x${winners}`;
+    if (usdEl) usdEl.textContent = `≈ $${totalUsd.toFixed(2)}`;
+    if (tonEl) tonEl.textContent = `${totalTon.toFixed(2)} TON`;
+
     const btn = document.getElementById('gwSubmitBtn');
     if (btn) {
         btn.innerHTML = `Оплатить ~${totalTon.toFixed(2)} TON`;

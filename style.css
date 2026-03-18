@@ -642,3 +642,11 @@ img.lazy-loaded {
     font-size: 15px;
     color: var(--text);
 }
+
+.hero-giveaways {
+    border-top: 2px solid #ff9f43;
+    background: radial-gradient(circle at top, rgba(255, 159, 67, 0.2) 0%, transparent 70%), var(--surface-2);
+}
+.hero-giveaways .hero-title {
+    color: #ff9f43;
+}

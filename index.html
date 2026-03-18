@@ -546,6 +546,12 @@
 
     <div id="page-giveaways" class="page page-stars-theme">
         
+        <div class="page-hero hero-giveaways" style="margin-top: 16px;">
+            <img src="https://cdn.changes.tg/gifts/models/Mini%20Oscar/png/Action%20Film.png" class="hero-img-left" alt="Giveaways">
+            <h1 class="hero-title">Розыгрыши</h1>
+            <img src="https://cdn.changes.tg/gifts/models/Mini%20Oscar/png/Action%20Film.png" class="hero-img-right" alt="Giveaways">
+        </div>
+
         <div class="profile-tabs" style="margin-top: 16px">
             <button class="ptab active" onclick="switchGiveawayTab('create', this)">Создать</button>
             <button class="ptab" onclick="switchGiveawayTab('participating', this)">Участвую</button>
@@ -620,11 +626,15 @@
                 <label class="form-label">Длительность розыгрыша (в часах)</label>
                 <input type="number" id="gwHoursCount" class="form-input" placeholder="24" value="24" min="1" oninput="updateGwCreatePrice()">
 
-                <div style="display:flex; justify-content:space-between; align-items:center; margin: 18px 0 8px;">
-                    <span style="font-size:14px; font-weight:700; color:var(--text-secondary)" data-i18n="gw_total">Итого к оплате:</span>
-                    <div style="text-align:right">
-                        <div style="font-size:20px; font-weight:800; color:var(--text)" id="gwTotalCostUsd">$0.00</div>
-                        <div style="font-size:12px; font-weight:600; color:var(--text-muted)" id="gwTotalCostTon">(≈ 0.00 TON)</div>
+                <div class="payment-breakdown" style="margin-top: 18px; margin-bottom: 12px;">
+                    <div class="breakdown-row"><span>Цена за победителя:</span> <span id="gwPerWinnerInfo">0.00 TON</span></div>
+                    <div class="breakdown-row"><span>Количество:</span> <span id="gwMultiplier">x1</span></div>
+                    <div class="breakdown-divider"></div>
+                    <div class="breakdown-row total"><span>Итого:</span> 
+                        <div style="text-align: right;">
+                            <span id="gwTotalCostTon">0.00 TON</span>
+                            <div style="font-size: 12px; font-weight: 600; color: var(--text-muted); margin-top: 2px;" id="gwTotalCostUsd">≈ $0.00</div>
+                        </div>
                     </div>
                 </div>
             </div>

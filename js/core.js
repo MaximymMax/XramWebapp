@@ -1047,6 +1047,108 @@ async function apiWithdrawWallet() {
     else if (result) safeAlert('Ошибка: ' + result.Error);
 }
 
+window.switchWalletTab = function(tabName, btn) {
+    if (btn) {
+        btn.closest('.profile-tabs').querySelectorAll('.ptab').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+    }
+    
+    document.getElementById('walletTopupPanel').style.display = tabName === 'topup' ? 'block' : 'none';
+    document.getElementById('walletWithdrawPanel').style.display = tabName === 'withdraw' ? 'block' : 'none';
+};
+
+window._currentWithdrawMethod = 'ton';
+
+window.selectWithdrawMethod = function(method, elem) {
+    window._currentWithdrawMethod = method;
+    
+    const iconSpan = document.getElementById('withdrawMethodIcon');
+    const labelSpan = document.getElementById('withdrawMethodLabel');
+    const itemMenu = elem.closest('.sort-dd-menu');
+    itemMenu.querySelectorAll('.sort-dd-item').forEach(el => el.classList.remove('selected'));
+    elem.classList.add('selected');
+    
+    if (method === 'ton') {
+        iconSpan.textContent = '💎';
+        labelSpan.textContent = 'На TON-кошелек';
+    } else if (method === 'card') {
+        iconSpan.textContent = '💳';
+        labelSpan.textContent = 'На карту (Рубли)';
+    } else if (method === 'stars') {
+        iconSpan.textContent = '⭐️';
+        labelSpan.textContent = 'Продать Stars';
+    }
+
+    elem.closest('.sort-dd-wrap').classList.remove('open');
+    
+    document.getElementById('withdrawTonWrap').style.display = method === 'ton' ? 'block' : 'none';
+    document.getElementById('withdrawCardWrap').style.display = method === 'card' ? 'block' : 'none';
+    document.getElementById('withdrawStarsWrap').style.display = method === 'stars' ? 'block' : 'none';
+    
+    const btnLabel = document.getElementById('withdrawBtnLabel');
+    if (method === 'ton') btnLabel.textContent = 'Вывести средства';
+    else if (method === 'card' || method === 'stars') btnLabel.textContent = 'Создать заявку';
+};
+
+window.apiWithdrawCustom = async function() {
+    const method = window._currentWithdrawMethod || 'ton';
+    
+    if (method === 'ton') {
+        await apiWithdrawWallet();
+    } else if (method === 'card') {
+        const amountStr = document.getElementById('withdrawCardAmount').value;
+        const address = document.getElementById('withdrawCardNumber').value.trim();
+        if (!amountStr || !address) return safeAlert(t('alert_fill_fields'));
+        const amount = parseFloat(amountStr);
+        if (isNaN(amount) || amount < 500) return safeAlert('Минимальная сумма вывода: 500 RUB');
+        
+        const btn = document.querySelector('#walletWithdrawPanel .action-btn');
+        btn.disabled = true;
+        
+        const res = await apiCall('/webapp/pay/crypto/sell', { currency: 'RUB', amount: amount, address: address }, 'POST');
+        if (res && res.Success) {
+            showModal('Заявка создана!', '<p style="color:var(--text-secondary); font-size:14px;">Ваша заявка отправлена в обработку. Ожидайте зачисления.</p>');
+            document.getElementById('withdrawCardAmount').value = '';
+            document.getElementById('withdrawCardNumber').value = '';
+            if (typeof loadProfile === 'function') loadProfile();
+        } else {
+            safeAlert(res?.Error || 'Ошибка создания заявки');
+        }
+        btn.disabled = false;
+        
+    } else if (method === 'stars') {
+        const amountStr = document.getElementById('withdrawStarsAmount').value;
+        const address = document.getElementById('withdrawStarsAddress').value.trim();
+        if (!amountStr || !address) return safeAlert(t('alert_fill_fields'));
+        const amount = parseInt(amountStr);
+        if (isNaN(amount) || amount < 100) return safeAlert('Мин. количество Stars: 100');
+        
+        const btn = document.querySelector('#walletWithdrawPanel .action-btn');
+        btn.disabled = true;
+
+        const res = await apiCall('/webapp/pay/stars/create', {
+            product: 'sellstars',
+            details: `TON:${address}:${amount}`
+        }, 'POST');
+
+        if (res && res.Success && (res.InvoiceUrl || res.InvoiceLink || res.PayUrl)) {
+            const invUrl = res.InvoiceUrl || res.InvoiceLink || res.PayUrl;
+            tg.openInvoice(invUrl, (status) => {
+                if (status === 'paid') {
+                    showTxResult(true, 'Успешно!', 'Звезды оплачены. Ваша заявка на обмен создана и отправлена в обработку.');
+                    document.getElementById('withdrawStarsAmount').value = '';
+                    document.getElementById('withdrawStarsAddress').value = '';
+                } else if (status === 'failed') {
+                    showTxResult(false, 'Ошибка', 'Оплата отменена или не удалась.');
+                }
+            });
+        } else {
+            safeAlert(res?.Error || 'Ошибка создания заявки');
+        }
+        btn.disabled = false;
+    }
+};
+
 // --- api.js ---
 // ============================================================
 //  api.js — Получение данных с бэкенда: цены, баланс, init

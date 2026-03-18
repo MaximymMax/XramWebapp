@@ -243,21 +243,16 @@ async function loadGiveawaysList(tab, showLoad = true) {
             const endsDate = new Date(endsAtStr);
             const isEnded = endsDate.getTime() <= Date.now();
             
-            const statusHtml = isEnded 
-                ? `<span style="color:#f07070; font-size:12px;">Завершен</span>`
-                : `<span style="color:var(--rent-primary); font-size:12px;">Активен до ${endsDate.toLocaleString('ru-RU', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'})}</span>`;
+            const statusClass = isEnded ? 'status-cancelled' : 'status-pending';
+            const statusText = isEnded ? 'Завершен' : `До ${endsDate.toLocaleString('ru-RU', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'})}`;
 
             return `
-                <div class="history-card" style="cursor:pointer;" onclick="showGiveawayInfo('${gw.Id}')">
-                    <div class="history-icon" style="background: var(--surface-3);">🎁</div>
-                    <div class="history-main">
-                        <div class="history-title">Розыгрыш: ${typeName}</div>
-                        <div class="history-date">${statusHtml}</div>
+                <div class="history-item" style="cursor:pointer;" onclick="showGiveawayInfo('${gw.Id}')">
+                    <div class="history-item-left">
+                        <div class="history-item-title">🎁 ${typeName}</div>
+                        <div class="history-item-meta">${gw.WinnersCount} победителей • ${gw.ParticipantsCount} участий</div>
                     </div>
-                    <div class="history-amount" style="text-align:right;">
-                        <div style="font-size:14px; color:var(--text);">${gw.WinnersCount} побед.</div>
-                        <div style="font-size:12px; color:var(--text-secondary);">${gw.ParticipantsCount} участн.</div>
-                    </div>
+                    <div class="history-item-status ${statusClass}">${statusText}</div>
                 </div>
             `;
         }).join('');

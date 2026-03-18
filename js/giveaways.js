@@ -149,7 +149,7 @@ window.openGwPaymentModal = async function() {
 }
 
 async function loadGiveawaysList(tab, showLoad = true) {
-    const list = document.getElementById(tab === 'my' ? 'gwMyList' : 'gwPartList');
+    const list = document.getElementById(tab === 'my' ? 'gwMyList' : 'gwParticipatingList');
     if (showLoad) list.innerHTML = '<div class="profile-empty"><p>Загрузка...</p></div>';
 
     const res = await apiCall('/webapp/giveaways/list');

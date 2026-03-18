@@ -379,6 +379,8 @@ window.openRentModal = function(address) {
         <span style="font-size: 16px; font-weight: 800; color: var(--text);">${balNum.toFixed(2)} TON</span>
     </div>`;
 
+    const gasFeeTon = window.sysConfig?.blockchainGasFeeTon || 0.06;
+
     showModal('Аренда NFT', `
         ${balIndicatorHtml}
         <div style="display:flex; gap:14px; margin-bottom:16px; align-items:center; margin-top:10px" class="page-rent-theme">
@@ -393,8 +395,13 @@ window.openRentModal = function(address) {
         <input type="number" id="modalRentDays" class="form-input" value="${state.rentDays}" min="${offer.MinDays}" max="${offer.MaxDays}" oninput="updateRentModalPrice()">
         <div id="modalRentError" class="rent-error-msg"></div>
 
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; font-size:13px; color:var(--text-secondary);">
+            <span>Комиссия сети (Газ):</span>
+            <span>~${gasFeeTon} TON</span>
+        </div>
+
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
-            <span style="font-size:14px; font-weight:700; color:var(--text-secondary)">К оплате:</span>
+            <span style="font-size:14px; font-weight:700; color:var(--text-secondary)">Итого к оплате:</span>
             <div style="text-align:right" id="modalRentTotalBlock">
                 <div style="font-size:22px; font-weight:800; color:var(--text)" id="modalRentTotalUsd">$0.00</div>
                 <div style="font-size:13px; font-weight:600; color:var(--text-muted)" id="modalRentTotalAlt">(≈ 0.00)</div>
@@ -435,11 +442,14 @@ window.updateRentModalPrice = function() {
     } else {
         errorMsg.style.display = 'none'; btn.disabled = false; btn.style.opacity = '1';
 
-        const totalTon = window.RENT_TON_PER_DAY * days;
+        // ИСПРАВЛЕНА МАТЕМАТИКА (добавлен Газ)
+        const gasFeeTon = window.sysConfig?.blockchainGasFeeTon || 0.06;
+        const totalTon = (window.RENT_TON_PER_DAY * days) + gasFeeTon; 
         const usdTotal = totalTon * getTonUsdRate();
 
         if (state.pay.rent && state.pay.rent.method === 'TelegramStars') {
-            document.getElementById('modalRentTotalUsd').textContent = `${Math.ceil(usdTotal / RATES.USD.starDeposit)} ⭐️`;
+            const starsCost = Math.ceil(usdTotal / RATES.USD.starDeposit);
+            document.getElementById('modalRentTotalUsd').textContent = `${starsCost} ⭐️`;
             document.getElementById('modalRentTotalAlt').textContent = `(≈ $${usdTotal.toFixed(2)})`;
         } else {
             document.getElementById('modalRentTotalUsd').textContent = `$${usdTotal.toFixed(2)}`;
@@ -467,7 +477,9 @@ window.apiRentGift = async function() {
     };
 
     if (pm === 'TelegramStars') {
-        const totalTon = window.RENT_TON_PER_DAY * days;
+        // ИСПРАВЛЕНА МАТЕМАТИКА (добавлен Газ)
+        const gasFeeTon = window.sysConfig?.blockchainGasFeeTon || 0.06;
+        const totalTon = (window.RENT_TON_PER_DAY * days) + gasFeeTon;
         const usdTotal = totalTon * getTonUsdRate();
         const starsCost = Math.ceil(usdTotal / RATES.USD.starDeposit);
 

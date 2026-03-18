@@ -51,17 +51,27 @@ const GW_GIFTS = [
     { id: "5882125812596999035", name: "Eternal Rose", price: 50 }
 ];
 
-function initGwGifts() {
+async function initGwGifts() {
     const menu = document.getElementById('gwGiftMenu');
     if (!menu) return;
-    menu.innerHTML = GW_GIFTS.map(g => `
-        <div class="sort-dd-item" onclick="selectGwGift('${g.id}', '${g.name}', ${g.price}, this)">
-            <div style="display:flex; align-items:center; gap:8px;">
-                <img src="https://cdn.changes.tg/gifts/originals/${g.id}/Original.png" style="width:24px; height:24px;">
-                <span class="sort-item-label">${g.name} (${g.price} ⭐️)</span>
+    
+    menu.innerHTML = '<div class="sort-dd-item"><span class="sort-item-label">Загрузка...</span></div>';
+
+    // ЗАМЕНИ /webapp/gifts/catalog на твой реальный эндпоинт, который отдает список подарков
+    const res = await apiCall('/webapp/gifts/catalog'); 
+    
+    if (res && res.Success && res.Gifts) {
+        menu.innerHTML = res.Gifts.map(g => `
+            <div class="sort-dd-item" onclick="selectGwGift('${g.Id}', '${g.Name}', ${g.PriceStars || g.Price}, this)">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <img src="https://cdn.changes.tg/gifts/originals/${g.Id}/Original.png" style="width:24px; height:24px;">
+                    <span class="sort-item-label">${g.Name} (${g.PriceStars || g.Price} ⭐️)</span>
+                </div>
             </div>
-        </div>
-    `).join('');
+        `).join('');
+    } else {
+        menu.innerHTML = '<div class="sort-dd-item"><span class="sort-item-label">Ошибка загрузки списка</span></div>';
+    }
 }
 setTimeout(initGwGifts, 300);
 
@@ -104,9 +114,12 @@ window.updateGwCreatePrice = function() {
     const totalUsd = usdPricePerWinner * winners;
     const totalTon = totalUsd / getTonUsdRate();
 
-    const btn = document.getElementById('gwCreateBtn');
-    btn.innerHTML = `Оплатить ~${totalTon.toFixed(2)} TON`;
-    btn.disabled = totalTon <= 0;
+    // ИСПРАВЛЕНО: gwSubmitBtn вместо gwCreateBtn
+    const btn = document.getElementById('gwSubmitBtn');
+    if (btn) {
+        btn.innerHTML = `Оплатить ~${totalTon.toFixed(2)} TON`;
+        btn.disabled = totalTon <= 0;
+    }
 }
 
 window.openGwPaymentModal = async function() {
@@ -135,7 +148,7 @@ window.openGwPaymentModal = async function() {
 
     if (winners < 1) return safeAlert("Должен быть хотя бы 1 победитель");
 
-    const btn = document.getElementById('gwCreateBtn');
+    const btn = document.getElementById('gwSubmitBtn');
     setLoading(btn, true);
 
     const res = await apiCall('/transactions/create/giveaway' + `?type=${type}&amount=${amount}&winners=${winners}&hours=${hours}&giftId=${giftId}`);

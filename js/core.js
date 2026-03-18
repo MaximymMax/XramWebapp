@@ -1268,4 +1268,158 @@ async function init() {
 
         document.getElementById('txResultState').style.display = 'block';
     }
+
+    // =================================================================
+//  ОБМЕННИК И БАЛАНС (Пополнение / Вывод)
+// =================================================================
+
+window.openBalanceModal = function(initialTab = 'topup') {
+    const content = `
+        <div style="display:flex; background:var(--surface-3); border-radius:10px; padding:4px; margin-bottom:20px;">
+            <div id="tabBtnTopup" onclick="switchBalanceTab('topup')" style="flex:1; text-align:center; padding:10px; font-size:14px; font-weight:700; cursor:pointer; border-radius:8px; transition: 0.2s;">Пополнение</div>
+            <div id="tabBtnWithdraw" onclick="switchBalanceTab('withdraw')" style="flex:1; text-align:center; padding:10px; font-size:14px; font-weight:700; cursor:pointer; border-radius:8px; transition: 0.2s;">Продать</div>
+        </div>
+
+        <div id="balanceTabTopup" style="display: none;">
+            <p style="color:var(--text-secondary); font-size:14px; margin-bottom:16px;">Пополните внутренний баланс в TON для моментальных покупок без комиссий сети.</p>
+            <input type="number" id="topupAmount" class="form-input" placeholder="Количество TON" style="width:100%; margin-bottom:16px;">
+            <button class="action-btn" onclick="submitTopup()" style="width:100%">Пополнить баланс</button>
+        </div>
+
+        <div id="balanceTabWithdraw" style="display: none;">
+            <label class="form-label">Что продаем?</label>
+            <select id="withdrawCurrency" class="form-input" onchange="updateWithdrawUI()" style="width:100%; margin-bottom:16px; background:var(--surface-2);">
+                <option value="Stars">Telegram Stars (⭐️)</option>
+                <option value="TON">TON с баланса</option>
+                <option value="USDT">USDT с баланса</option>
+            </select>
+
+            <label class="form-label">Количество для продажи</label>
+            <input type="number" id="withdrawAmount" class="form-input" placeholder="Введите сумму" style="width:100%; margin-bottom:16px;" oninput="calcWithdrawEst()">
+
+            <label class="form-label">Куда получаем выплату?</label>
+            <select id="withdrawTarget" class="form-input" style="width:100%; margin-bottom:16px; background:var(--surface-2);">
+                <option value="RUB">На банковскую карту (RUB)</option>
+                <option value="TON">На криптокошелек (TON)</option>
+            </select>
+
+            <label class="form-label">Реквизиты</label>
+            <input type="text" id="withdrawAddress" class="form-input" placeholder="Номер карты или адрес кошелька" style="width:100%; margin-bottom:12px;">
+
+            <div style="background:var(--surface-2); border: 1px solid var(--border-strong); border-radius:10px; padding:12px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:13px; color:var(--text-secondary);">Ожидаемая выплата:</span>
+                <span id="withdrawEst" style="font-size:16px; font-weight:800; color:var(--text);">0.00</span>
+            </div>
+
+            <button class="action-btn" id="withdrawSubmitBtn" onclick="submitWithdraw()" style="width:100%; background: linear-gradient(135deg, #229ED9, #9b72f0); border:none;">Создать заявку</button>
+        </div>
+    `;
+    showModal('Баланс и Обмен', content);
+    switchBalanceTab(initialTab);
+    updateWithdrawUI();
+};
+
+window.switchBalanceTab = function(tab) {
+    const isTopup = tab === 'topup';
+    // Кнопки
+    document.getElementById('tabBtnTopup').style.background = isTopup ? 'var(--surface)' : 'transparent';
+    document.getElementById('tabBtnTopup').style.color = isTopup ? 'var(--text)' : 'var(--text-secondary)';
+    document.getElementById('tabBtnWithdraw').style.background = !isTopup ? 'var(--surface)' : 'transparent';
+    document.getElementById('tabBtnWithdraw').style.color = !isTopup ? 'var(--text)' : 'var(--text-secondary)';
+    // Вкладки
+    document.getElementById('balanceTabTopup').style.display = isTopup ? 'block' : 'none';
+    document.getElementById('balanceTabWithdraw').style.display = !isTopup ? 'block' : 'none';
+};
+
+window.updateWithdrawUI = function() {
+    const cur = document.getElementById('withdrawCurrency').value;
+    const targetSelect = document.getElementById('withdrawTarget');
+    
+    // Если продаем крипту с баланса, то вывод пока только в рубли
+    if (cur === 'Stars') {
+        targetSelect.innerHTML = `
+            <option value="RUB">На банковскую карту (RUB)</option>
+            <option value="TON">На криптокошелек (TON)</option>
+        `;
+    } else {
+        targetSelect.innerHTML = `<option value="RUB">На банковскую карту (RUB)</option>`;
+    }
+    calcWithdrawEst();
+};
+
+window.calcWithdrawEst = function() {
+    // Декоративный расчет на фронте (точные расчеты всегда на бэкенде)
+    const amount = parseFloat(document.getElementById('withdrawAmount').value) || 0;
+    const cur = document.getElementById('withdrawCurrency').value;
+    const target = document.getElementById('withdrawTarget').value;
+    const estEl = document.getElementById('withdrawEst');
+    
+    const markup = 1 - ((window.sysConfig?.globalMarkupPercentage || 20) / 100);
+    
+    if (amount <= 0) { estEl.textContent = '0.00'; return; }
+
+    if (cur === 'Stars' && target === 'RUB') {
+        const rate = window.sysConfig?.rateStarToRub || 1.3;
+        estEl.textContent = `≈ ${(amount * rate * markup).toFixed(2)} RUB`;
+    } else if (cur === 'Stars' && target === 'TON') {
+        // Упрощенная прикидка для фронта
+        const usd = (amount * 0.013) * markup - 0.06; 
+        estEl.textContent = usd > 0 ? `≈ ${(usd / (window.RATES?.USD?.tonUsd || 5)).toFixed(2)} TON` : 'Слишком мало';
+    } else if (cur === 'TON' || cur === 'USDT') {
+        estEl.textContent = `≈ Выплата в RUB`; // Фронт может не знать точный курс RUB, пишем заглушку
+    }
+};
+
+window.submitWithdraw = async function() {
+    const currency = document.getElementById('withdrawCurrency').value;
+    const amount = parseFloat(document.getElementById('withdrawAmount').value);
+    const target = document.getElementById('withdrawTarget').value;
+    const address = document.getElementById('withdrawAddress').value;
+
+    if (!amount || amount <= 0) return safeAlert('Введите корректную сумму');
+    if (!address) return safeAlert('Введите реквизиты');
+
+    const btn = document.getElementById('withdrawSubmitBtn');
+    btn.disabled = true;
+    btn.innerText = 'Обработка...';
+
+    if (currency === 'Stars') {
+        // 1. ПРОДАЕМ ЗВЕЗДЫ (Создаем инвойс)
+        const res = await apiCall('/webapp/pay/stars/create', 'POST', {
+            product: 'sellstars',
+            details: `${target}:${address}:${amount}` // Формат для бэкенда "ВАЛЮТА:РЕКВИЗИТЫ:СУММА"
+        });
+
+        if (res && res.Success && res.InvoiceLink) {
+            closeModal();
+            tg.openInvoice(res.InvoiceLink, (status) => {
+                if (status === 'paid') {
+                    showTxResult(true, 'Успешно!', 'Звезды оплачены. Ваша заявка на обмен создана и отправлена в обработку.');
+                } else {
+                    showTxResult(false, 'Отмена', 'Оплата отменена.');
+                }
+            });
+        } else {
+            safeAlert(res?.Error || 'Ошибка создания заявки');
+        }
+    } else {
+        // 2. ПРОДАЕМ КРИПТУ С БАЛАНСА
+        const res = await apiCall('/webapp/pay/crypto/sell', 'POST', {
+            currency: currency,
+            amount: amount,
+            address: address
+        });
+
+        if (res && res.Success) {
+            closeModal();
+            showTxResult(true, 'Заявка создана!', res.Message || 'Криптовалюта списана с баланса, ожидайте перевода рублей.');
+            if (typeof loadProfile === 'function') loadProfile(); // Обновляем баланс на экране
+        } else {
+            safeAlert(res?.Error || 'Ошибка обмена. Возможно, недостаточно средств на балансе.');
+        }
+    }
+    
+    btn.disabled = false;
+    btn.innerText = 'Создать заявку';
+};
 }

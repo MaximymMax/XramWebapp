@@ -6,10 +6,10 @@ const translations = {
         nav_premium: 'Premium',
         nav_rent: 'Аренда',
         nav_profile: 'Профиль',
-        
+
         // Common
         loading: 'Загрузка...',
-        
+
         // Home page
         home_balances: 'Ваши балансы',
         home_ton_wallet: 'TON Кошелёк',
@@ -17,7 +17,7 @@ const translations = {
         btn_topup_balance: 'Пополнить баланс',
         home_services: 'Сервисы',
         home_account: 'Аккаунт',
-        
+
         // Services
         svc_stars_title: 'Telegram Stars',
         svc_stars_sub_price: 'от $0.015 за штуку',
@@ -27,7 +27,7 @@ const translations = {
         svc_rent_sub: 'Цифровые коллекции',
         svc_prof_title: 'Профиль и история',
         svc_prof_sub: 'Мои чеки, транзакции',
-        
+
         // Recipient tabs
         label_recipient: 'Получатель',
         tab_self: 'Себе',
@@ -35,13 +35,13 @@ const translations = {
         tab_cheque: 'Чек',
         badge_me: 'Я',
         label_cheque_duration: 'Срок действия чека',
-        
+
         // Packages
         pkg_custom_amount: 'Своё количество',
         pkg_3_months: '3 месяца',
         pkg_6_months: '6 месяцев',
         pkg_12_months: '12 месяцев',
-        
+
         // Rent
         rent_tab_gifts: 'Подарки',
         rent_tab_usernames: 'Юзернеймы',
@@ -52,7 +52,7 @@ const translations = {
         label_available_nft: 'Доступные NFT',
         btn_show_more: 'Показать еще',
         hint_click_card: 'Нажмите на карточку для аренды',
-        
+
         // Wallet
         title_topup: 'Пополнение',
         title_withdraw: 'Вывод средств',
@@ -62,7 +62,7 @@ const translations = {
         placeholder_amount: 'Введите сумму TON',
         btn_topup: 'Пополнить TON',
         btn_withdraw: 'Вывести средства',
-        
+
         // Profile
         tab_my_cheques: 'Мои чеки',
         tab_history: 'История',
@@ -72,7 +72,7 @@ const translations = {
         empty_history: 'История пуста',
         empty_history_hint: 'Здесь будут отображаться ваши покупки',
         empty_no_rentals: 'Нет активной аренды',
-        
+
         // Modal / Payment
         modal_order: 'Оформление заказа',
         modal_balance: 'Баланс:',
@@ -93,7 +93,7 @@ const translations = {
         modal_topup_title: 'Пополнение баланса',
         modal_topup_amount: 'Сумма пополнения',
         modal_topup_btn: 'Пополнить',
-        
+
         // Crypto transfer modal
         crypto_title: 'Крипто-перевод',
         crypto_desc: 'Переведите точную сумму на кошелек бота и укажите код в комментарии.',
@@ -105,20 +105,20 @@ const translations = {
         crypto_warning: 'Без кода в комментарии деньги не зачислятся!',
         crypto_wallet_copied: 'Кошелек скопирован',
         crypto_code_copied: 'Код скопирован',
-        
+
         // Stars modal
         stars_invoice_title: 'Оплата Звездами',
         stars_invoice_sent: 'Счет выставлен!',
         stars_invoice_desc: 'Закройте это окно и вернитесь в чат с ботом. Мы отправили вам счет на оплату Telegram Stars.',
         stars_close_webapp: 'Закрыть WebApp',
         stars_test_ok: 'Тестовый режим: Оплата Звездами сымитирована и прошла успешно!',
-        
+
         // Cheque modal
         cheque_created: '🧾 Чек успешно создан!',
         cheque_desc: 'Средства заморожены. Перешлите эту ссылку получателю:',
         cheque_copy: 'Копировать',
         cheque_go_to: 'Перейти в Мои чеки',
-        
+
         // Alerts
         alert_check_target: 'Пожалуйста, проверьте юзернейм получателя или срок чека.',
         alert_min_stars: 'Минимум 50 звезд',
@@ -129,7 +129,7 @@ const translations = {
         alert_fill_fields: 'Заполните все поля',
         alert_withdraw_ok: 'Заявка на вывод создана!',
         alert_wallet_info: 'Для подключения кошелька используйте бота или раздел Моя Аренда.',
-        
+
         // Other
         hdr_tonconnect: 'TON Connect',
         btn_support: 'Связаться с поддержкой',
@@ -137,11 +137,11 @@ const translations = {
         username_checking: 'Проверяется...',
         username_not_found: 'Пользователь не найден',
         test_mode_banner: '⚙️ ТЕСТОВЫЙ РЕЖИМ (ДЕНЬГИ НЕ СПИСЫВАЮТСЯ)',
-        
+
         // Buy buttons
         btn_buy_stars: 'Купить {count} Stars',
         btn_buy_premium: 'Купить Premium {months} мес',
-        
+
         // Rent per day
         rent_per_day: '/ дн',
 
@@ -168,10 +168,10 @@ const translations = {
         nav_premium: 'Premium',
         nav_rent: 'Rent',
         nav_profile: 'Profile',
-        
+
         // Common
         loading: 'Loading...',
-        
+
         // Home page
         home_balances: 'Your balances',
         home_ton_wallet: 'TON Wallet',
@@ -179,7 +179,7 @@ const translations = {
         btn_topup_balance: 'Top up balance',
         home_services: 'Services',
         home_account: 'Account',
-        
+
         // Services
         svc_stars_title: 'Telegram Stars',
         svc_stars_sub_price: 'from $0.015 each',
@@ -189,7 +189,7 @@ const translations = {
         svc_rent_sub: 'Digital collections',
         svc_prof_title: 'Profile & History',
         svc_prof_sub: 'My cheques, transactions',
-        
+
         // Recipient tabs
         label_recipient: 'Recipient',
         tab_self: 'Myself',
@@ -197,13 +197,13 @@ const translations = {
         tab_cheque: 'Cheque',
         badge_me: 'Me',
         label_cheque_duration: 'Cheque validity',
-        
+
         // Packages
         pkg_custom_amount: 'Custom amount',
         pkg_3_months: '3 months',
         pkg_6_months: '6 months',
         pkg_12_months: '12 months',
-        
+
         // Rent
         rent_tab_gifts: 'Gifts',
         rent_tab_usernames: 'Usernames',
@@ -214,7 +214,7 @@ const translations = {
         label_available_nft: 'Available NFTs',
         btn_show_more: 'Show more',
         hint_click_card: 'Tap a card to rent',
-        
+
         // Wallet
         title_topup: 'Top Up',
         title_withdraw: 'Withdrawal',
@@ -224,7 +224,7 @@ const translations = {
         placeholder_amount: 'Enter TON amount',
         btn_topup: 'Top Up TON',
         btn_withdraw: 'Withdraw',
-        
+
         // Profile
         tab_my_cheques: 'My Cheques',
         tab_history: 'History',
@@ -234,7 +234,7 @@ const translations = {
         empty_history: 'History is empty',
         empty_history_hint: 'Your purchases will appear here',
         empty_no_rentals: 'No active rentals',
-        
+
         // Modal / Payment
         modal_order: 'Place Order',
         modal_balance: 'Balance:',
@@ -255,7 +255,7 @@ const translations = {
         modal_topup_title: 'Top Up Balance',
         modal_topup_amount: 'Top up amount',
         modal_topup_btn: 'Top up',
-        
+
         // Crypto transfer modal
         crypto_title: 'Crypto Transfer',
         crypto_desc: 'Send the exact amount to the bot wallet and include the code in the comment.',
@@ -267,20 +267,20 @@ const translations = {
         crypto_warning: 'Without the code in the comment, funds will not be credited!',
         crypto_wallet_copied: 'Wallet copied',
         crypto_code_copied: 'Code copied',
-        
+
         // Stars modal
         stars_invoice_title: 'Pay with Stars',
         stars_invoice_sent: 'Invoice sent!',
         stars_invoice_desc: 'Close this window and return to the bot chat. We have sent you an invoice to pay with Telegram Stars.',
         stars_close_webapp: 'Close WebApp',
         stars_test_ok: 'Test mode: Stars payment simulated successfully!',
-        
+
         // Cheque modal
         cheque_created: '🧾 Cheque created!',
         cheque_desc: 'Funds are frozen. Share this link with the recipient:',
         cheque_copy: 'Copy',
         cheque_go_to: 'Go to My Cheques',
-        
+
         // Alerts
         alert_check_target: 'Please check the recipient username or cheque duration.',
         alert_min_stars: 'Minimum 50 stars',
@@ -291,7 +291,7 @@ const translations = {
         alert_fill_fields: 'Please fill in all fields',
         alert_withdraw_ok: 'Withdrawal request created!',
         alert_wallet_info: 'To connect a wallet, use the bot or the My Rentals section.',
-        
+
         // Other
         hdr_tonconnect: 'TON Connect',
         btn_support: 'Contact support',
@@ -299,11 +299,11 @@ const translations = {
         username_checking: 'Checking...',
         username_not_found: 'User not found',
         test_mode_banner: '⚙️ TEST MODE (NO CHARGES)',
-        
+
         // Buy buttons
         btn_buy_stars: 'Buy {count} Stars',
         btn_buy_premium: 'Buy Premium {months} mo',
-        
+
         // Rent per day
         rent_per_day: '/ day',
 
@@ -333,7 +333,7 @@ window.currentLang = 'ru';
  * @param {Object} [params] Replacement params, e.g. { count: 50 }
  * @returns {string} Translated string
  */
-window.t = function(key, params) {
+window.t = function (key, params) {
     const lang = window.currentLang || 'ru';
     let text = (translations[lang] && translations[lang][key]) || (translations.ru && translations.ru[key]) || key;
     if (params) {
@@ -344,9 +344,9 @@ window.t = function(key, params) {
     return text;
 }
 
-window.switchLang = function(lang) {
+window.switchLang = function (lang) {
     window.currentLang = lang;
-    
+
     const langLabel = document.getElementById('langLabel');
     if (langLabel) {
         langLabel.textContent = lang === 'en' ? '🇬🇧 EN' : '🇷🇺 RU';
@@ -355,7 +355,7 @@ window.switchLang = function(lang) {
     if (dropdownWrap) {
         dropdownWrap.classList.remove('open');
     }
-    
+
     // Translate all data-i18n elements
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
@@ -384,9 +384,9 @@ window.switchLang = function(lang) {
     if (typeof updateTopupBtn === 'function') updateTopupBtn();
     if (typeof updateStarsBtn === 'function') updateStarsBtn();
     if (typeof updatePremiumBtn === 'function') updatePremiumBtn();
-    
+
     // Save preference
-    try { localStorage.setItem('xram_lang', lang); } catch(e) {}
+    try { localStorage.setItem('xram_lang', lang); } catch (e) { }
 }
 
 // Restore saved language preference on load
@@ -398,7 +398,7 @@ try {
     } else if (tgLang && translations[tgLang]) {
         window.currentLang = tgLang;
     }
-} catch(e) {}
+} catch (e) { }
 
 document.addEventListener('DOMContentLoaded', () => {
     switchLang(window.currentLang);

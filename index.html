@@ -565,6 +565,7 @@
                         <div class="sort-dd-item selected" onclick="selectGwPrize('TelegramStars', this)"><span class="sort-item-label">Telegram Stars</span></div>
                         <div class="sort-dd-item" onclick="selectGwPrize('Premium', this)"><span class="sort-item-label">Telegram Premium</span></div>
                         <div class="sort-dd-item" onclick="selectGwPrize('TonTransfer', this)"><span class="sort-item-label">TON</span></div>
+                        <div class="sort-dd-item" onclick="selectGwPrize('DefaultGift', this)"><span class="sort-item-label">Подарки</span></div>
                     </div>
                 </div>
                 <input type="hidden" id="gwPrizeType" value="TelegramStars">
@@ -596,30 +597,28 @@
                     <input type="hidden" id="gwPrizePremium" value="3">
                 </div>
 
+                <div id="gwInputGiftWrap" style="display:none">
+                    <label class="form-label">Выберите подарок</label>
+                    <div class="sort-dd-wrap" id="gwGiftDropdown" style="width: 100%; margin-bottom: 16px;">
+                        <div class="sort-dd-trigger" style="justify-content: space-between; padding: 12px 14px; border: 1px solid var(--border-strong); border-radius: 12px; background: var(--surface-2);" onclick="toggleSortDropdown(event)">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <img id="gwGiftImg" src="" style="width:24px; height:24px; display:none;">
+                                <span class="sort-dd-label" id="gwGiftLabel">Выбрать...</span>
+                            </div>
+                            <svg class="sort-dd-arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9" /></svg>
+                        </div>
+                        <div class="sort-dd-menu" id="gwGiftMenu" style="width: 100%; max-height: 250px; overflow-y: auto;">
+                            </div>
+                    </div>
+                    <input type="hidden" id="gwPrizeGiftId" value="">
+                    <input type="hidden" id="gwPrizeGiftPrice" value="0">
+                </div>
+
                 <label class="form-label" data-i18n="gw_winners">Количество победителей</label>
                 <input type="number" id="gwWinnersCount" class="form-input" placeholder="1" value="1" min="1" oninput="updateGwCreatePrice()">
 
-                <label class="form-label" data-i18n="gw_end_date">Дата и время окончания (не менее 24ч)</label>
-                <div style="display: flex; gap: 10px; margin-bottom: 16px;">
-                    <div class="sort-dd-wrap" id="gwDateDropdown" style="flex: 3; margin-bottom: 0;">
-                        <div class="sort-dd-trigger" style="justify-content: space-between; padding: 12px 14px; border: 1px solid var(--border-strong); border-radius: 12px; background: var(--surface-2);" onclick="toggleSortDropdown(event)">
-                            <span class="sort-dd-label" id="gwDateLabel">Завтра</span>
-                            <svg class="sort-dd-arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9" /></svg>
-                        </div>
-                        <div class="sort-dd-menu" id="gwDateMenu" style="width: 100%; max-height: 220px; overflow-y: auto;">
-                        </div>
-                    </div>
-                    <div class="sort-dd-wrap" id="gwTimeDropdown" style="flex: 2; margin-bottom: 0;">
-                        <div class="sort-dd-trigger" style="justify-content: space-between; padding: 12px 14px; border: 1px solid var(--border-strong); border-radius: 12px; background: var(--surface-2);" onclick="toggleSortDropdown(event)">
-                            <span class="sort-dd-label" id="gwTimeLabel">12:00</span>
-                            <svg class="sort-dd-arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9" /></svg>
-                        </div>
-                        <div class="sort-dd-menu" id="gwTimeMenu" style="width: 100%; max-height: 220px; overflow-y: auto;">
-                        </div>
-                    </div>
-                </div>
-                <input type="hidden" id="gwSelectedDate" value="">
-                <input type="hidden" id="gwSelectedTime" value="">
+                <label class="form-label">Длительность розыгрыша (в часах)</label>
+                <input type="number" id="gwHoursCount" class="form-input" placeholder="24" value="24" min="1" oninput="updateGwCreatePrice()">
 
                 <div style="display:flex; justify-content:space-between; align-items:center; margin: 18px 0 8px;">
                     <span style="font-size:14px; font-weight:700; color:var(--text-secondary)" data-i18n="gw_total">Итого к оплате:</span>
@@ -827,8 +826,6 @@
             </div>
         </div>
     </div>
-
-    <!-- myRentDetailsModal удалён, теперь используется showModal() из core.js -->
 
     <div id="txStatusModal" class="modal-overlay" style="display:none; align-items: center; justify-content: center; z-index: 9999; flex-direction: column; background: var(--bg);">
         <div class="tx-status-content" style="text-align: center; display: flex; flex-direction: column; align-items: center; width: 100%; padding: 20px; max-width: 400px;">

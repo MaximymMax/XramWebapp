@@ -63,6 +63,15 @@ function getFragmentNftImage(rental) {
 function renderServerRentals(rentals) {
     const list = document.getElementById('rentalsList');
     if (!list) return;
+
+    // --- ФИЛЬТРАЦИЯ: Отсекаем истекшую аренду (оставляем только активные или выдающиеся) ---
+    const now = Date.now();
+    rentals = rentals.filter(r => {
+        let expiresStr = r.ExpiresAt ? (r.ExpiresAt.endsWith('Z') ? r.ExpiresAt : r.ExpiresAt + 'Z') : new Date().toISOString();
+        return new Date(expiresStr).getTime() > now || r.IsPending;
+    });
+    // ----------------------------------------------------------------------------------------
+
     if (!rentals.length) {
         list.innerHTML = `<div class="profile-empty"><p>Нет активной аренды</p></div>`;
         return;

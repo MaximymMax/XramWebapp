@@ -11,12 +11,11 @@ window.switchGiveawayTab = function(tab, btn) {
     document.getElementById('gwTabMy').style.display = tab === 'my' ? 'block' : 'none';
 
     if (tab === 'participating' || tab === 'my') {
-        loadGiveawaysList(tab, false); // false убирает мерцание загрузки
+        loadGiveawaysList(tab, false);
     }
 }
 
 window.fetchAllGiveaways = async function() {
-    // Ждем загрузку обеих вкладок одновременно
     await Promise.all([
         loadGiveawaysList('participating', false),
         loadGiveawaysList('my', false)
@@ -26,98 +25,65 @@ window.fetchAllGiveaways = async function() {
 // ── Кастомные дропдауны ─────────────────────────────────────
 window.selectGwPrize = function(val, elem) {
     document.getElementById('gwPrizeType').value = val;
-    document.getElementById('gwPrizeLabel').textContent = elem.textContent;
+    document.getElementById('gwPrizeLabel').textContent = elem.querySelector('.sort-item-label').textContent;
     
-    // Подсветка выбранного (ИСПРАВЛЕНО на closest)
     elem.closest('.sort-dd-menu').querySelectorAll('.sort-dd-item').forEach(el => el.classList.remove('selected'));
     elem.classList.add('selected');
 
     document.getElementById('gwInputStarsWrap').style.display = val === 'TelegramStars' ? 'block' : 'none';
     document.getElementById('gwInputTonWrap').style.display = val === 'TonTransfer' ? 'block' : 'none';
     document.getElementById('gwInputPremiumWrap').style.display = val === 'Premium' ? 'block' : 'none';
-    
+    document.getElementById('gwInputGiftWrap').style.display = val === 'DefaultGift' ? 'block' : 'none';
+
     updateGwCreatePrice();
 }
 
-window.selectGwPremium = function(months, elem) {
-    document.getElementById('gwPrizePremium').value = months;
-    document.getElementById('gwPremLabel').textContent = elem.textContent;
+// ── Подарки для розыгрыша ────────────────────────────────────
+const GW_GIFTS = [
+    { id: "5983471780763796287", name: "Santa Hat", price: 50 },
+    { id: "5936085638515261992", name: "Signet Ring", price: 50 },
+    { id: "5933671725160989227", name: "Precious Peach", price: 50 },
+    { id: "5936013938331222567", name: "Plush Pepe", price: 50 },
+    { id: "5913442287462908725", name: "Spiced Wine", price: 50 },
+    { id: "5915502858152706668", name: "Jelly Bunny", price: 50 },
+    { id: "5915521180483191380", name: "Durov's Cap", price: 50 },
+    { id: "5913517067138499193", name: "Perfume Bottle", price: 50 },
+    { id: "5882125812596999035", name: "Eternal Rose", price: 50 }
+];
+
+function initGwGifts() {
+    const menu = document.getElementById('gwGiftMenu');
+    if (!menu) return;
+    menu.innerHTML = GW_GIFTS.map(g => `
+        <div class="sort-dd-item" onclick="selectGwGift('${g.id}', '${g.name}', ${g.price}, this)">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <img src="https://cdn.changes.tg/gifts/originals/${g.id}/Original.png" style="width:24px; height:24px;">
+                <span class="sort-item-label">${g.name} (${g.price} ⭐️)</span>
+            </div>
+        </div>
+    `).join('');
+}
+setTimeout(initGwGifts, 300);
+
+window.selectGwGift = function(id, name, price, elem) {
+    document.getElementById('gwPrizeGiftId').value = id;
+    document.getElementById('gwPrizeGiftPrice').value = price;
+    document.getElementById('gwGiftLabel').textContent = `${name} (${price} ⭐️)`;
     
+    const img = document.getElementById('gwGiftImg');
+    img.src = `https://cdn.changes.tg/gifts/originals/${id}/Original.png`;
+    img.style.display = 'block';
+
     elem.closest('.sort-dd-menu').querySelectorAll('.sort-dd-item').forEach(el => el.classList.remove('selected'));
     elem.classList.add('selected');
     updateGwCreatePrice();
 }
 
-// ── Инициализация красивых списков даты и времени ───────────
-function initGwDateSelectors() {
-    const dateMenu = document.getElementById('gwDateMenu');
-    const timeMenu = document.getElementById('gwTimeMenu');
-    if(!dateMenu || !timeMenu || dateMenu.innerHTML.trim() !== '') return;
-
-    const locale = window.currentLang === 'en' ? 'en-US' : 'ru-RU';
-    const formatter = new Intl.DateTimeFormat(locale, { month: 'long', day: 'numeric' });
-    const today = new Date();
-    
-    let dateHtml = '';
-    let firstDateStr = '';
-    
-    // Генерируем 14 дней вперед, начиная с завтрашнего
-    for(let i = 1; i <= 14; i++) {
-        let d = new Date();
-        d.setDate(today.getDate() + i);
-        
-        let label = formatter.format(d);
-        if (i === 1) label = (window.currentLang === 'en' ? 'Tomorrow (' : 'Завтра (') + label + ')';
-        else if (i === 2) label = (window.currentLang === 'en' ? 'Day after (' : 'Послезавтра (') + label + ')';
-
-        let val = d.toISOString().split('T')[0];
-        if (i === 1) firstDateStr = val;
-
-        dateHtml += `<div class="sort-dd-item ${i===1?'selected':''}" onclick="selectGwDate('${val}', '${label}', this)"><span class="sort-item-label">${label}</span></div>`;
-    }
-    dateMenu.innerHTML = dateHtml;
-    document.getElementById('gwSelectedDate').value = firstDateStr;
-    document.getElementById('gwDateLabel').textContent = dateMenu.querySelector('.selected .sort-item-label').textContent;
-
-    // Генерируем время каждые 30 минут
-    let timeHtml = '';
-    let firstTimeStr = '12:00';
-    for(let h = 0; h < 24; h++) {
-        for(let m of ['00', '30']) {
-            let t = `${h.toString().padStart(2, '0')}:${m}`;
-            timeHtml += `<div class="sort-dd-item ${t===firstTimeStr?'selected':''}" onclick="selectGwTime('${t}', this)"><span class="sort-item-label">${t}</span></div>`;
-        }
-    }
-    timeMenu.innerHTML = timeHtml;
-    document.getElementById('gwSelectedTime').value = firstTimeStr;
-    document.getElementById('gwTimeLabel').textContent = firstTimeStr;
-}
-
-// Запускаем инициализацию при загрузке скрипта
-setTimeout(initGwDateSelectors, 300);
-
-window.selectGwDate = function(val, label, elem) {
-    document.getElementById('gwSelectedDate').value = val;
-    document.getElementById('gwDateLabel').textContent = label;
-    elem.closest('.sort-dd-menu').querySelectorAll('.sort-dd-item').forEach(el => el.classList.remove('selected'));
-    elem.classList.add('selected');
-    updateGwCreatePrice();
-}
-
-window.selectGwTime = function(val, elem) {
-    document.getElementById('gwSelectedTime').value = val;
-    document.getElementById('gwTimeLabel').textContent = val;
-    elem.closest('.sort-dd-menu').querySelectorAll('.sort-dd-item').forEach(el => el.classList.remove('selected'));
-    elem.classList.add('selected');
-    updateGwCreatePrice();
-}
-
-// ── Создание розыгрыша ──────────────────────────────────────
 window.updateGwCreatePrice = function() {
     const type = document.getElementById('gwPrizeType').value;
     const winners = parseInt(document.getElementById('gwWinnersCount').value) || 1;
     let usdPricePerWinner = 0;
-    
+
     if (type === 'TelegramStars') {
         const amount = parseFloat(document.getElementById('gwPrizeStars').value) || 0;
         usdPricePerWinner = amount * RATES.USD.perStar;
@@ -125,48 +91,34 @@ window.updateGwCreatePrice = function() {
         const amount = parseFloat(document.getElementById('gwPrizeTon').value) || 0;
         usdPricePerWinner = amount * getTonUsdRate();
     } else if (type === 'Premium') {
-        const months = parseInt(document.getElementById('gwPrizePremium').value);
-        usdPricePerWinner = months === 12 ? window.finalPrices.premium12 : (months === 6 ? window.finalPrices.premium6 : window.finalPrices.premium3);
+        const months = parseInt(document.getElementById('gwPrizePremium').value) || 3;
+        if (months === 12) usdPricePerWinner = window.sysConfig?.finalPricesUsd?.premium12 || 35.99;
+        else if (months === 6) usdPricePerWinner = window.sysConfig?.finalPricesUsd?.premium6 || 15.99;
+        else usdPricePerWinner = window.sysConfig?.finalPricesUsd?.premium3 || 11.99;
+    } else if (type === 'DefaultGift') {
+        const price = parseFloat(document.getElementById('gwPrizeGiftPrice').value) || 0;
+        const gasFeeUsd = (window.sysConfig?.blockchainGasFeeTon || 0.06) * getTonUsdRate();
+        usdPricePerWinner = (price * RATES.USD.perStar) + gasFeeUsd;
     }
 
     const totalUsd = usdPricePerWinner * winners;
     const totalTon = totalUsd / getTonUsdRate();
 
-    document.getElementById('gwTotalCostUsd').textContent = typeof formatTonPrice === 'function' ? formatTonPrice(totalTon) : `$${totalUsd.toFixed(2)}`;
-    document.getElementById('gwTotalCostTon').textContent = `(≈ ${totalTon.toFixed(2)} TON)`;
-
-    // Проверка баланса
-    const userBalance = parseFloat(document.getElementById('homeTonBalance').textContent) || 0;
-    const submitBtn = document.getElementById('gwSubmitBtn');
-    const topupBtn = document.getElementById('gwTopupBtn');
-    
-    if (totalTon > userBalance) {
-        submitBtn.disabled = true;
-        submitBtn.classList.add('outline-action-btn'); 
-        topupBtn.style.display = 'flex'; 
-    } else {
-        submitBtn.disabled = false;
-        submitBtn.classList.remove('outline-action-btn'); 
-        topupBtn.style.display = 'none'; 
-    }
+    const btn = document.getElementById('gwCreateBtn');
+    btn.innerHTML = `Оплатить ~${totalTon.toFixed(2)} TON`;
+    btn.disabled = totalTon <= 0;
 }
 
-window.openGwPaymentModal = function() {
+window.openGwPaymentModal = async function() {
     const type = document.getElementById('gwPrizeType').value;
     const winners = parseInt(document.getElementById('gwWinnersCount').value) || 1;
     
-    // Считываем дату и время из новых красивых селекторов
-    const dateVal = document.getElementById('gwSelectedDate').value;
-    const timeVal = document.getElementById('gwSelectedTime').value;
-    const endDate = new Date(`${dateVal}T${timeVal}:00`);
-    
-    const diffMs = endDate.getTime() - Date.now();
-    const minutes = Math.floor(diffMs / 60000);
-
-    const minError = window.currentLang === 'en' ? "Minimum duration is 1 day (24 hours)" : "Минимальная длительность - 1 день (24 часа)";
-    if (minutes < 1440) return safeAlert(minError);
+    const hours = parseInt(document.getElementById('gwHoursCount').value) || 0;
+    if (hours < 1) return safeAlert("Минимальная длительность - 1 час");
 
     let amount = 0;
+    let giftId = "";
+    
     if (type === 'TelegramStars') {
         amount = parseFloat(document.getElementById('gwPrizeStars').value);
         if (amount < 50) return safeAlert("Минимальное количество звезд: 50");
@@ -175,191 +127,186 @@ window.openGwPaymentModal = function() {
         if (amount < 0.5) return safeAlert("Минимальная сумма: 0.5 TON");
     } else if (type === 'Premium') {
         amount = parseInt(document.getElementById('gwPrizePremium').value);
+    } else if (type === 'DefaultGift') {
+        giftId = document.getElementById('gwPrizeGiftId').value;
+        if (!giftId) return safeAlert("Пожалуйста, выберите подарок из списка");
+        amount = parseFloat(document.getElementById('gwPrizeGiftPrice').value);
     }
 
     if (winners < 1) return safeAlert("Должен быть хотя бы 1 победитель");
 
-    safeConfirm('Списать средства с внутреннего баланса TON и запустить розыгрыш?', async (ok) => {
-        if (!ok) return;
+    const btn = document.getElementById('gwCreateBtn');
+    setLoading(btn, true);
 
-        showTxLoading(); // Показываем Lottie-ожидание
-
-        const res = await apiCall('/transactions/create/giveaway', { type, amount, winners, minutes });
-        
-        if (res && res.Success) {
-            const detailsHtml = `<div class="cheque-link-input" style="user-select:all; padding:10px; background:var(--bg); border-radius:8px; word-break:break-all;">${res.InviteLink}</div>`;
-            showTxResult(true, "Розыгрыш запущен!", "Средства заморожены. Ссылка для участия скопирована:", detailsHtml, () => {
-                switchGiveawayTab('my', document.querySelectorAll('#page-giveaways .ptab')[2]);
-            });
-            
-            navigator.clipboard.writeText(res.InviteLink);
-            if (typeof fetchServerData === 'function') fetchServerData();
-        } else {
-            showTxResult(false, "Ошибка создания", res?.Error || 'Не удалось списать средства.', "");
-        }
-    });
-}
-
-// ── Отмена розыгрыша ─────────────────────────────────────────
-window.cancelGiveaway = async function(gwId) {
-    safeConfirm('Вы уверены, что хотите отменить розыгрыш? Средства будут возвращены на баланс.', async (ok) => {
-        if (!ok) return;
-        
-        // POST запрос на отмену
-        const res = await apiCall(`/webapp/giveaways/${gwId}/cancel`);
-        if (res && res.Success) {
-            safeAlert('Розыгрыш отменен. Средства разморожены.');
-            loadGiveawaysList('my'); // Обновляем список
-            if (typeof fetchServerData === 'function') fetchServerData(); 
-        } else {
-            safeAlert(res?.Error || 'Не удалось отменить розыгрыш');
-        }
-    });
-}
-
-// ── Списки с Таймерами ──────────────────────────────────────
-async function loadGiveawaysList(tab, showLoading = true) {
-    const container = document.getElementById(tab === 'my' ? 'gwMyList' : 'gwParticipatingList');
-    
-    // Показываем "Загрузка..." только если контейнер пустой или если запросили явно
-    if (showLoading && container.innerHTML.trim() === '') {
-        container.innerHTML = '<div class="profile-empty"><p>Загрузка...</p></div>';
-    }
-
-    const res = await apiCall(`/webapp/giveaways/list?type=${tab}`);
+    const res = await apiCall('/transactions/create/giveaway' + `?type=${type}&amount=${amount}&winners=${winners}&hours=${hours}&giftId=${giftId}`);
+    setLoading(btn, false);
 
     if (res && res.Success) {
-        // БЕРЕМ ПРАВИЛЬНЫЙ МАССИВ ИЗ JSON ОТВЕТА
+        tg.openTelegramLink(res.InviteLink);
+    } else {
+        safeAlert(res?.Error || "Ошибка создания розыгрыша");
+    }
+}
+
+async function loadGiveawaysList(tab, showLoad = true) {
+    const list = document.getElementById(tab === 'my' ? 'gwMyList' : 'gwPartList');
+    if (showLoad) list.innerHTML = '<div class="profile-empty"><p>Загрузка...</p></div>';
+
+    const res = await apiCall('/webapp/giveaways/list');
+    if (res && res.Success) {
         const items = tab === 'my' ? res.My : res.Participating;
 
-        if (!items || !items.length) {
-            return container.innerHTML = `<div class="profile-empty"><p>Пусто</p></div>`;
+        // Скрываем завершенные розыгрыши во вкладке "Участвую"
+        if (tab === 'participating' && items) {
+            const now = Date.now();
+            for (let i = items.length - 1; i >= 0; i--) {
+                let endsAtStr = items[i].EndsAt;
+                if (endsAtStr && !endsAtStr.endsWith('Z')) endsAtStr += 'Z';
+                if (new Date(endsAtStr).getTime() <= now) {
+                    items.splice(i, 1);
+                }
+            }
         }
-        
-        container.innerHTML = items.map(g => {
-            // ФИКС ЧАСОВОГО ПОЯСА
-            let endsAtStr = g.EndsAt;
+
+        if (!items || items.length === 0) {
+            list.innerHTML = `<div class="profile-empty"><p>${tab === 'my' ? 'У вас нет созданных розыгрышей' : 'Вы не участвуете в активных розыгрышах'}</p></div>`;
+            return;
+        }
+
+        list.innerHTML = items.map(gw => {
+            let typeName = gw.PrizeType;
+            if (typeName === 'TelegramStars' || typeName === 'Stars') typeName = 'Telegram Stars';
+            if (typeName === 'TonTransfer') typeName = 'TON';
+            if (typeName === 'DefaultGift') typeName = 'Подарок';
+            
+            let endsAtStr = gw.EndsAt;
             if (endsAtStr && !endsAtStr.endsWith('Z')) endsAtStr += 'Z';
+            const endsDate = new Date(endsAtStr);
+            const isEnded = endsDate.getTime() <= Date.now();
             
-            // Если сумма не указана (например для TON), чтобы не писало "undefined"
-            const amountText = g.Amount ? g.Amount : '';
-            
+            const statusHtml = isEnded 
+                ? `<span style="color:#f07070; font-size:12px;">Завершен</span>`
+                : `<span style="color:var(--rent-primary); font-size:12px;">Активен до ${endsDate.toLocaleString('ru-RU', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'})}</span>`;
+
             return `
-            <div class="history-item" style="flex-direction:column; align-items:stretch; cursor:pointer;" onclick="openGiveawayJoin('${g.Id}')">
-                <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                    <span style="font-weight:700">${g.PrizeType} ${g.PrizeType === 'Premium' ? amountText + ' мес' : ''} x${g.WinnersCount}</span>
-                    <div class="countdown-timer" data-ends="${endsAtStr}" data-timeout-text="Завершено" style="font-size:12px; color:var(--rent-primary); font-weight:700;">Считаем...</div>
-                </div>
-                <div style="font-size:12px; color:var(--text-muted)">Участников: ${g.ParticipantsCount}</div>
-                <div style="display:flex; gap: 8px; margin-top:12px">
-                    ${tab === 'my' ? `<button class="action-btn outline-action-btn" style="flex:1; margin:0; padding:8px; font-size:12px;" onclick="event.stopPropagation(); navigator.clipboard.writeText('${g.InviteLink}'); safeAlert('Скопировано');">🔗 Копировать</button>` : ''}
-                    ${tab === 'my' && g.ParticipantsCount === 0 ? `<button class="action-btn" style="flex:1; margin:0; padding:8px; font-size:12px; background: rgba(255, 69, 58, 0.15); color: #ff453a; border: none;" onclick="event.stopPropagation(); cancelGiveaway('${g.Id}')">❌ Отменить</button>` : ''}
-                </div>
-            </div>`
-        }).join('');
-    } else {
-        container.innerHTML = `<div class="profile-empty"><p>Ошибка загрузки</p></div>`;
-    }
-}
-
-// ── Полноэкранная Модалка с открытой Капчей ─────────────────
-let currentGiveawayId = null;
-
-window.openGiveawayJoin = async function(gwId) {
-    const modal = document.getElementById('giveawayJoinModal');
-    const content = document.getElementById('giveawayJoinContent');
-    content.innerHTML = '<div style="text-align:center; padding: 40px 0;"><p>Загрузка розыгрыша...</p></div>';
-    modal.style.display = 'flex';
-
-    const res = await apiCall(`/webapp/giveaways/${gwId}/info`);
-    if (!res || !res.Success) {
-        modal.style.display = 'none';
-        return safeAlert('Розыгрыш не найден или завершен');
-    }
-
-    let html = `
-        <div style="text-align:center;">
-            <div style="font-size:54px; margin-bottom:10px;">${res.PrizeType === 'Stars' ? '⭐️' : '💎'}</div>
-            <h2 style="margin-bottom:6px; font-size:22px;">Приз: ${res.Amount} ${res.PrizeType}</h2>
-            <p style="color:var(--text-secondary); font-size:14px; margin-bottom:16px;">
-                Победителей: <b>${res.WinnersCount}</b> • Участников: <b>${res.ParticipantsCount}</b>
-            </p>
-            
-            <div style="background: var(--surface-3); padding: 14px; border-radius: 16px; margin-bottom: 24px;">
-                <span style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">До конца:</span>
-                <div class="countdown-timer" data-ends="${res.EndsAt}" data-timeout-text="Завершено" style="font-size: 24px; font-weight: 800; color: var(--text); margin-top: 4px;">Считаем...</div>
-            </div>
-    `;
-
-    // === ЛОГИКА ДЛЯ СОЗДАТЕЛЯ РОЗЫГРЫША ===
-    if (res.IsCreator) {
-        html += `<div style="text-align:left; background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 20px; max-height: 200px; overflow-y: auto;">
-                    <div style="font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 8px; text-transform: uppercase;">Список участников:</div>`;
-        
-        if (res.Participants && res.Participants.length > 0) {
-            html += res.Participants.map(p => `
-                <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border-strong); font-size: 13px;">
-                    <span style="color: var(--text); font-weight: 600;">${p.Name}</span>
-                    <span style="color: var(--text-muted); font-family: monospace;">${p.Id}</span>
-                </div>
-            `).join('');
-        } else {
-            html += `<div style="font-size: 13px; color: var(--text-muted); text-align: center; padding: 10px 0;">Пока никто не присоединился</div>`;
-        }
-        html += `</div>`;
-        
-        html += `<button class="action-btn outline-action-btn" style="width:100%; margin:0 0 10px; pointer-events:none;">Это ваш розыгрыш 👑</button>`;
-        html += `<button class="action-btn" style="width:100%; margin:0; background: var(--surface-3); color: var(--text);" onclick="document.getElementById('giveawayJoinModal').style.display='none'">Закрыть</button></div>`;
-        content.innerHTML = html;
-        return; // Выходим, чтобы не рисовать капчу
-    }
-
-    // === ЛОГИКА ДЛЯ ОБЫЧНОГО УЧАСТНИКА ===
-    if (res.IsJoined) {
-        html += `<button class="action-btn outline-action-btn" style="width:100%; margin:0 0 10px; pointer-events:none;">Вы уже участвуете ✅</button>`;
-        html += `<button class="action-btn" style="width:100%; margin:0; background: var(--surface-3); color: var(--text);" onclick="document.getElementById('giveawayJoinModal').style.display='none'">Закрыть</button></div>`;
-        content.innerHTML = html;
-    } else {
-        html += `<div id="inlineCaptcha" style="margin-bottom: 20px;"><p style="font-size:13px; color:var(--text-secondary);">Подготовка проверки на бота...</p></div>`;
-        html += `<button class="action-btn outline-action-btn" style="width:100%; margin:0;" onclick="document.getElementById('giveawayJoinModal').style.display='none'">Отмена</button></div>`;
-        content.innerHTML = html;
-
-        currentGiveawayId = gwId;
-        const capRes = await apiCall(`/webapp/giveaways/${gwId}/captcha`);
-        const capDiv = document.getElementById('inlineCaptcha');
-        
-        if (capRes && capRes.Success) {
-            capDiv.innerHTML = `
-                <div style="border-top: 1px solid var(--border); margin: 20px 0;"></div>
-                <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 14px;">
-                    Для участия выберите: <b style="color: var(--text); font-size: 16px;">${capRes.TargetName}</b>
-                </p>
-                <div style="display: flex; justify-content: center; gap: 8px; flex-wrap: wrap;">
-                    ${capRes.Emojis.map(emoji => `
-                        <button onclick="submitCaptcha('${emoji}')" style="font-size: 28px; background: var(--surface-2); border: 1px solid var(--border-strong); border-radius: 12px; width: 50px; height: 50px; cursor: pointer; display:flex; align-items:center; justify-content:center;">
-                            ${emoji}
-                        </button>
-                    `).join('')}
+                <div class="history-card" style="cursor:pointer;" onclick="showGiveawayInfo('${gw.Id}')">
+                    <div class="history-icon" style="background: var(--surface-3);">🎁</div>
+                    <div class="history-main">
+                        <div class="history-title">Розыгрыш: ${typeName}</div>
+                        <div class="history-date">${statusHtml}</div>
+                    </div>
+                    <div class="history-amount" style="text-align:right;">
+                        <div style="font-size:14px; color:var(--text);">${gw.WinnersCount} побед.</div>
+                        <div style="font-size:12px; color:var(--text-secondary);">${gw.ParticipantsCount} участн.</div>
+                    </div>
                 </div>
             `;
-        } else {
-            capDiv.innerHTML = `<p style="color:#ff453a; font-size:13px;">${capRes?.Error || 'Ошибка загрузки капчи'}</p>`;
-        }
+        }).join('');
+    } else {
+        list.innerHTML = '<div class="profile-empty"><p>Ошибка загрузки</p></div>';
     }
 }
 
-// Отправка открытой капчи
+window.showGiveawayInfo = async function(id) {
+    const res = await apiCall(`/webapp/giveaways/${id}/info`);
+    if (res && res.Success) {
+        let endsAtStr = res.EndsAt;
+        if (endsAtStr && !endsAtStr.endsWith('Z')) endsAtStr += 'Z';
+        const endsDate = new Date(endsAtStr);
+        const isEnded = endsDate.getTime() <= Date.now();
+        
+        let prizeName = res.PrizeType;
+        let prizeVal = res.Amount;
+        if (prizeName === 'TelegramStars' || prizeName === 'Stars') { prizeName = 'Telegram Stars'; prizeVal += ' ⭐️'; }
+        else if (prizeName === 'TonTransfer') { prizeName = 'TON'; prizeVal += ' TON'; }
+        else if (prizeName === 'Premium') { prizeVal += ' мес.'; }
+        else if (prizeName === 'DefaultGift') { prizeName = 'Подарок'; prizeVal = '1 шт.'; }
+
+        let html = `
+            <div style="text-align:center; font-size:40px; margin-bottom:10px;">🎁</div>
+            <div class="modal-info-row"><span class="modal-info-label">Приз</span><span class=\"modal-info-value\">${prizeName} (${prizeVal})</span></div>
+            <div class="modal-info-row"><span class="modal-info-label">Победителей</span><span class=\"modal-info-value\">${res.WinnersCount}</span></div>
+            <div class="modal-info-row"><span class="modal-info-label">Участников</span><span class=\"modal-info-value\">${res.ParticipantsCount}</span></div>
+            <div class="modal-info-row"><span class="modal-info-label">Завершение</span><span class=\"modal-info-value\">${endsDate.toLocaleString('ru-RU')}</span></div>
+        `;
+
+        if (res.IsCreator && res.Participants && res.Participants.length > 0) {
+            html += `<div style="margin-top:15px; font-weight:600; font-size:14px; color:var(--text);">Участники:</div>`;
+            html += `<div style="max-height:150px; overflow-y:auto; margin-top:8px; background:var(--surface-3); padding:10px; border-radius:8px;">`;
+            res.Participants.forEach(p => {
+                html += `<div style="font-size:13px; color:var(--text-secondary); margin-bottom:4px;">${p.Name} <span style="font-size:11px; opacity:0.7;">(${new Date(p.JoinedAt + 'Z').toLocaleString('ru-RU')})</span></div>`;
+            });
+            html += `</div>`;
+        }
+
+        if (!isEnded && res.IsCreator && res.ParticipantsCount === 0) {
+            html += `<button class="action-btn outline-action-btn" style="width:100%; margin-top:15px; border-color:#f07070; color:#f07070;" onclick="cancelGiveaway('${id}')">Отменить розыгрыш</button>`;
+        }
+
+        showModal('Детали розыгрыша', html);
+    }
+}
+
+window.cancelGiveaway = async function(id) {
+    if (!confirm("Вы уверены, что хотите отменить розыгрыш? Средства будут возвращены на ваш баланс.")) return;
+    
+    closeModal();
+    const res = await apiCall(`/webapp/giveaways/${id}/cancel`);
+    if (res && res.Success) {
+        safeAlert("Розыгрыш отменен. Средства возвращены.");
+        fetchAllGiveaways();
+        loadProfile(); 
+    } else {
+        safeAlert(res?.Error || "Ошибка при отмене");
+    }
+}
+
+window.checkGiveawayInvite = async function() {
+    const startParam = tg.initDataUnsafe?.start_param;
+    if (startParam && startParam.startsWith('gw_')) {
+        const gwId = startParam.replace('gw_', '');
+        window.currentGiveawayId = gwId;
+        switchTab('giveaways', document.querySelector('.nav-item[onclick*=\"giveaways\"]'));
+        
+        const capRes = await apiCall(`/webapp/giveaways/${gwId}/captcha`);
+        if (capRes && capRes.Success) {
+            let capHtml = `
+                <div style="text-align:center;">
+                    <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 16px;">
+                        Вы приглашены в розыгрыш!<br>Для участия выберите: <b>${capRes.TargetName}</b>
+                    </p>
+                    <div id="inlineCaptcha" style="margin-top:10px;">
+                        <div style="display: flex; justify-content: center; gap: 8px; flex-wrap: wrap;">
+                            ${capRes.Emojis.map(emoji => `
+                                <button onclick="submitCaptcha('${emoji}')" style="font-size: 28px; background: var(--surface-2); border: 1px solid var(--border-strong); border-radius: 12px; width: 50px; height: 50px; cursor: pointer; display:flex; align-items:center; justify-content:center;">
+                                    ${emoji}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+            showModal('Участие в розыгрыше', capHtml);
+        } else {
+            safeAlert(capRes?.Error || "Ошибка загрузки розыгрыша");
+        }
+    }
+}
+setTimeout(checkGiveawayInvite, 1000);
+
 window.submitCaptcha = async function(emoji) {
     const capDiv = document.getElementById('inlineCaptcha');
     capDiv.innerHTML = `<p style="color:var(--text-secondary); font-size:14px;">Проверка...</p>`;
     
     const res = await apiCall(`/webapp/giveaways/${currentGiveawayId}/join?emoji=${encodeURIComponent(emoji)}`);
     if (res && res.Success) {
-        document.getElementById('giveawayJoinModal').style.display = 'none';
+        closeModal();
         safeAlert(res.Message);
-        if(document.getElementById('gwTabParticipating')?.style.display === 'block') loadGiveawaysList('participating');
+        if(document.getElementById('gwTabParticipating')?.style.display === 'block') {
+            loadGiveawaysList('participating', false);
+        }
     } else {
-        document.getElementById('giveawayJoinModal').style.display = 'none';
-        safeAlert(res?.Error || 'Неверно!');
+        capDiv.innerHTML = `<p style="color:#ff453a; font-size:13px; margin-bottom:10px;">${res?.Error || 'Неверно'}</p>
+                            <button class="action-btn outline-action-btn" onclick="closeModal()">Закрыть</button>`;
     }
 }

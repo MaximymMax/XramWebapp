@@ -104,7 +104,10 @@ async function switchRentCategory(category, btn) {
 
         const res = await apiCall('/webapp/rent/collections', { category });
         if (res && res.Success && res.Collections.length > 0) {
-            let html = `<div class="dd-item" onclick="onCollectionSelected('', 'Все коллекции', 0, '')">
+            let html = `<div class="dd-item" onclick="onCollectionSelected('best_deals', 'Лучшие предложения', 0, '')" style="background: rgba(255, 152, 0, 0.08); border-bottom: 1px solid rgba(255, 152, 0, 0.2);">
+                            <span class="dd-item-name" style="font-weight: 800; color: #ff9800; display:flex; align-items:center; gap:6px;">🔥 Лучшие предложения</span>
+                        </div>
+                        <div class="dd-item" onclick="onCollectionSelected('', 'Все коллекции', 0, '')">
                             <span class="dd-item-name">Все коллекции</span>
                         </div>`;
             res.Collections.forEach(c => {
@@ -260,7 +263,11 @@ async function loadRentOffers(category, collectionAddress, model, reset = true) 
 
     const sortBy = document.getElementById('rentSort')?.value || 'recently_touch';
     const params = { category, sortBy };
-    if (collectionAddress) params.collection = collectionAddress;
+    if (collectionAddress === 'best_deals') {
+        params.bestDeals = true;
+    } else if (collectionAddress) {
+        params.collection = collectionAddress;
+    }
     if (model) params.model = model;
     if (state.nextCursor) params.cursor = state.nextCursor;
 
@@ -276,7 +283,8 @@ async function loadRentOffers(category, collectionAddress, model, reset = true) 
 
             res.Items.forEach(o => {
                 const card = document.createElement('div');
-                card.className = 'rent-card page-rent-theme';
+                let isBestDealCard = (collectionAddress === 'best_deals');
+                card.className = 'rent-card page-rent-theme' + (isBestDealCard ? ' best-deal-highlight' : '');
                 card.onclick = () => openRentModal(o.NftAddress);
 
                 const visual = getFragmentRentCardImage(o);
@@ -297,11 +305,18 @@ async function loadRentOffers(category, collectionAddress, model, reset = true) 
                     card.appendChild(img);
                 }
 
+                if (isBestDealCard) {
+                    const badge = document.createElement('div');
+                    badge.className = 'best-deal-badge';
+                    badge.innerHTML = '🔥 Топ цена';
+                    card.appendChild(badge);
+                }
+
                 const content = document.createElement('div');
                 content.className = 'rent-card-content';
                 content.innerHTML = `
                     <div class="rent-card-name">${o.Name}</div>
-                    <div class="rent-card-price" data-nft="${o.NftAddress}">~${formatTonPrice(o.PriceTon)} / дн</div>`;
+                    <div class="rent-card-price" data-nft="${o.NftAddress}" ${isBestDealCard ? 'style="color: #ff9800; font-weight: 800;"' : ''}>~${formatTonPrice(o.PriceTon)} / дн</div>`;
 
                 card.appendChild(content);
                 fragment.appendChild(card);

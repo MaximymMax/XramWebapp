@@ -375,6 +375,9 @@ header { position: sticky; top: 0; z-index: 50; display: flex; justify-content: 
 .rent-card-content { padding: 10px 8px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px; width: 100%; box-sizing: border-box; }
 .rent-card-name { font-size: 13px; font-weight: 700; color: var(--text); width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rent-card-price { font-size: 12px; font-weight: 700; color: var(--rent-primary); }
+.best-deal-highlight { border: 1.5px solid #ff9800 !important; box-shadow: 0 0 12px rgba(255, 152, 0, 0.35); position: relative; overflow: hidden; }
+.best-deal-highlight::before { content: ''; position: absolute; top:0; left:0; right:0; bottom:0; pointer-events:none; box-shadow: inset 0 0 25px rgba(255, 152, 0, 0.15); z-index: 1; }
+.best-deal-badge { position: absolute; top: 6px; right: 6px; background: linear-gradient(135deg, #ff9800, #ff5722); color: #fff; font-size: 10px; font-weight: 800; padding: 4px 6px; border-radius: 6px; z-index: 2; box-shadow: 0 2px 6px rgba(0,0,0,0.3); text-transform: uppercase; letter-spacing: 0.5px; }
 .rent-cards-empty { grid-column: span 2; width: 100%; text-align: center; color: var(--text-muted); font-size: 13px; padding: 20px 0; }
 .rent-error-msg { color: #f07070; font-size: 12.5px; margin-top: -10px; margin-bottom: 14px; display: none; font-weight: 600; }
 
@@ -665,4 +668,39 @@ input[type="number"]::-webkit-inner-spin-button {
 input[type="number"] {
     appearance: textfield;
     -moz-appearance: textfield;
+}
+
+/* --- СТИЛИ ДЛЯ ЛУЧШИХ ПРЕДЛОЖЕНИЙ --- */
+.nft-card.best-deal {
+    border: 2px solid #ff9800; /* Оранжевая рамка для выделения */
+    position: relative;
+    box-shadow: 0 4px 15px rgba(255, 152, 0, 0.25);
+    transition: transform 0.2s ease;
+}
+
+.nft-card.best-deal:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(255, 152, 0, 0.4);
+}
+
+.best-deal-badge {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background: linear-gradient(135deg, #ff9800, #ff5722);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    box-shadow: 0 2px 8px rgba(255, 87, 34, 0.5);
+    z-index: 10;
+    animation: pulse-badge 2s infinite;
+}
+
+@keyframes pulse-badge {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
 }

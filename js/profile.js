@@ -310,16 +310,16 @@ window.showTxDetails = function(id) {
             <div style="margin-top: 16px; background: var(--surface-2); padding: 12px; border-radius: 12px; border: 1px solid var(--border-strong);">
                 <div style="font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 12px; text-align: center;">Ожидается оплата (TON)</div>
                 
-                <span style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; display: block;">Адрес кошелька:</span>
-                <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-                    <div style="flex:1; background: var(--surface-3); border: 1px solid var(--border-strong); border-radius: 8px; padding: 10px; font-family: monospace; font-size: 11px; color: var(--text); word-break: break-all; min-height: 42px; display: flex; align-items: center;">${wallet}</div>
-                    <button class="action-btn outline-action-btn" style="margin: 0; padding: 0 16px; height: 42px;" onclick="navigator.clipboard.writeText('${wallet}'); typeof safeAlert === 'function' ? safeAlert('Адрес скопирован!') : alert('Скопировано');">Копия</button>
+                <span style="font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; display: block;">Адрес кошелька:</span>
+                <div class="cheque-link-wrap" style="margin-bottom: 16px;">
+                    <div class="cheque-link-input" style="font-size: 12px;">${wallet}</div>
+                    <button class="cheque-copy-btn" onclick="navigator.clipboard.writeText('${wallet}'); typeof safeAlert === 'function' ? safeAlert('Адрес скопирован!') : alert('Скопировано');">Копировать</button>
                 </div>
 
-                <span style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; display: block;">Комментарий (ОБЯЗАТЕЛЬНО):</span>
-                <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-                    <div style="flex:1; background: var(--surface-3); border: 1px dashed var(--rent-primary); border-radius: 8px; padding: 10px; font-family: monospace; font-size: 14px; font-weight: bold; color: var(--text); text-align: center; height: 42px; display: flex; align-items: center; justify-content: center;">${tx.PaymentCode || '—'}</div>
-                    <button class="action-btn rent-action-btn" style="margin: 0; padding: 0 16px; height: 42px;" onclick="navigator.clipboard.writeText('${tx.PaymentCode || ''}'); typeof safeAlert === 'function' ? safeAlert('Комментарий скопирован!') : alert('Скопировано');">Копия</button>
+                <span style="font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; display: block;">Комментарий (ОБЯЗАТЕЛЬНО):</span>
+                <div class="cheque-link-wrap" style="margin-bottom: 16px;">
+                    <div class="cheque-link-input" style="font-weight: bold; color: var(--text); text-align: center;">${tx.PaymentCode || '—'}</div>
+                    <button class="cheque-copy-btn" onclick="navigator.clipboard.writeText('${tx.PaymentCode || ''}'); typeof safeAlert === 'function' ? safeAlert('Комментарий скопирован!') : alert('Скопировано');">Копировать</button>
                 </div>
                 
                 <a href="${tx.PayLink}" class="action-btn rent-action-btn" style="display: flex; align-items: center; justify-content: center; width: 100%; margin: 0; text-decoration: none; height: 42px; background: #2481cc; color: white;">
@@ -335,16 +335,16 @@ window.showTxDetails = function(id) {
             <div style="margin-top: 16px; background: var(--surface-2); padding: 12px; border-radius: 12px; border: 1px solid var(--border-strong);">
                 <div style="font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 12px; text-align: center;">Ожидается оплата</div>
                 
-                <span style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; display: block;">Адрес кошелька (${tx.Currency}):</span>
-                <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-                    <div style="flex:1; background: var(--surface-3); border: 1px solid var(--border-strong); border-radius: 8px; padding: 10px; font-family: monospace; font-size: 11px; color: var(--text); word-break: break-all; min-height: 42px; display: flex; align-items: center;">${window.sysConfig?.receivingWallet || tx.TargetAddress || ''}</div>
-                    <button class="action-btn outline-action-btn" style="margin: 0; padding: 0 16px; height: 42px;" onclick="navigator.clipboard.writeText('${window.sysConfig?.receivingWallet || tx.TargetAddress || ''}'); typeof safeAlert === 'function' ? safeAlert('Адрес скопирован!') : alert('Скопировано');">Копия</button>
+                <span style="font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; display: block;">Адрес кошелька (${tx.Currency}):</span>
+                <div class="cheque-link-wrap" style="margin-bottom: 16px;">
+                    <div class="cheque-link-input" style="font-size: 12px;">${window.sysConfig?.receivingWallet || tx.TargetAddress || ''}</div>
+                    <button class="cheque-copy-btn" onclick="navigator.clipboard.writeText('${window.sysConfig?.receivingWallet || tx.TargetAddress || ''}'); typeof safeAlert === 'function' ? safeAlert('Адрес скопирован!') : alert('Скопировано');">Копировать</button>
                 </div>
 
-                <span style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; display: block;">Комментарий (ОБЯЗАТЕЛЬНО):</span>
-                <div style="display: flex; gap: 8px;">
-                    <div style="flex:1; background: var(--surface-3); border: 1px dashed var(--rent-primary); border-radius: 8px; padding: 10px; font-family: monospace; font-size: 14px; font-weight: bold; color: var(--text); text-align: center; height: 42px; display: flex; align-items: center; justify-content: center;">${tx.PaymentCode || '—'}</div>
-                    <button class="action-btn rent-action-btn" style="margin: 0; padding: 0 16px; height: 42px;" onclick="navigator.clipboard.writeText('${tx.PaymentCode || ''}'); typeof safeAlert === 'function' ? safeAlert('Комментарий скопирован!') : alert('Скопировано');">Копия</button>
+                <span style="font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; display: block;">Комментарий (ОБЯЗАТЕЛЬНО):</span>
+                <div class="cheque-link-wrap" style="margin-bottom: 8px;">
+                    <div class="cheque-link-input" style="font-weight: bold; color: var(--text); text-align: center;">${tx.PaymentCode || '—'}</div>
+                    <button class="cheque-copy-btn" onclick="navigator.clipboard.writeText('${tx.PaymentCode || ''}'); typeof safeAlert === 'function' ? safeAlert('Комментарий скопирован!') : alert('Скопировано');">Копировать</button>
                 </div>
             </div>
         `;

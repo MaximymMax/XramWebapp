@@ -464,12 +464,15 @@
             <button class="ptab active" onclick="switchRentCategory('gifts', this)" data-i18n="rent_tab_gifts">Подарки</button>
             <button class="ptab" onclick="switchRentCategory('usernames', this)" data-i18n="rent_tab_usernames">Юзернеймы</button>
             <button class="ptab" onclick="switchRentCategory('numbers', this)" data-i18n="rent_tab_numbers">Номера</button>
-            <button class="category-btn best-deals-btn" onclick="openBestDeals()">
-                    Лучшие предложения
-            </button>
         </div>
 
         <div class="form-card rent-form-card" style="margin-top: 0; padding-bottom: 12px; margin-bottom: 0;">
+
+            <div id="bestDealsWrap" style="margin-bottom: 12px; display: none;">
+                <button id="bestDealsBtn" onclick="toggleBestDeals()" style="width: 100%; padding: 12px; border-radius: 12px; border: 1.5px solid #ff9800; background: rgba(255, 152, 0, 0.08); color: #ff9800; font-weight: 800; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s;">
+                    🔥 Смотреть лучшие предложения
+                </button>
+            </div>
 
             <div id="rentCollectionWrap">
                 <label class="form-label" data-i18n="label_collection">Коллекция</label>

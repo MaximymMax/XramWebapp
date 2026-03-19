@@ -97,6 +97,7 @@ async function switchRentCategory(category, btn) {
         state.currentCollectionName = '';
         state.currentModel = '';
 
+        document.getElementById('bestDealsWrap').style.display = 'block';
         document.getElementById('colTriggerName').textContent = 'Загрузка...';
         document.getElementById('colTriggerPrice').style.display = 'none';
         document.getElementById('colTriggerImg').style.display = 'none';
@@ -104,10 +105,7 @@ async function switchRentCategory(category, btn) {
 
         const res = await apiCall('/webapp/rent/collections', { category });
         if (res && res.Success && res.Collections.length > 0) {
-            let html = `<div class="dd-item" onclick="onCollectionSelected('best_deals', 'Лучшие предложения', 0, '')" style="background: rgba(255, 152, 0, 0.08); border-bottom: 1px solid rgba(255, 152, 0, 0.2);">
-                            <span class="dd-item-name" style="font-weight: 800; color: #ff9800; display:flex; align-items:center; gap:6px;">🔥 Лучшие предложения</span>
-                        </div>
-                        <div class="dd-item" onclick="onCollectionSelected('', 'Все коллекции', 0, '')">
+            let html = `<div class="dd-item" onclick="onCollectionSelected('', 'Все коллекции', 0, '')">
                             <span class="dd-item-name">Все коллекции</span>
                         </div>`;
             res.Collections.forEach(c => {
@@ -125,6 +123,8 @@ async function switchRentCategory(category, btn) {
             onCollectionSelected('', 'Все коллекции', 0, '');
         }
     } else {
+        const bdWrap = document.getElementById('bestDealsWrap');
+        if (bdWrap) bdWrap.style.display = 'none';
         colWrap.style.display = 'none';
         modWrap.style.display = 'none';
         state.currentCollection = '';
@@ -134,6 +134,8 @@ async function switchRentCategory(category, btn) {
 }
 
 window.onCollectionSelected = async function(address, name, rentFloor, imgSrc) {
+    // Если выбрали "Лучшие предложения" НЕ через кнопку, а программно - не синхронизируем UI кнопки. 
+    // Но для безопасности закроем dropdown
     document.getElementById('collectionDropdown').classList.remove('open');
     document.getElementById('colTriggerName').textContent = name;
 
@@ -165,7 +167,13 @@ window.onCollectionSelected = async function(address, name, rentFloor, imgSrc) {
         if (modelsRes && modelsRes.Success && modelsRes.Models) {
             const baseName = getBaseCollectionName(name);
             modelsRes.Models.forEach(m => {
-                const mImgSrc = `https://cdn.changes.tg/gifts/models/${encodeURIComponent(baseName)}/png/${encodeURIComponent(m.ModelName)}.png`;
+                let mImgSrc = '';
+                if (address === 'best_deals') {
+                    const colId = getCollectionIdByName(m.ModelName);
+                    mImgSrc = colId ? `https://cdn.changes.tg/gifts/originals/${colId}/Original.png` : '';
+                } else {
+                    mImgSrc = `https://cdn.changes.tg/gifts/models/${encodeURIComponent(baseName)}/png/${encodeURIComponent(m.ModelName)}.png`;
+                }
                 const mFloorText = m.RentFloorTon > 0 ? `от ${formatTonPrice(m.RentFloorTon)}/дн` : '';
                 mHtml += `
                     <div class="dd-item" onclick="onModelSelected('${m.ModelName}', '${m.ModelName}', ${m.RentFloorTon}, '${mImgSrc}')">
@@ -180,6 +188,23 @@ window.onCollectionSelected = async function(address, name, rentFloor, imgSrc) {
     } else {
         modWrap.style.display = 'none';
         await loadRentOffers(state.rentCategory, '', null, true);
+    }
+};
+
+window.toggleBestDeals = function() {
+    const btn = document.getElementById('bestDealsBtn');
+    if (state.currentCollection !== 'best_deals') {
+        document.getElementById('rentCollectionWrap').style.display = 'none';
+        btn.innerHTML = '← Назад к коллекциям 🎁';
+        btn.style.background = 'linear-gradient(135deg, #ff9800, #ff5722)';
+        btn.style.color = '#fff';
+        onCollectionSelected('best_deals', 'Лучшие предложения', 0, '');
+    } else {
+        document.getElementById('rentCollectionWrap').style.display = 'block';
+        btn.innerHTML = '🔥 Смотреть лучшие предложения';
+        btn.style.background = 'rgba(255, 152, 0, 0.08)';
+        btn.style.color = '#ff9800';
+        onCollectionSelected('', 'Все коллекции', 0, '');
     }
 };
 
@@ -243,7 +268,13 @@ function getFragmentRentCardImage(offer) {
     if (cat === 'numbers') {
         return { type: 'number', text: name };
     }
+    
     const fragmentImg = getFragmentImageUrl(name);
+    if (!fragmentImg && cat === 'gifts') {
+        const colId = getCollectionIdByName(name);
+        if (colId) return { type: 'img', url: `https://cdn.changes.tg/gifts/originals/${colId}/Original.png` };
+    }
+    
     return { type: 'img', url: fragmentImg || offer.ImageUrl };
 }
 
@@ -303,13 +334,6 @@ async function loadRentOffers(category, collectionAddress, model, reset = true) 
                     img.className = 'rent-card-img-lazy';
                     img.onerror = function() { this.style.opacity = '0.3'; };
                     card.appendChild(img);
-                }
-
-                if (isBestDealCard) {
-                    const badge = document.createElement('div');
-                    badge.className = 'best-deal-badge';
-                    badge.innerHTML = '🔥 Топ цена';
-                    card.appendChild(badge);
                 }
 
                 const content = document.createElement('div');

@@ -892,23 +892,36 @@ window.handleTxFlow = function(txData) {
         }
     } 
     else if (txData.PaymentMethod === 'CryptoTransfer') {
-        showModal(t('crypto_title') || 'Перевод', `
-            <p style="color:var(--text-secondary);font-size:13px;margin-bottom:14px">${t('crypto_desc') || 'Переведите по реквизитам ниже:'}</p>
+        let wallet = txData.PayWallet || window.sysConfig?.receivingWallet || '';
+        let extraHtml = '';
+        if (txData.PayLink) {
+            extraHtml = `
+                <a href="${txData.PayLink}" class="action-btn rent-action-btn" style="display: flex; align-items: center; justify-content: center; width: 100%; margin: 0; text-decoration: none; height: 42px; background: #2481cc; color: white;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+                    Оплатить в 1 клик
+                </a>
+            `;
+        }
+
+        showModal(t('crypto_title') || 'Ожидается оплата', `
+            <p style="color:var(--text-secondary);font-size:13px;margin-bottom:14px;text-align:center;">${t('crypto_desc') || 'Переведите по реквизитам ниже. Мы начнем обработку автоматически.'}</p>
             <div class="modal-info-row"><span class="modal-info-label">${t('crypto_amount') || 'Сумма'}</span><span class="modal-info-value" style="color:var(--rent-primary)">${txData.Amount} ${txData.Currency}</span></div>
             
-            <label class="form-label" style="margin-top:12px">${t('crypto_wallet_label') || 'Кошелек'}</label>
-            <div class="cheque-link-wrap" style="margin-bottom: 8px;">
-                <div class="cheque-link-input">${window.sysConfig.receivingWallet}</div>
-                <button class="cheque-copy-btn" onclick="navigator.clipboard.writeText('${window.sysConfig.receivingWallet}'); safeAlert('${t('crypto_wallet_copied') || 'Скопировано'}');">${t('crypto_copy_wallet') || 'Копировать'}</button>
+            <span style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; display: block; margin-top: 12px;">Адрес кошелька:</span>
+            <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                <div style="flex:1; background: var(--surface-3); border: 1px solid var(--border-strong); border-radius: 8px; padding: 10px; font-family: monospace; font-size: 11px; color: var(--text); word-break: break-all; min-height: 42px; display: flex; align-items: center;">${wallet}</div>
+                <button class="action-btn outline-action-btn" style="margin: 0; padding: 0 16px; height: 42px;" onclick="navigator.clipboard.writeText('${wallet}'); typeof safeAlert === 'function' ? safeAlert('Адрес скопирован!') : alert('Скопировано');">Копия</button>
             </div>
-            
-            <label class="form-label" style="margin-top:12px">${t('crypto_code_label') || 'Комментарий (ОБЯЗАТЕЛЬНО)'}</label>
-            <div class="cheque-link-wrap" style="margin-bottom: 16px;">
-                <div class="cheque-link-input">${txData.PaymentCode}</div>
-                <button class="cheque-copy-btn" onclick="navigator.clipboard.writeText('${txData.PaymentCode}'); safeAlert('${t('crypto_code_copied') || 'Скопировано'}');">${t('crypto_copy_code') || 'Копировать'}</button>
+
+            <span style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; display: block;">Комментарий (ОБЯЗАТЕЛЬНО):</span>
+            <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                <div style="flex:1; background: var(--surface-3); border: 1px dashed var(--rent-primary); border-radius: 8px; padding: 10px; font-family: monospace; font-size: 14px; font-weight: bold; color: var(--text); text-align: center; height: 42px; display: flex; align-items: center; justify-content: center;">${txData.PaymentCode || '—'}</div>
+                <button class="action-btn rent-action-btn" style="margin: 0; padding: 0 16px; height: 42px;" onclick="navigator.clipboard.writeText('${txData.PaymentCode || ''}'); typeof safeAlert === 'function' ? safeAlert('Комментарий скопирован!') : alert('Скопировано');">Копия</button>
             </div>
 
             <div style="font-size:11.5px; color:#ff6b6b; text-align:center; padding: 10px; background: rgba(255,107,107,0.1); border-radius: 8px; border: 1px solid rgba(255,107,107,0.2); margin-bottom:14px;">${t('crypto_warning') || 'Если вы не укажете комментарий, мы не сможем найти платеж!'}</div>
+            
+            ${extraHtml}
         `);
     } else {
         safeAlert(`Откройте бота, чтобы завершить оплату: ${txData.PaymentMethod}`);

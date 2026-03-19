@@ -304,7 +304,7 @@ window.showTxDetails = function(id) {
     let extraHtml = '';
 
     // 1. ЛОГИКА ОПЛАТЫ КРИПТОЙ В 1 КЛИК (Новые поля: PayLink и PayWallet)
-    if (tx.Status === 'Pending' && tx.PaymentMethod === 'CryptoTransfer' && tx.PayLink) {
+    if ((tx.Status === 'Pending' || tx.Status === 'Processing') && tx.PayLink) {
         let wallet = tx.PayWallet || window.sysConfig?.receivingWallet || '';
         extraHtml += `
             <div style="margin-top: 16px; background: var(--surface-2); padding: 12px; border-radius: 12px; border: 1px solid var(--border-strong);">
@@ -330,7 +330,7 @@ window.showTxDetails = function(id) {
         `;
     }
     // Старая логика (для других методов крипты, если PayLink нет, например USDT)
-    else if ((tx.Status === 'Pending' || tx.Status === 'Processing') && tx.Type === 'TopUp' && tx.PaymentMethod !== 'TelegramStars' && tx.PaymentMethod !== 'BankCard' && !tx.PayLink) {
+    else if ((tx.Status === 'Pending' || tx.Status === 'Processing') && !tx.PayLink && tx.PaymentCode && tx.Currency !== 'Stars' && tx.Currency !== 'RUB') {
         extraHtml += `
             <div style="margin-top: 16px; background: var(--surface-2); padding: 12px; border-radius: 12px; border: 1px solid var(--border-strong);">
                 <div style="font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 12px; text-align: center;">Ожидается оплата</div>

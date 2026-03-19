@@ -42,7 +42,7 @@ window.selectGwPremium = function(val, elem) {
     // Меняем скрытое значение
     document.getElementById('gwPrizePremium').value = val;
     // Меняем текст на кнопке
-    document.getElementById('gwPremiumLabel').textContent = elem.querySelector('.sort-item-label').textContent;
+    document.getElementById('gwPremLabel').textContent = elem.querySelector('.sort-item-label').textContent;
     
     // Убираем класс active у других элементов и добавляем текущему
     elem.closest('.sort-dd-menu').querySelectorAll('.sort-dd-item').forEach(el => el.classList.remove('active'));
@@ -262,6 +262,8 @@ async function loadGiveawaysList(tab, showLoad = true) {
 }
 
 window.showGiveawayInfo = async function(id) {
+    showModal('Загрузка...', '<div style="text-align:center; padding: 20px;"><p style="color:var(--text-secondary);">Получение информации о розыгрыше...</p></div>');
+    
     const res = await apiCall(`/webapp/giveaways/${id}/info`);
     if (res && res.Success) {
         let endsAtStr = res.EndsAt;
@@ -293,11 +295,22 @@ window.showGiveawayInfo = async function(id) {
             html += `</div>`;
         }
 
+        if (res.IsCreator) {
+            const inviteUrl = res.InviteLink || `https://t.me/${window.BOT_USERNAME || 'bot'}?start=gw_${id}`;
+            html += `<div style="margin-top:15px; font-weight:600; font-size:14px; color:var(--text);">Ссылка для приглашения:</div>`;
+            html += `<div class="cheque-link-wrap" style="margin-top:8px; margin-bottom: 16px;">
+                         <div class="cheque-link-input">${inviteUrl}</div>
+                         <button class="cheque-copy-btn" onclick="navigator.clipboard.writeText('${inviteUrl}'); typeof safeAlert === 'function' ? safeAlert('Скопировано!') : alert('Скопировано!');">Копировать</button>
+                     </div>`;
+        }
+
         if (!isEnded && res.IsCreator && res.ParticipantsCount === 0) {
-            html += `<button class="action-btn outline-action-btn" style="width:100%; margin-top:15px; border-color:#f07070; color:#f07070;" onclick="cancelGiveaway('${id}')">Отменить розыгрыш</button>`;
+            html += `<button class="action-btn outline-action-btn" style="width:100%; margin: 15px 0 0; border-color:#f07070; color:#f07070;" onclick="cancelGiveaway('${id}')">Отменить розыгрыш</button>`;
         }
 
         showModal('Детали розыгрыша', html);
+    } else {
+        showModal('Ошибка', '<div style="text-align:center; padding: 20px;"><p style="color:#f07070;">Не удалось загрузить данные о розыгрыше</p></div>');
     }
 }
 

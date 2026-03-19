@@ -202,6 +202,7 @@ function renderServerCheques(cheques) {
 }
 
 // ── История транзакций ───────────────────────────────────────
+// ── История транзакций ───────────────────────────────────────
 function renderServerHistory(history) {
     const list = document.getElementById('historyList');
     if (!list) return;
@@ -241,6 +242,15 @@ function renderServerHistory(history) {
         if (tx.IsCheque) productText = 'TON Чек';
         if (tx.IsGiveawayPrize) productText = 'Взнос за розыгрыш';
 
+        // --- НОВЫЕ БЕЙДЖИ ДЛЯ СПИСКА ---
+        let badgesHtml = '';
+        if (tx.Status === 'Pending' && tx.PayLink) {
+            badgesHtml += `<span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(255, 193, 7, 0.15); color: #ffc107; border: 1px solid rgba(255, 193, 7, 0.3); margin-left: 6px; white-space: nowrap;">Ждет оплаты</span>`;
+        }
+        if (tx.IsGiveawayPrize && tx.GiveawayLink) {
+            badgesHtml += `<span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(155, 114, 240, 0.15); color: #9b72f0; border: 1px solid rgba(155, 114, 240, 0.3); margin-left: 6px; white-space: nowrap;">Розыгрыш</span>`;
+        }
+
         const icon = isTopUp ? '↓' : isWithdraw ? '↑' : '🛒';
         const iconColor = isTopUp ? '#2ecc71' : isWithdraw ? '#e74c3c' : '#8a2be2';
         const iconBg = isTopUp ? 'rgba(46,204,113,0.13)' : isWithdraw ? 'rgba(231,76,60,0.13)' : 'rgba(138,43,226,0.13)';
@@ -255,7 +265,7 @@ function renderServerHistory(history) {
         <div class="history-item" style="cursor:pointer;" onclick="showTxDetails('${tx.Id}')">
             <div class="tx-icon" style="background:${iconBg}; color:${iconColor}; width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:800; flex-shrink:0;">${icon}</div>
             <div class="history-item-left" style="flex:1">
-                <div class="history-item-title">${title}${productText ? ': ' + productText : ''}</div>
+                <div class="history-item-title" style="display:flex; align-items:center; flex-wrap:wrap;">${title}${productText ? ': ' + productText : ''}${badgesHtml}</div>
                 <div class="history-item-meta">${dateStr}</div>
                 ${timerHtml}
             </div>
@@ -291,20 +301,37 @@ window.showTxDetails = function(id) {
     if (tx.IsCheque) productText = 'TON Чек';
     if (tx.IsGiveawayPrize) productText = 'Взнос за розыгрыш';
 
-    showModal('Детали транзакции', `
-        <div style="display:flex; align-items:center; gap:14px; margin-bottom:18px;">
-            <div style="width:52px; height:52px; border-radius:14px; background:${iconBg}; color:${iconColor}; display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:800; flex-shrink:0;">${icon}</div>
-            <div>
-                <div style="font-size:16px; font-weight:700; color:var(--text);">${tx.Type === 'TopUp' ? 'Пополнение' : tx.Type === 'Withdrawal' ? 'Вывод' : 'Покупка'}</div>
-                <div style="font-size:12px; color:var(--text-secondary);">${dateStr}</div>
+    let extraHtml = '';
+
+    // 1. ЛОГИКА ОПЛАТЫ КРИПТОЙ В 1 КЛИК (Новые поля: PayLink и PayWallet)
+    if (tx.Status === 'Pending' && tx.PaymentMethod === 'CryptoTransfer' && tx.PayLink) {
+        let wallet = tx.PayWallet || window.sysConfig?.receivingWallet || '';
+        extraHtml += `
+            <div style="margin-top: 16px; background: var(--surface-2); padding: 12px; border-radius: 12px; border: 1px solid var(--border-strong);">
+                <div style="font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 12px; text-align: center;">Ожидается оплата (TON)</div>
+                
+                <span style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; display: block;">Адрес кошелька:</span>
+                <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                    <div style="flex:1; background: var(--surface-3); border: 1px solid var(--border-strong); border-radius: 8px; padding: 10px; font-family: monospace; font-size: 11px; color: var(--text); word-break: break-all; min-height: 42px; display: flex; align-items: center;">${wallet}</div>
+                    <button class="action-btn outline-action-btn" style="margin: 0; padding: 0 16px; height: 42px;" onclick="navigator.clipboard.writeText('${wallet}'); typeof safeAlert === 'function' ? safeAlert('Адрес скопирован!') : alert('Скопировано');">Копия</button>
+                </div>
+
+                <span style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; display: block;">Комментарий (ОБЯЗАТЕЛЬНО):</span>
+                <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                    <div style="flex:1; background: var(--surface-3); border: 1px dashed var(--rent-primary); border-radius: 8px; padding: 10px; font-family: monospace; font-size: 14px; font-weight: bold; color: var(--text); text-align: center; height: 42px; display: flex; align-items: center; justify-content: center;">${tx.PaymentCode || '—'}</div>
+                    <button class="action-btn rent-action-btn" style="margin: 0; padding: 0 16px; height: 42px;" onclick="navigator.clipboard.writeText('${tx.PaymentCode || ''}'); typeof safeAlert === 'function' ? safeAlert('Комментарий скопирован!') : alert('Скопировано');">Копия</button>
+                </div>
+                
+                <a href="${tx.PayLink}" class="action-btn rent-action-btn" style="display: flex; align-items: center; justify-content: center; width: 100%; margin: 0; text-decoration: none; height: 42px; background: #2481cc; color: white;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+                    Оплатить в 1 клик
+                </a>
             </div>
-        </div>
-        <div class="modal-info-row"><span class="modal-info-label">Продукт</span><span class="modal-info-value">${productText}</span></div>
-        <div class="modal-info-row"><span class="modal-info-label">Сумма</span><span class="modal-info-value" style="font-size:15px;">${tx.Amount} ${tx.Currency}</span></div>
-        <div class="modal-info-row"><span class="modal-info-label">Статус</span><span class="modal-info-value"><span class="history-item-status ${sClass}">${sText}</span></span></div>
-        <div class="modal-info-row"><span class="modal-info-label">ID</span><span style="font-size:11px; color:var(--text-secondary); word-break:break-all;">${tx.Id}</span></div>
-        
-        ${((tx.Status === 'Pending' || tx.Status === 'Processing') && tx.Type === 'TopUp' && tx.PaymentMethod !== 'TelegramStars' && tx.PaymentMethod !== 'BankCard') ? `
+        `;
+    }
+    // Старая логика (для других методов крипты, если PayLink нет, например USDT)
+    else if ((tx.Status === 'Pending' || tx.Status === 'Processing') && tx.Type === 'TopUp' && tx.PaymentMethod !== 'TelegramStars' && tx.PaymentMethod !== 'BankCard' && !tx.PayLink) {
+        extraHtml += `
             <div style="margin-top: 16px; background: var(--surface-2); padding: 12px; border-radius: 12px; border: 1px solid var(--border-strong);">
                 <div style="font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 12px; text-align: center;">Ожидается оплата</div>
                 
@@ -320,9 +347,39 @@ window.showTxDetails = function(id) {
                     <button class="action-btn rent-action-btn" style="margin: 0; padding: 0 16px; height: 42px;" onclick="navigator.clipboard.writeText('${tx.PaymentCode || ''}'); typeof safeAlert === 'function' ? safeAlert('Комментарий скопирован!') : alert('Скопировано');">Копия</button>
                 </div>
             </div>
-        ` : ''}
+        `;
+    }
 
-        ${tx.Status === 'Pending' || tx.Status === 'Processing' ? `<div style="margin-top:16px;font-size:12px;color:var(--text-muted);text-align:center;">Если транзакция долго в ожидании — обратитесь в <a href="https://t.me/${BOT_USERNAME}" style="color:var(--rent-primary)">поддержку</a></div>` : ''}
+    // 2. ССЫЛКА НА РОЗЫГРЫШ
+    if (tx.IsGiveawayPrize && tx.GiveawayLink) {
+        extraHtml += `
+            <div style="margin-top: 16px;">
+                <a href="${tx.GiveawayLink}" target="_blank" class="action-btn rent-action-btn" style="display: flex; align-items: center; justify-content: center; width: 100%; margin: 0; padding: 12px; font-size: 14px; text-decoration: none; background: #9b72f0; color: #fff;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><polyline points="20 12 20 22 4 22 4 12"/><rect width="20" height="5" x="2" y="7"/><line x1="12" x2="12" y1="22" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+                    Страница розыгрыша
+                </a>
+            </div>
+        `;
+    }
+
+    if (tx.Status === 'Pending' || tx.Status === 'Processing') {
+        extraHtml += `<div style="margin-top:16px;font-size:12px;color:var(--text-muted);text-align:center;">Если транзакция долго в ожидании — обратитесь в <a href="https://t.me/${BOT_USERNAME}" style="color:var(--rent-primary)">поддержку</a></div>`;
+    }
+
+    showModal('Детали транзакции', `
+        <div style="display:flex; align-items:center; gap:14px; margin-bottom:18px;">
+            <div style="width:52px; height:52px; border-radius:14px; background:${iconBg}; color:${iconColor}; display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:800; flex-shrink:0;">${icon}</div>
+            <div>
+                <div style="font-size:16px; font-weight:700; color:var(--text);">${tx.Type === 'TopUp' ? 'Пополнение' : tx.Type === 'Withdrawal' ? 'Вывод' : 'Покупка'}</div>
+                <div style="font-size:12px; color:var(--text-secondary);">${dateStr}</div>
+            </div>
+        </div>
+        <div class="modal-info-row"><span class="modal-info-label">Продукт</span><span class="modal-info-value">${productText}</span></div>
+        <div class="modal-info-row"><span class="modal-info-label">Сумма</span><span class="modal-info-value" style="font-size:15px;">${tx.Amount} ${tx.Currency}</span></div>
+        <div class="modal-info-row"><span class="modal-info-label">Статус</span><span class="modal-info-value"><span class="history-item-status ${sClass}">${sText}</span></span></div>
+        <div class="modal-info-row"><span class="modal-info-label">ID</span><span style="font-size:11px; color:var(--text-secondary); word-break:break-all;">${tx.Id}</span></div>
+        
+        ${extraHtml}
     `);
 };
 

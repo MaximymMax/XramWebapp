@@ -322,10 +322,10 @@ window.showTxDetails = function(id) {
                     <button class="cheque-copy-btn" onclick="navigator.clipboard.writeText('${tx.PaymentCode || ''}'); typeof safeAlert === 'function' ? safeAlert('Комментарий скопирован!') : alert('Скопировано');">Копировать</button>
                 </div>
                 
-                <a href="${tx.PayLink}" class="action-btn rent-action-btn" style="display: flex; align-items: center; justify-content: center; width: 100%; margin: 0; text-decoration: none; height: 42px; background: #2481cc; color: white;">
+                <button class="action-btn rent-action-btn" style="display: flex; align-items: center; justify-content: center; width: 100%; margin: 12px 0 0; height: 42px; background: #2481cc; color: white;" onclick="typeof openSafeLink === 'function' ? openSafeLink('${tx.PayLink}') : window.Telegram.WebApp.openLink('${tx.PayLink}')">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
                     Оплатить в 1 клик
-                </a>
+                </button>
             </div>
         `;
     }
@@ -394,6 +394,7 @@ window.openChequeModal = function(id, amount, expStr, isExpired) {
                 <button class="action-btn rent-action-btn" style="margin:0; padding:0 16px;" onclick="navigator.clipboard.writeText('${link}').then(()=>safeAlert('\u0421\u0441\u044b\u043b\u043a\u0430 \u0441\u043a\u043e\u043f\u0438\u0440\u043e\u0432\u0430\u043d\u0430'))">\u041a\u043e\u043f\u0438\u044f</button>
             </div>
         </div>
+        <button class="action-btn outline-action-btn" style="width:100%; margin-top:8px; border-color:#f07070; color:#f07070;" onclick="cancelCheque('${id}')">Отменить чек</button>
     `;
     showModal('Детали чека', `
         <div style="text-align:center; font-size:40px; margin-bottom:10px;">🧾</div>
@@ -402,6 +403,29 @@ window.openChequeModal = function(id, amount, expStr, isExpired) {
         ${linkHtml}
         ${isExpired ? '<div style="color:#f07070; font-size:13px; text-align:center; margin-top:10px;">Срок действия чека истёк.</div>' : ''}
     `);
+};
+
+window.cancelCheque = async function(id) {
+    safeConfirm('Вы уверены, что хотите отменить этот чек?', async (confirmed) => {
+        if (!confirmed) return;
+        const btn = document.querySelector('.outline-action-btn');
+        if (btn) btn.innerHTML = 'Отмена...';
+        
+        let res = await apiCall(`/webapp/cheques/${id}/cancel`);
+        if (!res || !res.Success) {
+            res = await apiCall(`/transactions/${id}/cancel`); // Fallback if endpoint varies
+        }
+
+        if (res && res.Success) {
+            safeAlert('Чек успешно отменен.');
+            closeModal();
+            fetchServerData();
+            if (typeof loadProfile === 'function') loadProfile();
+        } else {
+            safeAlert('Ошибка при отмене: ' + (res?.Error || 'Неизвестная ошибка'));
+            if (btn) btn.innerHTML = 'Отменить чек';
+        }
+    });
 };
 
 // ── Вкладки профиля ───────────────────────────────────────────

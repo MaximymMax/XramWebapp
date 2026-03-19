@@ -896,10 +896,10 @@ window.handleTxFlow = function(txData) {
         let extraHtml = '';
         if (txData.PayLink) {
             extraHtml = `
-                <a href="${txData.PayLink}" class="action-btn rent-action-btn" style="display: flex; align-items: center; justify-content: center; width: 100%; margin: 0; text-decoration: none; height: 42px; background: #2481cc; color: white;">
+                <button class="action-btn rent-action-btn" style="display: flex; align-items: center; justify-content: center; width: 100%; margin: 0; height: 42px; background: #2481cc; color: white;" onclick="typeof openSafeLink === 'function' ? openSafeLink('${txData.PayLink}') : window.Telegram.WebApp.openLink('${txData.PayLink}')">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
                     Оплатить в 1 клик
-                </a>
+                </button>
             `;
         }
 
@@ -1416,6 +1416,77 @@ async function init() {
     // =================================================================
 //  ОБМЕННИК И БАЛАНС (Пополнение / Вывод)
 // =================================================================
+
+// Добавь это где-нибудь в начале или среди утилит в core.js
+function openSafeLink(url) {
+    const tg = window.Telegram.WebApp;
+    
+    if (!url) return;
+
+    if (url.startsWith('ton://') || url.startsWith('https://app.tonkeeper.com')) {
+        // Открывает внешний кошелек
+        tg.openLink(url); 
+    } else if (url.startsWith('https://t.me/')) {
+        // Открывает системные ссылки Telegram (например, Wallet)
+        tg.openTelegramLink(url); 
+    } else {
+        // Стандартный фоллбэк
+        tg.openLink(url);
+    }
+}
+
+function showQuickPayScreen(txData) {
+    // Получаем контейнер твоего модального окна (замени ID на тот, что в index.html)
+    const modalBody = document.getElementById('payment-modal-body') || document.getElementById('modal-content');
+    
+    if (!modalBody) {
+        console.error("Не найден контейнер модального окна!");
+        return;
+    }
+
+    // Рисуем красивый экран успешного создания с кнопкой
+    modalBody.innerHTML = `
+        <div class="quick-pay-container" style="text-align: center; padding: 20px;">
+            <div style="font-size: 40px; margin-bottom: 10px;">⏳</div>
+            <h3 style="margin-bottom: 5px;">Заявка создана</h3>
+            <p style="color: var(--tg-theme-hint-color); font-size: 14px; margin-bottom: 20px;">
+                Код: <b>${txData.PaymentCode}</b>
+            </p>
+            
+            <div style="background: var(--tg-theme-secondary-bg-color); border-radius: 12px; padding: 15px; margin-bottom: 20px;">
+                <span style="font-size: 14px; color: var(--tg-theme-hint-color);">К оплате:</span><br>
+                <b style="font-size: 24px; color: var(--tg-theme-text-color);">${txData.Amount} ${txData.Currency}</b>
+            </div>
+
+            <button id="btn-quick-pay" class="main-button" style="width: 100%; padding: 12px; background: var(--tg-theme-button-color); color: var(--tg-theme-button-text-color); border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 15px;">
+                💎 Оплатить в 1 клик
+            </button>
+
+            <p style="font-size: 12px; color: var(--tg-theme-hint-color); word-break: break-all;">
+                Или переведите вручную на:<br>
+                <span style="user-select: all; font-family: monospace;">${txData.PayWallet}</span>
+            </p>
+            
+            <button id="btn-close-pay" style="margin-top: 10px; background: transparent; border: none; color: var(--tg-theme-link-color); font-weight: bold; cursor: pointer;">
+                Закрыть
+            </button>
+        </div>
+    `;
+
+    // Вешаем обработчик на новую кнопку оплаты
+    document.getElementById('btn-quick-pay').addEventListener('click', () => {
+        openSafeLink(txData.PayLink); // Вызываем нашу безопасную функцию!
+    });
+
+    // Обработчик закрытия
+    document.getElementById('btn-close-pay').addEventListener('click', () => {
+        // Вызови свою функцию закрытия модалки
+        if (typeof closeModal === 'function') closeModal(); 
+        
+        // Желательно также обновить историю/баланс, если юзер закрыл окно
+        if (typeof loadHistory === 'function') loadHistory();
+    });
+}
 
 window.openBalanceModal = function(initialTab = 'topup') {
     const content = `

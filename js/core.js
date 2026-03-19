@@ -302,14 +302,26 @@ window.updateModalBreakdown = function() {
     let bdGasStr = "";
     let bdTotalStr = "";
     let btnText = "Подтвердить";
+    let topupDisplayAmount = "";
 
-    if (method === 'InternalWallet' || method === 'CryptoTransfer') {
+    const pc = methodObj.currency || 'TON';
+
+    if (method === 'InternalWallet' || (method === 'CryptoTransfer' && pc === 'TON')) {
         let totalTon = baseTon + gasTon;
 
         bdPriceStr = `${baseTon.toFixed(2)} TON`;
         bdGasStr = `+ ${gasTon.toFixed(2)} TON`;
         bdTotalStr = `${totalTon.toFixed(2)} TON`;
         btnText = `Оплатить ${totalTon.toFixed(2)} TON`;
+        topupDisplayAmount = `${baseTon} TON`;
+    } else if (method === 'CryptoTransfer' && pc === 'USDT') {
+        let totalUsd = baseUsd + gasUsd;
+        
+        bdPriceStr = `${baseUsd.toFixed(2)} USDT`;
+        bdGasStr = `+ ${gasUsd.toFixed(2)} USDT`;
+        bdTotalStr = `${totalUsd.toFixed(2)} USDT`;
+        btnText = `Оплатить ${totalUsd.toFixed(2)} USDT`;
+        topupDisplayAmount = `${baseUsd.toFixed(2)} USDT`;
     } else if (method === 'BankCard') {
         let totalUsd = baseUsd + gasUsd;
         let totalRub = totalUsd * RUB_PER_USD;
@@ -320,6 +332,7 @@ window.updateModalBreakdown = function() {
         bdGasStr = `+ ${Math.round(gasRub)} ₽`;
         bdTotalStr = `${Math.round(totalRub)} ₽`;
         btnText = `Оплатить ${Math.round(totalRub)} ₽`;
+        topupDisplayAmount = `${Math.round(baseRub)} ₽`;
     } else if (method === 'TelegramStars') {
         let starPrice = RATES.USD.perStar;
         
@@ -331,6 +344,12 @@ window.updateModalBreakdown = function() {
         bdGasStr = `+ ${gasStars} ⭐️`;
         bdTotalStr = `${totalStars} ⭐️`;
         btnText = `Оплатить ${totalStars} ⭐️`;
+        topupDisplayAmount = `${baseStars} ⭐️`;
+    }
+
+    if (product === 'topup') {
+        const amtValEl = document.getElementById('modalTopupAmountValue');
+        if (amtValEl) amtValEl.innerText = topupDisplayAmount;
     }
 
     const breakdownEl = document.getElementById('paymentBreakdown');
@@ -998,16 +1017,16 @@ window.apiTopupWallet = function () {
 
     showModal(t('modal_topup_title'), `
         <div class="page-wallet-theme" style="margin-top: 10px;">
-            <div class="modal-info-row"><span class="modal-info-label">${t('modal_topup_amount')}</span><span class="modal-info-value" style="color:var(--wallet-primary)">${amount} TON</span></div>
+            <div class="modal-info-row"><span class="modal-info-label">${t('modal_topup_amount')}</span><span class="modal-info-value" id="modalTopupAmountValue" style="color:var(--wallet-primary)">${amount} TON</span></div>
 
             ${breakdownHtml}
 
             <label class="form-label" style="margin-bottom:8px;">${t('modal_pay_method') || 'Способ оплаты'}</label>
             <div class="payment-methods" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                <div class="pay-method selected" data-method="CryptoTransfer" data-currency="TON" onclick="selectPayMethod('topup', this)">💎 TON</div>
-                <div class="pay-method" data-method="CryptoTransfer" data-currency="USDT" onclick="selectPayMethod('topup', this)">💵 USDT (TON)</div>
-                <div class="pay-method" data-method="BankCard" data-currency="RUB" onclick="selectPayMethod('topup', this)">💳 Карта (RUB)</div>
-                <div class="pay-method" data-method="TelegramStars" data-currency="Stars" onclick="selectPayMethod('topup', this)">⭐️ Stars</div>
+                <div class="pay-method selected" data-method="CryptoTransfer" data-currency="TON" onclick="selectPayMethod('topup', this)">TON</div>
+                <div class="pay-method" data-method="CryptoTransfer" data-currency="USDT" onclick="selectPayMethod('topup', this)">USDT (TON)</div>
+                <div class="pay-method" data-method="BankCard" data-currency="RUB" onclick="selectPayMethod('topup', this)">Карта (RUB)</div>
+                <div class="pay-method" data-method="TelegramStars" data-currency="Stars" onclick="selectPayMethod('topup', this)">Stars</div>
             </div>
 
             <button class="action-btn wallet-action-btn" id="modalConfirmBtn" onclick="executeTopup(${amount})" style="width:100%; margin: 16px 0 0">${t('modal_topup_btn')}</button>
@@ -1029,8 +1048,11 @@ window.executeTopup = async function (amount) {
         return payWithTelegramStars('topup', amount.toString(), starsCost, telegramId.toString());
     }
 
+    let passAmount = amount;
+    if (pc === 'USDT') passAmount = amount * getTonUsdRate();
+
     setLoading(btn, true);
-    const result = await apiCall('/transactions/create/topup', { telegramId, currency: pc, method: pm, amount });
+    const result = await apiCall('/transactions/create/topup', { telegramId, currency: pc, method: pm, amount: passAmount });
     setLoading(btn, false);
 
     if (result && result.Success) { handleTxFlow(result); }

@@ -244,7 +244,7 @@ async function loadGiveawaysList(tab, showLoad = true) {
             const isEnded = endsDate.getTime() <= Date.now();
             
             const statusClass = isEnded ? 'status-cancelled' : 'status-pending';
-            const statusText = isEnded ? 'Завершен' : `До ${endsDate.toLocaleString('ru-RU', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'})}`;
+            const statusText = isEnded ? 'Завершен' : `<span style="font-size:11px; margin-right:3px;">⏱</span><span class="countdown-timer" data-ends="${endsAtStr}" data-timeout-text="Завершен">Обновление...</span>`;
 
             return `
                 <div class="history-item" style="cursor:pointer;" onclick="showGiveawayInfo('${gw.Id}')">
@@ -295,12 +295,12 @@ window.showGiveawayInfo = async function(id) {
             html += `</div>`;
         }
 
-        if (res.IsCreator) {
-            const inviteUrl = res.InviteLink || `https://t.me/${window.BOT_USERNAME || 'bot'}?start=gw_${id}`;
-            html += `<div style="margin-top:15px; font-weight:600; font-size:14px; color:var(--text);">Ссылка для приглашения:</div>`;
-            html += `<div class="cheque-link-wrap" style="margin-top:8px; margin-bottom: 16px;">
-                         <div class="cheque-link-input">${inviteUrl}</div>
-                         <button class="cheque-copy-btn" onclick="navigator.clipboard.writeText('${inviteUrl}'); typeof safeAlert === 'function' ? safeAlert('Скопировано!') : alert('Скопировано!');">Копировать</button>
+        if (res.IsCreator || res.InviteLink) {
+            const inviteUrl = res.InviteLink || `https://t.me/${window.BOT_USERNAME || 'xram_shop_bot'}?start=gw_${id}`;
+            html += `<div style="margin-top:15px; font-weight:600; font-size:14px; color:var(--text); text-align: left;">Ссылка для приглашения:</div>`;
+            html += `<div class="cheque-link-wrap" style="margin-top:8px; margin-bottom: 16px; display: flex; gap: 8px;">
+                         <input type="text" readonly value="${inviteUrl}" style="flex:1; background: var(--surface-3); border: 1px solid var(--border-strong); border-radius: 8px; padding: 10px; font-family: monospace; font-size: 11px; color: var(--text);">
+                         <button class="action-btn outline-action-btn" style="margin: 0; padding: 0 16px;" onclick="navigator.clipboard.writeText('${inviteUrl}'); typeof safeAlert === 'function' ? safeAlert('Ссылка скопирована!') : alert('Скопировано!');">Копия</button>
                      </div>`;
         }
 

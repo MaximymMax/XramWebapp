@@ -1002,11 +1002,12 @@ window.apiTopupWallet = function () {
 
             ${breakdownHtml}
 
-            <label class="form-label" style="margin-bottom:8px;">${t('modal_pay_method')}</label>
-            <div class="payment-methods">
-                <div class="pay-method selected" data-method="CryptoTransfer" data-currency="TON" onclick="selectPayMethod('topup', this)">${t('modal_pay_transfer')}</div>
-                <div class="pay-method" data-method="BankCard" data-currency="RUB" onclick="selectPayMethod('topup', this)">${t('modal_pay_card')}</div>
-                <div class="pay-method" style="grid-column: span 2" data-method="TelegramStars" data-currency="Stars" onclick="selectPayMethod('topup', this)">${t('modal_pay_stars')}</div>
+            <label class="form-label" style="margin-bottom:8px;">${t('modal_pay_method') || 'Способ оплаты'}</label>
+            <div class="payment-methods" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <div class="pay-method selected" data-method="CryptoTransfer" data-currency="TON" onclick="selectPayMethod('topup', this)">💎 TON</div>
+                <div class="pay-method" data-method="CryptoTransfer" data-currency="USDT" onclick="selectPayMethod('topup', this)">💵 USDT (TON)</div>
+                <div class="pay-method" data-method="BankCard" data-currency="RUB" onclick="selectPayMethod('topup', this)">💳 Карта (RUB)</div>
+                <div class="pay-method" data-method="TelegramStars" data-currency="Stars" onclick="selectPayMethod('topup', this)">⭐️ Stars</div>
             </div>
 
             <button class="action-btn wallet-action-btn" id="modalConfirmBtn" onclick="executeTopup(${amount})" style="width:100%; margin: 16px 0 0">${t('modal_topup_btn')}</button>

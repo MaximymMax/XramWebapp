@@ -220,6 +220,22 @@ function renderServerHistory(history) {
         if (createdStr && !createdStr.endsWith('Z')) createdStr += 'Z';
         const dateStr = new Date(createdStr).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 
+        let timerHtml = '';
+        if (tx.Status === 'Pending' || tx.Status === 'Processing') {
+            let expiresStr = tx.ExpiresAt || tx.ValidUntil;
+            if (!expiresStr) {
+                let created = new Date(createdStr);
+                created.setHours(created.getHours() + 1);
+                expiresStr = created.toISOString();
+            } else if (!expiresStr.endsWith('Z')) {
+                expiresStr += 'Z';
+            }
+            timerHtml = `<div style="font-size:11px; margin-top:4px; color:var(--rent-primary); font-weight:600; display:flex; align-items:center; gap:4px;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span class="countdown-timer" data-ends="${expiresStr}" data-timeout-text="Время вышло">Осталось: Загрузка...</span>
+            </div>`;
+        }
+
         let title = isTopUp ? 'Пополнение' : isWithdraw ? 'Вывод' : 'Покупка';
         let productText = tx.Product === 'None' ? 'Баланс' : (tx.Product || '');
         if (tx.IsCheque) productText = 'TON Чек';
@@ -241,6 +257,7 @@ function renderServerHistory(history) {
             <div class="history-item-left" style="flex:1">
                 <div class="history-item-title">${title}${productText ? ': ' + productText : ''}</div>
                 <div class="history-item-meta">${dateStr}</div>
+                ${timerHtml}
             </div>
             <div style="display:flex; flex-direction:column; align-items:flex-end; gap:5px;">
                 <span style="font-weight:700; font-size:14px; color:${amtColor};">${sign}${tx.Amount} ${tx.Currency}</span>
@@ -286,6 +303,25 @@ window.showTxDetails = function(id) {
         <div class="modal-info-row"><span class="modal-info-label">Сумма</span><span class="modal-info-value" style="font-size:15px;">${tx.Amount} ${tx.Currency}</span></div>
         <div class="modal-info-row"><span class="modal-info-label">Статус</span><span class="modal-info-value"><span class="history-item-status ${sClass}">${sText}</span></span></div>
         <div class="modal-info-row"><span class="modal-info-label">ID</span><span style="font-size:11px; color:var(--text-secondary); word-break:break-all;">${tx.Id}</span></div>
+        
+        ${((tx.Status === 'Pending' || tx.Status === 'Processing') && tx.Type === 'TopUp' && tx.PaymentMethod !== 'TelegramStars' && tx.PaymentMethod !== 'BankCard') ? `
+            <div style="margin-top: 16px; background: var(--surface-2); padding: 12px; border-radius: 12px; border: 1px solid var(--border-strong);">
+                <div style="font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 12px; text-align: center;">Ожидается оплата</div>
+                
+                <span style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; display: block;">Адрес кошелька (${tx.Currency}):</span>
+                <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                    <div style="flex:1; background: var(--surface-3); border: 1px solid var(--border-strong); border-radius: 8px; padding: 10px; font-family: monospace; font-size: 11px; color: var(--text); word-break: break-all; min-height: 42px; display: flex; align-items: center;">${window.sysConfig?.receivingWallet || tx.TargetAddress || ''}</div>
+                    <button class="action-btn outline-action-btn" style="margin: 0; padding: 0 16px; height: 42px;" onclick="navigator.clipboard.writeText('${window.sysConfig?.receivingWallet || tx.TargetAddress || ''}'); typeof safeAlert === 'function' ? safeAlert('Адрес скопирован!') : alert('Скопировано');">Копия</button>
+                </div>
+
+                <span style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; display: block;">Комментарий (ОБЯЗАТЕЛЬНО):</span>
+                <div style="display: flex; gap: 8px;">
+                    <div style="flex:1; background: var(--surface-3); border: 1px dashed var(--rent-primary); border-radius: 8px; padding: 10px; font-family: monospace; font-size: 14px; font-weight: bold; color: var(--text); text-align: center; height: 42px; display: flex; align-items: center; justify-content: center;">${tx.PaymentCode || '—'}</div>
+                    <button class="action-btn rent-action-btn" style="margin: 0; padding: 0 16px; height: 42px;" onclick="navigator.clipboard.writeText('${tx.PaymentCode || ''}'); typeof safeAlert === 'function' ? safeAlert('Комментарий скопирован!') : alert('Скопировано');">Копия</button>
+                </div>
+            </div>
+        ` : ''}
+
         ${tx.Status === 'Pending' || tx.Status === 'Processing' ? `<div style="margin-top:16px;font-size:12px;color:var(--text-muted);text-align:center;">Если транзакция долго в ожидании — обратитесь в <a href="https://t.me/${BOT_USERNAME}" style="color:var(--rent-primary)">поддержку</a></div>` : ''}
     `);
 };

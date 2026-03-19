@@ -322,7 +322,7 @@ window.showTxDetails = function(id) {
                     <button class="cheque-copy-btn" onclick="navigator.clipboard.writeText('${tx.PaymentCode || ''}'); typeof safeAlert === 'function' ? safeAlert('Комментарий скопирован!') : alert('Скопировано');">Копировать</button>
                 </div>
                 
-                <button class="action-btn rent-action-btn" style="display: flex; align-items: center; justify-content: center; width: 100%; margin: 12px 0 0; height: 42px; background: #2481cc; color: white;" onclick="typeof openSafeLink === 'function' ? openSafeLink('${tx.PayLink}') : window.Telegram.WebApp.openLink('${tx.PayLink}')">
+                <button class="action-btn rent-action-btn" style="display: flex; align-items: center; justify-content: center; width: 100%; margin: 12px 0 0; height: 42px; background: #2481cc; color: white;" onclick="window.openSafeLink ? window.openSafeLink('${tx.PayLink}') : window.Telegram.WebApp.openLink('${tx.PayLink}')">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
                     Оплатить в 1 клик
                 </button>
@@ -389,9 +389,9 @@ window.openChequeModal = function(id, amount, expStr, isExpired) {
     let linkHtml = isExpired ? '' : `
         <div style="margin:16px 0;">
             <div style="font-size:12px; color:var(--text-muted); margin-bottom:6px;">Ссылка для получателя:</div>
-            <div style="display:flex; gap:8px;">
-                <input type="text" class="form-input" value="${link}" readonly style="flex:1; font-size:12px; margin:0;" onclick="this.select()">
-                <button class="action-btn rent-action-btn" style="margin:0; padding:0 16px;" onclick="navigator.clipboard.writeText('${link}').then(()=>safeAlert('\u0421\u0441\u044b\u043b\u043a\u0430 \u0441\u043a\u043e\u043f\u0438\u0440\u043e\u0432\u0430\u043d\u0430'))">\u041a\u043e\u043f\u0438\u044f</button>
+            <div class="cheque-link-wrap" style="margin-bottom: 4px;">
+                <div class="cheque-link-input" style="font-size:12px;">${link}</div>
+                <button class="cheque-copy-btn" onclick="navigator.clipboard.writeText('${link}').then(()=>safeAlert('\u0421\u0441\u044b\u043b\u043a\u0430 \u0441\u043a\u043e\u043f\u0438\u0440\u043e\u0432\u0430\u043d\u0430'))">\u041a\u043e\u043f\u0438\u044f</button>
             </div>
         </div>
         <button class="action-btn outline-action-btn" style="width:100%; margin-top:8px; border-color:#f07070; color:#f07070;" onclick="cancelCheque('${id}')">Отменить чек</button>

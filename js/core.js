@@ -1159,12 +1159,15 @@ window.finalPrices = window.finalPrices || {
 };
 
 async function fetchServerData() {
-    const config = await apiCall('/webapp/config/prices');
+    const [config, balance] = await Promise.all([
+        apiCall('/webapp/config/prices').catch(e => null),
+        apiCall('/webapp/user/balance').catch(e => null)
+    ]);
+    
     if (config && config.Success) {
         window.sysConfig.isTestMode = config.IsTestMode;
         window.sysConfig.receivingWallet = config.ReceivingWalletAddress;
         
-        // ДОБАВЛЕН УЧЕТ ГАЗА С СЕРВЕРА
         window.sysConfig.gasFeeTon = config.BlockchainGasFeeTon || 0.06;
 
         RATES.USD.tonUsd = config.Rates.TonUsd;
@@ -1185,7 +1188,6 @@ async function fetchServerData() {
         updateAllPrices();
     }
 
-    const balance = await apiCall('/webapp/user/balance');
     if (balance && balance.Success) {
         tonConnect.balance = balance.TonBalance;
         tonConnect.frozenBalance = balance.FrozenTonBalance;
@@ -1193,7 +1195,7 @@ async function fetchServerData() {
     }
 
     if (!window.currentRentOffers || window.currentRentOffers.length === 0) {
-        await switchRentCategory('gifts');
+        switchRentCategory('gifts').catch(console.error);
     }
 }
 
@@ -1219,7 +1221,11 @@ async function init() {
     }
 
     try {
-        const initData = await apiCall(`/webapp/init?username=${reqUsername}`);
+        const [initData] = await Promise.all([
+            apiCall(`/webapp/init?username=${reqUsername}`).catch(e => null),
+            fetchServerData()
+        ]);
+        
         if (initData && initData.Success) {
             window.finalPrices = {
                 star: initData.FinalPricesUsd.Star,
@@ -1256,10 +1262,10 @@ async function init() {
         if (usr) usr.textContent = usernameDisplay;
     });
 
-    await Promise.all([
-        fetchServerData(),
-        typeof window.fetchAllGiveaways === 'function' ? window.fetchAllGiveaways() : Promise.resolve()
-    ]);
+    // Запускаем загрузку розыгрышей в фоне, не блокируя UI
+    if (typeof window.fetchAllGiveaways === 'function') {
+        window.fetchAllGiveaways();
+    }
 
     if (window.currentLang && window.currentLang !== 'ru') {
         switchLang(window.currentLang);

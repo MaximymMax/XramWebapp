@@ -1389,9 +1389,18 @@ window.openBalanceModal = function(initialTab = 'topup') {
         </div>
 
         <div id="balanceTabTopup" style="display: none;">
-            <p style="color:var(--text-secondary); font-size:14px; margin-bottom:16px;">Пополните внутренний баланс в TON для моментальных покупок без комиссий сети.</p>
-            <input type="number" id="topupAmount" class="form-input" placeholder="Количество TON" style="width:100%; margin-bottom:16px;">
-            <button class="action-btn" onclick="submitTopup()" style="width:100%">Пополнить баланс</button>
+            <p style="color:var(--text-secondary); font-size:14px; margin-bottom:16px;">Пополните внутренний баланс для моментальных покупок. При пополнении в USDT они автоматически конвертируются в TON.</p>
+            
+            <label class="form-label">Валюта перевода</label>
+            <select id="topupCurrency" class="form-input" style="width:100%; margin-bottom:16px; background:var(--surface-2);">
+                <option value="TON">TON (Toncoin)</option>
+                <option value="USDT">USDT (сеть TON) -> в TON</option>
+            </select>
+
+            <label class="form-label">Сумма к отправке</label>
+            <input type="number" id="topupAmount" class="form-input" placeholder="Введите количество" style="width:100%; margin-bottom:16px;">
+            
+            <button class="action-btn" onclick="submitTopup()" style="width:100%; background: linear-gradient(135deg, #229ED9, #9b72f0); border:none;">Продолжить</button>
         </div>
 
         <div id="balanceTabWithdraw" style="display: none;">
@@ -1425,6 +1434,47 @@ window.openBalanceModal = function(initialTab = 'topup') {
     showModal('Баланс и Обмен', content);
     switchBalanceTab(initialTab);
     updateWithdrawUI();
+};
+
+window.submitTopup = async function() {
+    const amount = parseFloat(document.getElementById('topupAmount').value);
+    const currency = document.getElementById('topupCurrency').value;
+
+    if (!amount || amount <= 0) return safeAlert('Введите корректную сумму');
+
+    const btn = document.querySelector('#balanceTabTopup button');
+    const oldText = btn.innerText;
+    btn.disabled = true;
+    btn.innerText = 'Создание заявки...';
+
+    // Отправляем запрос на твой API (передаем выбранную валюту)
+    const res = await apiCall(`/transactions/create/topup?amount=${amount}&currency=${currency}&method=CryptoTransfer`, 'GET');
+
+    if (res && res.Success) {
+        closeModal();
+        
+        // Формируем красивую инструкцию с реквизитами из бэкенда
+        const detailsHtml = `
+            <div style="text-align: center; margin-top: 10px;">
+                <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">Переведите <b>${res.Amount} ${res.Currency}</b> на адрес:</p>
+                <div style="background: var(--bg); padding: 10px; border-radius: 8px; word-break: break-all; font-family: monospace; font-size: 12px; color: var(--text); border: 1px solid var(--border-strong); margin-bottom: 12px;">
+                    ${res.Address}
+                </div>
+                <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">ОБЯЗАТЕЛЬНЫЙ комментарий:</p>
+                <div style="background: var(--bg); padding: 10px; border-radius: 8px; font-family: monospace; font-size: 14px; font-weight: bold; color: var(--text); border: 1px solid var(--border-strong); margin-bottom: 16px;">
+                    ${res.PaymentCode}
+                </div>
+                <button class="action-btn" style="width:100%;" onclick="tg.openTelegramLink('https://t.me/wallet?startattach=ton_transfer')">Открыть Wallet в Telegram</button>
+            </div>
+        `;
+
+        showTxResult(true, 'Ожидание оплаты', res.Message || 'Пожалуйста, выполните перевод по реквизитам ниже.', detailsHtml);
+    } else {
+        safeAlert(res?.Error || 'Ошибка создания заявки на пополнение');
+    }
+
+    btn.disabled = false;
+    btn.innerText = oldText;
 };
 
 window.switchBalanceTab = function(tab) {

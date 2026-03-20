@@ -237,12 +237,18 @@ function renderServerHistory(history) {
             </div>`;
         }
 
-        let title = isTopUp ? 'Пополнение' : isWithdraw ? 'Вывод' : 'Покупка';
+       let title = isTopUp ? 'Пополнение' : isWithdraw ? 'Вывод' : 'Покупка';
         let productText = tx.Product === 'None' ? 'Баланс' : (tx.Product || '');
         if (tx.IsCheque) productText = 'TON Чек';
         if (tx.IsGiveawayPrize) productText = 'Взнос за розыгрыш';
 
-        // --- НОВЫЕ БЕЙДЖИ ДЛЯ СПИСКА ---
+        // --- НОВАЯ ЛОГИКА ДЛЯ ПРИЗОВ ---
+        let isPrize = (tx.ProductDetails || '').includes('Giveaway Prize');
+        if (isPrize) {
+            title = '🎁 Выигрыш в розыгрыше';
+            productText = '';
+        }
+
         let badgesHtml = '';
         if (tx.Status === 'Pending' && tx.PayLink) {
             badgesHtml += `<span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(255, 193, 7, 0.15); color: #ffc107; border: 1px solid rgba(255, 193, 7, 0.3); margin-left: 6px; white-space: nowrap;">Ждет оплаты</span>`;
@@ -251,15 +257,16 @@ function renderServerHistory(history) {
             badgesHtml += `<span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(155, 114, 240, 0.15); color: #9b72f0; border: 1px solid rgba(155, 114, 240, 0.3); margin-left: 6px; white-space: nowrap;">Розыгрыш</span>`;
         }
 
-        const icon = isTopUp ? '↓' : isWithdraw ? '↑' : '🛒';
-        const iconColor = isTopUp ? '#2ecc71' : isWithdraw ? '#e74c3c' : '#8a2be2';
-        const iconBg = isTopUp ? 'rgba(46,204,113,0.13)' : isWithdraw ? 'rgba(231,76,60,0.13)' : 'rgba(138,43,226,0.13)';
+        // Обновленные иконки и цвета (Приз теперь зеленый с плюсиком)
+        const icon = isPrize ? '🎁' : isTopUp ? '↓' : isWithdraw ? '↑' : '🛒';
+        const iconColor = isPrize ? '#ff9f43' : isTopUp ? '#2ecc71' : isWithdraw ? '#e74c3c' : '#8a2be2';
+        const iconBg = isPrize ? 'rgba(255,159,67,0.13)' : isTopUp ? 'rgba(46,204,113,0.13)' : isWithdraw ? 'rgba(231,76,60,0.13)' : 'rgba(138,43,226,0.13)';
 
         const sClass = statusClass[tx.Status] || 'status-pending';
         const sText = statusLabel[tx.Status] || tx.Status;
 
-        const sign = isTopUp ? '+' : tx.Status === 'Failed' || tx.Status === 'Cancelled' ? '' : '-';
-        const amtColor = isTopUp ? '#2ecc71' : tx.Status === 'Failed' || tx.Status === 'Cancelled' ? 'var(--text-secondary)' : 'var(--text)';
+        const sign = (isPrize || isTopUp) ? '+' : tx.Status === 'Failed' || tx.Status === 'Cancelled' ? '' : '-';
+        const amtColor = (isPrize || isTopUp) ? '#2ecc71' : tx.Status === 'Failed' || tx.Status === 'Cancelled' ? 'var(--text-secondary)' : 'var(--text)';
 
         return `
         <div class="history-item" style="cursor:pointer;" onclick="showTxDetails('${tx.Id}')">

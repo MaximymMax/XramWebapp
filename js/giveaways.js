@@ -355,13 +355,16 @@ window.checkGiveawayInvite = async function() {
         if (capRes && capRes.Success) {
             let capHtml = `
                 <div style="text-align:center;">
-                    <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 16px;">
-                        Вы приглашены в розыгрыш!<br>Для участия выберите: <b>${capRes.TargetName}</b>
+                    <div style="font-size: 48px; margin-bottom: 12px; animation: scaleIn 0.3s ease-out;">🎁</div>
+                    <h3 style="margin-bottom: 8px; color: var(--text);">Вы приглашены!</h3>
+                    <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 20px; line-height: 1.5;">
+                        Для участия докажите, что вы не робот.<br>
+                        Выберите: <b style="color: var(--rent-primary); font-size: 16px; background: var(--surface-3); padding: 2px 8px; border-radius: 6px;">${capRes.TargetName}</b>
                     </p>
-                    <div id="inlineCaptcha" style="margin-top:10px;">
-                        <div style="display: flex; justify-content: center; gap: 8px; flex-wrap: wrap;">
+                    <div id="inlineCaptcha" style="background: var(--surface-2); padding: 20px; border-radius: 16px; border: 1px solid var(--border-strong); box-shadow: inset 0 2px 10px rgba(0,0,0,0.2);">
+                        <div style="display: flex; justify-content: center; gap: 12px; flex-wrap: wrap;">
                             ${capRes.Emojis.map(emoji => `
-                                <button onclick="submitCaptcha('${emoji}')" style="font-size: 28px; background: var(--surface-2); border: 1px solid var(--border-strong); border-radius: 12px; width: 50px; height: 50px; cursor: pointer; display:flex; align-items:center; justify-content:center;">
+                                <button onclick="submitCaptcha('${emoji}')" style="font-size: 32px; background: var(--surface-3); border: 1px solid var(--border-hover); border-radius: 14px; width: 65px; height: 65px; cursor: pointer; display:flex; align-items:center; justify-content:center; transition: 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.15);" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
                                     ${emoji}
                                 </button>
                             `).join('')}

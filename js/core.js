@@ -1305,8 +1305,9 @@ async function init() {
 
         timers.forEach(timer => {
             let endsAtStr = timer.getAttribute('data-ends');
-            if (!endsAtStr) return;
-            
+            // ДОБАВЛЕНА ПРОВЕРКА НА null В ВИДЕ СТРОКИ
+            if (!endsAtStr || endsAtStr === 'null' || endsAtStr === 'undefined') return;
+
             if (!endsAtStr.endsWith('Z') && !endsAtStr.includes('+')) endsAtStr += 'Z';
             
             const endsAt = new Date(endsAtStr).getTime();

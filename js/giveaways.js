@@ -238,13 +238,22 @@ async function loadGiveawaysList(tab, showLoad = true) {
             if (typeName === 'TonTransfer') typeName = 'TON';
             if (typeName === 'DefaultGift') typeName = 'Подарок';
             
-            let endsAtStr = gw.EndsAt;
-            if (endsAtStr && !endsAtStr.endsWith('Z')) endsAtStr += 'Z';
-            const endsDate = new Date(endsAtStr);
-            const isEnded = endsDate.getTime() <= Date.now();
-            
-            const statusClass = isEnded ? 'status-cancelled' : 'status-pending';
-            const statusText = isEnded ? 'Завершен' : `<span style="font-size:11px; margin-right:3px;">⏱</span><span class="countdown-timer" data-ends="${endsAtStr}" data-timeout-text="Завершен">Обновление...</span>`;
+            let isEnded = false;
+            let statusClass = 'status-pending';
+            let statusText = '';
+
+            if (!gw.EndsAt) {
+                // Если время окончания еще не задано (0 участников)
+                statusText = `<span style="font-size:11px; margin-right:3px;">⏳</span>Ожидание участников`;
+            } else {
+                // Если таймер запущен
+                let endsAtStr = gw.EndsAt;
+                if (!endsAtStr.endsWith('Z')) endsAtStr += 'Z';
+                const endsDate = new Date(endsAtStr);
+                isEnded = endsDate.getTime() <= Date.now();
+                statusClass = isEnded ? 'status-cancelled' : 'status-pending';
+                statusText = isEnded ? 'Завершен' : `<span style="font-size:11px; margin-right:3px;">⏱</span><span class="countdown-timer" data-ends="${endsAtStr}" data-timeout-text="Завершен">Обновление...</span>`;
+            }
 
             return `
                 <div class="history-item" style="cursor:pointer;" onclick="showGiveawayInfo('${gw.Id}')">
@@ -266,10 +275,17 @@ window.showGiveawayInfo = async function(id) {
     
     const res = await apiCall(`/webapp/giveaways/${id}/info`);
     if (res && res.Success) {
-        let endsAtStr = res.EndsAt;
-        if (endsAtStr && !endsAtStr.endsWith('Z')) endsAtStr += 'Z';
-        const endsDate = new Date(endsAtStr);
-        const isEnded = endsDate.getTime() <= Date.now();
+        
+        let isEnded = false;
+        let endsDateText = 'После 1-го участника';
+
+        if (res.EndsAt) {
+            let endsAtStr = res.EndsAt;
+            if (!endsAtStr.endsWith('Z')) endsAtStr += 'Z';
+            const endsDate = new Date(endsAtStr);
+            isEnded = endsDate.getTime() <= Date.now();
+            endsDateText = endsDate.toLocaleString('ru-RU');
+        }
         
         let prizeName = res.PrizeType;
         let prizeVal = res.Amount;
@@ -280,10 +296,10 @@ window.showGiveawayInfo = async function(id) {
 
         let html = `
             <div style="text-align:center; font-size:40px; margin-bottom:10px;">🎁</div>
-            <div class="modal-info-row"><span class="modal-info-label">Приз</span><span class=\"modal-info-value\">${prizeName} (${prizeVal})</span></div>
-            <div class="modal-info-row"><span class="modal-info-label">Победителей</span><span class=\"modal-info-value\">${res.WinnersCount}</span></div>
-            <div class="modal-info-row"><span class="modal-info-label">Участников</span><span class=\"modal-info-value\">${res.ParticipantsCount}</span></div>
-            <div class="modal-info-row"><span class="modal-info-label">Завершение</span><span class=\"modal-info-value\">${endsDate.toLocaleString('ru-RU')}</span></div>
+            <div class="modal-info-row"><span class="modal-info-label">Приз</span><span class="modal-info-value">${prizeName} (${prizeVal})</span></div>
+            <div class="modal-info-row"><span class="modal-info-label">Победителей</span><span class="modal-info-value">${res.WinnersCount}</span></div>
+            <div class="modal-info-row"><span class="modal-info-label">Участников</span><span class="modal-info-value">${res.ParticipantsCount}</span></div>
+            <div class="modal-info-row"><span class="modal-info-label">Завершение</span><span class="modal-info-value">${endsDateText}</span></div>
         `;
 
         if (res.IsCreator && res.Participants && res.Participants.length > 0) {

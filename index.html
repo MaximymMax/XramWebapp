@@ -50,7 +50,7 @@
                 </div>
                 <div class="currency-dropdown-menu">
                     <div class="currency-dd-item" onclick="selectCurrency('USD')">USD</div>
-                    <div class="currency-dd-item" onclick="selectCurrency('RUB')">RUB</div>
+                    <div class="currency-dd-item" onclick="selectCurrency('USDT')">USDT</div>
                     <div class="currency-dd-item" onclick="selectCurrency('TON')">TON</div>
                     <div class="currency-dd-item" onclick="selectCurrency('Stars')">Stars</div>
                 </div>
@@ -714,7 +714,7 @@
                     </div>
                     <div class="sort-dd-menu" style="width: 100%;">
                         <div class="sort-dd-item selected" onclick="selectWithdrawMethod('ton', this)"><span class="sort-item-icon">💎</span><span class="sort-item-label">На TON-кошелек</span></div>
-                        <div class="sort-dd-item" onclick="selectWithdrawMethod('card', this)"><span class="sort-item-icon">💳</span><span class="sort-item-label">На карту (Рубли)</span></div>
+                        <div class="sort-dd-item" onclick="selectWithdrawMethod('usdt', this)"><span class="sort-item-icon">🟢</span><span class="sort-item-label">На USDT-кошелек</span></div>
                         <div class="sort-dd-item" onclick="selectWithdrawMethod('stars', this)"><span class="sort-item-icon">⭐️</span><span class="sort-item-label">Продать Stars</span></div>
                     </div>
                 </div>
@@ -726,11 +726,11 @@
                     <input type="text" id="withdrawAddress" placeholder="EQ... или UQ..." class="form-input" data-i18n="placeholder_address" style="margin-bottom:14px">
                 </div>
 
-                <div id="withdrawCardWrap" style="display: none;">
-                    <label class="form-label">Сумма вывода (В рублях)</label>
-                    <input type="number" id="withdrawCardAmount" placeholder="Мин. 500 ₽" class="form-input" min="500">
-                    <label class="form-label">Номер карты</label>
-                    <input type="text" id="withdrawCardNumber" placeholder="0000 0000 0000 0000" class="form-input" style="margin-bottom:14px">
+                <div id="withdrawUsdtWrap" style="display: none;">
+                    <label class="form-label">Сумма вывода (USDT)</label>
+                    <input type="number" id="withdrawUsdtAmount" placeholder="Мин. 1 USDT" class="form-input" min="1">
+                    <label class="form-label">Адрес USDT кошелька (TRC20/TON)</label>
+                    <input type="text" id="withdrawUsdtAddress" placeholder="Адрес кошелька" class="form-input" style="margin-bottom:14px">
                 </div>
 
                 <div id="withdrawStarsWrap" style="display: none;">

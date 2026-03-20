@@ -54,7 +54,7 @@ function getBaseCollectionName(name) {
 }
 
 // ── Сортировка ─────────────────────────────────────────────────
-window.selectSortOption = function(el) {
+window.selectSortOption = function (el) {
     const value = el.dataset.value;
     const label = el.querySelector('.sort-item-label').textContent;
 
@@ -69,7 +69,7 @@ window.selectSortOption = function(el) {
     loadRentOffers(state.rentCategory, state.currentCollection, state.currentModel, true);
 };
 
-window.onRentSortChange = function() {
+window.onRentSortChange = function () {
     loadRentOffers(state.rentCategory, state.currentCollection, state.currentModel, true);
 };
 
@@ -133,7 +133,7 @@ async function switchRentCategory(category, btn) {
     }
 }
 
-window.onCollectionSelected = async function(address, name, rentFloor, imgSrc) {
+window.onCollectionSelected = async function (address, name, rentFloor, imgSrc) {
     // Если выбрали "Лучшие предложения" НЕ через кнопку, а программно - не синхронизируем UI кнопки. 
     // Но для безопасности закроем dropdown
     document.getElementById('collectionDropdown').classList.remove('open');
@@ -191,11 +191,11 @@ window.onCollectionSelected = async function(address, name, rentFloor, imgSrc) {
     }
 };
 
-window.toggleBestDeals = function() {
+window.toggleBestDeals = function () {
     const btn = document.getElementById('bestDealsBtn');
     if (state.currentCollection !== 'best_deals') {
         document.getElementById('rentCollectionWrap').style.display = 'none';
-        btn.innerHTML = '← Назад к коллекциям 🎁';
+        btn.innerHTML = '← Назад к обычным предложениям';
         btn.style.background = 'linear-gradient(135deg, #ff9800, #ff5722)';
         btn.style.color = '#fff';
         onCollectionSelected('best_deals', 'Лучшие предложения', 0, '');
@@ -208,7 +208,7 @@ window.toggleBestDeals = function() {
     }
 };
 
-window.onModelSelected = async function(modelId, modelName, rentFloor, imgSrc) {
+window.onModelSelected = async function (modelId, modelName, rentFloor, imgSrc) {
     document.getElementById('modelDropdown').classList.remove('open');
     document.getElementById('modTriggerName').textContent = modelName;
 
@@ -268,13 +268,13 @@ function getFragmentRentCardImage(offer) {
     if (cat === 'numbers') {
         return { type: 'number', text: name };
     }
-    
+
     const fragmentImg = getFragmentImageUrl(name);
     if (!fragmentImg && cat === 'gifts') {
         const colId = getCollectionIdByName(name);
         if (colId) return { type: 'img', url: `https://cdn.changes.tg/gifts/originals/${colId}/Original.png` };
     }
-    
+
     return { type: 'img', url: fragmentImg || offer.ImageUrl };
 }
 
@@ -332,7 +332,7 @@ async function loadRentOffers(category, collectionAddress, model, reset = true) 
                     img.dataset.src = imgUrl;
                     img.alt = 'NFT';
                     img.className = 'rent-card-img-lazy';
-                    img.onerror = function() { this.style.opacity = '0.3'; };
+                    img.onerror = function () { this.style.opacity = '0.3'; };
                     card.appendChild(img);
                 }
 
@@ -368,12 +368,12 @@ async function loadRentOffers(category, collectionAddress, model, reset = true) 
     }
 }
 
-window.loadNextRentPage = function() {
+window.loadNextRentPage = function () {
     if (state.nextCursor) loadRentOffers(state.rentCategory, state.currentCollection, state.currentModel, false);
 };
 
 // ── Модальное окно аренды ─────────────────────────────────────
-window.openRentModal = function(address) {
+window.openRentModal = function (address) {
     const offer = window.currentRentOffers.find(o => o.NftAddress === address);
     if (!offer) return;
 
@@ -460,7 +460,7 @@ window.openRentModal = function(address) {
     updateRentModalPrice();
 };
 
-window.updateRentModalPrice = function() {
+window.updateRentModalPrice = function () {
     const input = document.getElementById('modalRentDays');
     const errorMsg = document.getElementById('modalRentError');
     const btn = document.getElementById('modalRentBtn');
@@ -477,7 +477,7 @@ window.updateRentModalPrice = function() {
 
         const gasFeeTon = window.sysConfig?.blockchainGasFeeTon || 0.06;
         const productTon = window.RENT_TON_PER_DAY * days;
-        const totalTon = productTon + gasFeeTon; 
+        const totalTon = productTon + gasFeeTon;
         const usdTotal = totalTon * getTonUsdRate();
 
         // Обновляем Breakdown элементы
@@ -497,7 +497,7 @@ window.updateRentModalPrice = function() {
     }
 };
 
-window.apiRentGift = async function() {
+window.apiRentGift = async function () {
     const days = state.rentDays;
     if (days < state.rentMinDays || days > state.rentMaxDays) return safeAlert(`Доступно от ${state.rentMinDays} до ${state.rentMaxDays} дней`);
     const pm = state.pay.rent.method;
@@ -522,7 +522,7 @@ window.apiRentGift = async function() {
         const usdTotal = totalTon * getTonUsdRate();
         const starsCost = Math.ceil(usdTotal / RATES.USD.starDeposit);
 
-        const exactNano = window.ORIGINAL_NANO_PER_DAY; 
+        const exactNano = window.ORIGINAL_NANO_PER_DAY;
         const encodedName = encodeURIComponent(state.rentNftName);
         const encodedImg = encodeURIComponent(state.rentImageUrl);
         // В details теперь уходит точная базовая цена без наценок
@@ -538,7 +538,7 @@ window.apiRentGift = async function() {
         }, 'POST');
 
         if (res && res.Success && res.InvoiceUrl) {
-            tg.openInvoice(res.InvoiceUrl, function(status) {
+            tg.openInvoice(res.InvoiceUrl, function (status) {
                 if (status === 'paid') {
                     window.pendingRental = fakePendingRental;
                     showTxResult(true, "Аренда оформлена!", `Вы успешно оплатили аренду на ${days} дн. звёздами.`, `<div style="text-align:center">Нажмите «Закрыть», чтобы перейти к установке NFT.</div>`, () => {
@@ -569,9 +569,9 @@ window.apiRentGift = async function() {
     const result = await apiCall('/webapp/transactions/create/rent', {
         telegramId, currency: pc, method: pm,
         nftAddress: state.rentNftAddress, nftName: state.rentNftName,
-        days, 
+        days,
         // Отправляем БАЗОВЫЕ цены на бэкенд, а наценку он накинет сам
-        pricePerDayTon: window.ORIGINAL_TON_PER_DAY, 
+        pricePerDayTon: window.ORIGINAL_TON_PER_DAY,
         priceNano: window.ORIGINAL_NANO_PER_DAY,
         category: state.rentCategory, imageUrl: state.rentImageUrl
     }, 'POST');
@@ -596,7 +596,7 @@ window.apiRentGift = async function() {
 };
 
 // ── TonConnect (установка NFT) ────────────────────────────────
-window.openTonConnectModal = function(nftAddress) {
+window.openTonConnectModal = function (nftAddress) {
     showModal('Установка NFT', `
         <p style="color:var(--text-secondary);font-size:13px;margin-bottom:14px">
             1. Откройте настройки Telegram → Ваш Профиль → Подарки.<br>
@@ -608,7 +608,7 @@ window.openTonConnectModal = function(nftAddress) {
     `);
 };
 
-window.submitTonConnectUri = async function(nftAddress) {
+window.submitTonConnectUri = async function (nftAddress) {
     const uri = document.getElementById('tcUriInput').value.trim();
     if (!uri.startsWith('tc://')) {
         return safeAlert('\u041e\u0448\u0438\u0431\u043a\u0430: \u0421\u0441\u044b\u043b\u043a\u0430 \u0434\u043e\u043b\u0436\u043d\u0430 \u043d\u0430\u0447\u0438\u043d\u0430\u0442\u044c\u0441\u044f \u0441 tc://');

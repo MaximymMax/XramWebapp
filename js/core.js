@@ -20,9 +20,9 @@ const telegramId = user.id;
 
 const tonConnect = { connected: false, address: null, balance: null, frozenBalance: null };
 
-let RATES = { USD: { tonUsd: 2.0, perStar: 0.015, starDeposit: 0.013 }, RUB: { tonUsd: 180, perStar: 1.35 }, TON: { tonUsd: 1, perStar: 0.0075 } };
+let RATES = { USD: { tonUsd: 2.0, perStar: 0.015, starDeposit: 0.013 }, TON: { tonUsd: 1, perStar: 0.0075 }, USDT: { tonUsd: 1, perStar: 0.015 } };
+window.RATES = RATES;
 let PREMIUM_TON = { 3: 6, 10: 10, 12: 18 };
-const RUB_PER_USD = 95;
 
 // Дефолтные цены и системные настройки
 window.finalPrices = { star: 0.018, premium3: 14.38, premium6: 19.18, premium12: 34.78 };
@@ -110,7 +110,7 @@ function formatTonPrice(tonAmount) {
     const cur = state.currency;
     if (cur === 'TON') return `${tonAmount.toFixed(2)} TON`;
     if (cur === 'USD') return `$${(tonAmount * getTonUsdRate()).toFixed(2)}`;
-    if (cur === 'RUB') return `${Math.round(tonAmount * getTonUsdRate() * RUB_PER_USD)} ₽`;
+    if (cur === 'USDT') return `${(tonAmount * getTonUsdRate()).toFixed(2)} USDT`;
     if (cur === 'Stars') return `${Math.ceil((tonAmount * getTonUsdRate()) / RATES.USD.perStar)} ⭐️`;
     return `${tonAmount.toFixed(2)} TON`;
 }
@@ -118,7 +118,7 @@ function formatTonPrice(tonAmount) {
 function formatUsdPrice(usdAmount) {
     const cur = state.currency;
     if (cur === 'USD') return `$${usdAmount.toFixed(2)}`;
-    if (cur === 'RUB') return `${Math.round(usdAmount * RUB_PER_USD)} ₽`;
+    if (cur === 'USDT') return `${usdAmount.toFixed(2)} USDT`;
     if (cur === 'TON') return `${(usdAmount / getTonUsdRate()).toFixed(2)} TON`;
     if (cur === 'Stars') return `${Math.ceil(usdAmount / RATES.USD.perStar)} ⭐️`;
     return `$${usdAmount.toFixed(2)}`;
@@ -322,17 +322,6 @@ window.updateModalBreakdown = function() {
         bdTotalStr = `${totalUsd.toFixed(2)} USDT`;
         btnText = `Оплатить ${totalUsd.toFixed(2)} USDT`;
         topupDisplayAmount = `${baseUsd.toFixed(2)} USDT`;
-    } else if (method === 'BankCard') {
-        let totalUsd = baseUsd + gasUsd;
-        let totalRub = totalUsd * RUB_PER_USD;
-        let gasRub = gasUsd * RUB_PER_USD;
-        let baseRub = baseUsd * RUB_PER_USD;
-        
-        bdPriceStr = `${Math.round(baseRub)} ₽`;
-        bdGasStr = `+ ${Math.round(gasRub)} ₽`;
-        bdTotalStr = `${Math.round(totalRub)} ₽`;
-        btnText = `Оплатить ${Math.round(totalRub)} ₽`;
-        topupDisplayAmount = `${Math.round(baseRub)} ₽`;
     } else if (method === 'TelegramStars') {
         let starPrice = RATES.USD.perStar;
         
@@ -682,8 +671,8 @@ function generatePaymentMethodsHtml(product, targetMode, requiredTon) {
             ${btnTopup}
         </div>
         <div class="payment-methods" style="grid-template-columns: 1fr 1fr; display:grid;">
-            <div class="pay-method ${otherClass}" data-method="CryptoTransfer" data-currency="TON" onclick="selectPayMethod('${product}', this)">${t('modal_pay_transfer')}</div>
-            <div class="pay-method" data-method="BankCard" data-currency="RUB" onclick="selectPayMethod('${product}', this)">${t('modal_pay_card')}</div>
+            <div class="pay-method ${otherClass}" data-method="CryptoTransfer" data-currency="TON" onclick="selectPayMethod('${product}', this)">${t('modal_pay_transfer') || 'Криптокошелек'} (TON)</div>
+            <div class="pay-method" data-method="CryptoTransfer" data-currency="USDT" onclick="selectPayMethod('${product}', this)">${t('modal_pay_transfer') || 'Криптокошелек'} (USDT)</div>
             <div class="pay-method" style="grid-column: span 2" data-method="TelegramStars" data-currency="Stars" onclick="selectPayMethod('${product}', this)">${t('modal_pay_stars')}</div>
         </div>`;
 }
@@ -1038,8 +1027,7 @@ window.apiTopupWallet = function () {
             <div class="payment-methods" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                 <div class="pay-method selected" data-method="CryptoTransfer" data-currency="TON" onclick="selectPayMethod('topup', this)">TON</div>
                 <div class="pay-method" data-method="CryptoTransfer" data-currency="USDT" onclick="selectPayMethod('topup', this)">USDT (TON)</div>
-                <div class="pay-method" data-method="BankCard" data-currency="RUB" onclick="selectPayMethod('topup', this)">Карта (RUB)</div>
-                <div class="pay-method" data-method="TelegramStars" data-currency="Stars" onclick="selectPayMethod('topup', this)">Stars</div>
+                <div class="pay-method" style="grid-column: span 2" data-method="TelegramStars" data-currency="Stars" onclick="selectPayMethod('topup', this)">Stars</div>
             </div>
 
             <button class="action-btn wallet-action-btn" id="modalConfirmBtn" onclick="executeTopup(${amount})" style="width:100%; margin: 16px 0 0">${t('modal_topup_btn')}</button>
@@ -1107,9 +1095,9 @@ window.selectWithdrawMethod = function(method, elem) {
     if (method === 'ton') {
         iconSpan.textContent = '💎';
         labelSpan.textContent = 'На TON-кошелек';
-    } else if (method === 'card') {
-        iconSpan.textContent = '💳';
-        labelSpan.textContent = 'На карту (Рубли)';
+    } else if (method === 'usdt') {
+        iconSpan.textContent = '🟢';
+        labelSpan.textContent = 'На USDT-кошелек';
     } else if (method === 'stars') {
         iconSpan.textContent = '⭐️';
         labelSpan.textContent = 'Продать Stars';
@@ -1118,12 +1106,12 @@ window.selectWithdrawMethod = function(method, elem) {
     elem.closest('.sort-dd-wrap').classList.remove('open');
     
     document.getElementById('withdrawTonWrap').style.display = method === 'ton' ? 'block' : 'none';
-    document.getElementById('withdrawCardWrap').style.display = method === 'card' ? 'block' : 'none';
+    document.getElementById('withdrawUsdtWrap').style.display = method === 'usdt' ? 'block' : 'none';
     document.getElementById('withdrawStarsWrap').style.display = method === 'stars' ? 'block' : 'none';
     
     const btnLabel = document.getElementById('withdrawBtnLabel');
-    if (method === 'ton') btnLabel.textContent = 'Вывести средства';
-    else if (method === 'card' || method === 'stars') btnLabel.textContent = 'Создать заявку';
+    if (method === 'ton' || method === 'usdt') btnLabel.textContent = 'Вывести средства';
+    else if (method === 'stars') btnLabel.textContent = 'Создать заявку';
 };
 
 window.apiWithdrawCustom = async function() {
@@ -1131,21 +1119,21 @@ window.apiWithdrawCustom = async function() {
     
     if (method === 'ton') {
         await apiWithdrawWallet();
-    } else if (method === 'card') {
-        const amountStr = document.getElementById('withdrawCardAmount').value;
-        const address = document.getElementById('withdrawCardNumber').value.trim();
+    } else if (method === 'usdt') {
+        const amountStr = document.getElementById('withdrawUsdtAmount').value;
+        const address = document.getElementById('withdrawUsdtAddress').value.trim();
         if (!amountStr || !address) return safeAlert(t('alert_fill_fields'));
         const amount = parseFloat(amountStr);
-        if (isNaN(amount) || amount < 500) return safeAlert('Минимальная сумма вывода: 500 RUB');
+        if (isNaN(amount) || amount < 1) return safeAlert('Минимальная сумма вывода: 1 USDT');
         
         const btn = document.querySelector('#walletWithdrawPanel .action-btn');
         btn.disabled = true;
         
-        const res = await apiCall('/webapp/pay/crypto/sell', { currency: 'RUB', amount: amount, address: address }, 'POST');
+        const res = await apiCall('/webapp/pay/crypto/sell', { currency: 'USDT', amount: amount, address: address }, 'POST');
         if (res && res.Success) {
             showModal('Заявка создана!', '<p style="color:var(--text-secondary); font-size:14px;">Ваша заявка отправлена в обработку. Ожидайте зачисления.</p>');
-            document.getElementById('withdrawCardAmount').value = '';
-            document.getElementById('withdrawCardNumber').value = '';
+            document.getElementById('withdrawUsdtAmount').value = '';
+            document.getElementById('withdrawUsdtAddress').value = '';
             if (typeof loadProfile === 'function') loadProfile();
         } else {
             safeAlert(res?.Error || 'Ошибка создания заявки');
@@ -1527,8 +1515,8 @@ window.openBalanceModal = function(initialTab = 'topup') {
 
             <label class="form-label">Куда получаем выплату?</label>
             <select id="withdrawTarget" class="form-input" style="width:100%; margin-bottom:16px; background:var(--surface-2);">
-                <option value="RUB">На банковскую карту (RUB)</option>
                 <option value="TON">На криптокошелек (TON)</option>
+                <option value="USDT">На криптокошелек (USDT)</option>
             </select>
 
             <label class="form-label">Реквизиты</label>
@@ -1604,14 +1592,17 @@ window.updateWithdrawUI = function() {
     const cur = document.getElementById('withdrawCurrency').value;
     const targetSelect = document.getElementById('withdrawTarget');
     
-    // Если продаем крипту с баланса, то вывод пока только в рубли
+    // Если продаем крипту с баланса
     if (cur === 'Stars') {
         targetSelect.innerHTML = `
-            <option value="RUB">На банковскую карту (RUB)</option>
             <option value="TON">На криптокошелек (TON)</option>
+            <option value="USDT">На криптокошелек (USDT)</option>
         `;
     } else {
-        targetSelect.innerHTML = `<option value="RUB">На банковскую карту (RUB)</option>`;
+        targetSelect.innerHTML = `
+            <option value="TON">На криптокошелек (TON)</option>
+            <option value="USDT">На криптокошелек (USDT)</option>
+        `;
     }
     calcWithdrawEst();
 };
@@ -1627,15 +1618,15 @@ window.calcWithdrawEst = function() {
     
     if (amount <= 0) { estEl.textContent = '0.00'; return; }
 
-    if (cur === 'Stars' && target === 'RUB') {
-        const rate = window.sysConfig?.rateStarToRub || 1.3;
-        estEl.textContent = `≈ ${(amount * rate * markup).toFixed(2)} RUB`;
+    if (cur === 'Stars' && target === 'USDT') {
+        const usdVal = (amount * 0.013) * markup - 0.06;
+        estEl.textContent = usdVal > 0 ? `≈ ${usdVal.toFixed(2)} USDT` : 'Слишком мало';
     } else if (cur === 'Stars' && target === 'TON') {
         // Упрощенная прикидка для фронта
         const usd = (amount * 0.013) * markup - 0.06; 
         estEl.textContent = usd > 0 ? `≈ ${(usd / (window.RATES?.USD?.tonUsd || 5)).toFixed(2)} TON` : 'Слишком мало';
     } else if (cur === 'TON' || cur === 'USDT') {
-        estEl.textContent = `≈ Выплата в RUB`; // Фронт может не знать точный курс RUB, пишем заглушку
+        estEl.textContent = `≈ Выплата в ${target}`;
     }
 };
 

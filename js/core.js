@@ -323,15 +323,21 @@ window.updateModalBreakdown = function() {
         btnText = `Оплатить ${totalUsd.toFixed(2)} USDT`;
         topupDisplayAmount = `${baseUsd.toFixed(2)} USDT`;
     } else if (method === 'TelegramStars') {
-        let starPrice = RATES.USD.perStar;
+        const globalMarkup = window.sysConfig?.globalMarkupPercentage || 20;
+        let markupUsd = baseUsd * (globalMarkup / 100);
+        let subtotalUsd = baseUsd + markupUsd;
+        let starsWithdrawalFeeUsd = subtotalUsd * 0.05;
+        let finalUsd = subtotalUsd + starsWithdrawalFeeUsd;
         
-        let baseStars = Math.ceil(baseUsd / starPrice);
-        let gasStars = hasGas ? Math.ceil(gasUsd / starPrice) : 0;
-        let totalStars = baseStars + gasStars;
+        let totalStars = Math.ceil(finalUsd / 0.015);
+        let baseStars = Math.ceil(baseUsd / 0.015);
+        let markupStars = totalStars - baseStars;
 
         bdPriceStr = `${baseStars} ⭐️`;
-        bdGasStr = `+ ${gasStars} ⭐️`;
+        bdGasStr = `+ ${markupStars} ⭐️ (Наценка + Вывод)`;
         bdTotalStr = `${totalStars} ⭐️`;
+        btnText = `Оплатить ${totalStars} ⭐️`;
+        topupDisplayAmount = `${baseStars} ⭐️`;
         btnText = `Оплатить ${totalStars} ⭐️`;
         topupDisplayAmount = `${baseStars} ⭐️`;
     }
@@ -673,7 +679,7 @@ function generatePaymentMethodsHtml(product, targetMode, requiredTon) {
         <div class="payment-methods" style="grid-template-columns: 1fr 1fr; display:grid;">
             <div class="pay-method ${otherClass}" data-method="CryptoTransfer" data-currency="TON" onclick="selectPayMethod('${product}', this)">${t('modal_pay_transfer') || 'Криптокошелек'} (TON)</div>
             <div class="pay-method" data-method="CryptoTransfer" data-currency="USDT" onclick="selectPayMethod('${product}', this)">${t('modal_pay_transfer') || 'Криптокошелек'} (USDT)</div>
-            <div class="pay-method" style="grid-column: span 2" data-method="TelegramStars" data-currency="Stars" onclick="selectPayMethod('${product}', this)">${t('modal_pay_stars')}</div>
+            ${product !== 'stars' ? `<div class="pay-method" style="grid-column: span 2" data-method="TelegramStars" data-currency="Stars" onclick="selectPayMethod('${product}', this)">${t('modal_pay_stars')}</div>` : ''}
         </div>`;
 }
 
@@ -1043,10 +1049,16 @@ window.executeTopup = async function (amount) {
     const btn = document.getElementById('modalConfirmBtn');
 
     if (pm === 'TelegramStars') {
-        const usdTotal = amount * getTonUsdRate();
-        const starsCost = Math.ceil(usdTotal / RATES.USD.starDeposit);
+        const baseUsd = amount * getTonUsdRate();
+        const globalMarkup = window.sysConfig?.globalMarkupPercentage || 20;
+        let markupUsd = baseUsd * (globalMarkup / 100);
+        let subtotalUsd = baseUsd + markupUsd;
+        let starsWithdrawalFeeUsd = subtotalUsd * 0.05;
+        let finalUsd = subtotalUsd + starsWithdrawalFeeUsd;
+        let totalStars = Math.ceil(finalUsd / 0.015);
+
         closeModal();
-        return payWithTelegramStars('topup', amount.toString(), starsCost, telegramId.toString());
+        return payWithTelegramStars('topup', amount.toString(), totalStars, telegramId.toString());
     }
 
     let passAmount = amount;

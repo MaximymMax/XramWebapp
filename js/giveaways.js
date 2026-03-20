@@ -128,8 +128,8 @@ window.updateGwCreatePrice = function() {
         
     } else if (type === 'TonTransfer') {
         const amount = parseFloat(document.getElementById('gwPrizeTon').value) || 0;
-        // TON * наценку + газ
-        usdPricePerWinner = ((amount * getTonUsdRate()) * markupMult) + gasFeeUsd;
+        // ЭТО ВНУТРЕННИЙ ПЕРЕВОД: БЕЗ НАЦЕНКИ И БЕЗ КОМИССИИ СЕТИ (ГАЗА)
+        usdPricePerWinner = amount * getTonUsdRate();
         
     } else if (type === 'Premium') {
         const months = parseInt(document.getElementById('gwPrizePremium').value) || 3;

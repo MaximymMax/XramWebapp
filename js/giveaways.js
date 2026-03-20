@@ -351,7 +351,10 @@ window.checkGiveawayInvite = async function() {
         window.currentGiveawayId = gwId;
         switchTab('giveaways', document.querySelector('.nav-item[onclick*=\"giveaways\"]'));
         
-        const capRes = await apiCall(`/webapp/giveaways/${gwId}/captcha`);
+        const tgUser = window.Telegram.WebApp.initDataUnsafe?.user;
+        const usernameParam = tgUser?.username ? `?username=${encodeURIComponent(tgUser.username)}` : '';
+
+        const capRes = await apiCall(`/webapp/giveaways/${gwId}/captcha${usernameParam}`);
         if (capRes && capRes.Success) {
             let capHtml = `
                 <div style="text-align:center;">

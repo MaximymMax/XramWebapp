@@ -1078,9 +1078,24 @@ async function apiWithdrawWallet() {
     if (!amountStr || !address) return safeAlert(t('alert_fill_fields'));
     const amount = parseFloat(amountStr);
     if (isNaN(amount) || amount < 0.5) return safeAlert('Минимальная сумма вывода: 0.5 TON');
+    
+    const btn = document.querySelector('#withdrawTonWrap .action-btn') || document.querySelector('#walletWithdrawPanel .action-btn');
+    if (btn) setLoading(btn, true);
+    
     const result = await apiCall('/transactions/create/withdrawal', { telegramId, currency: 'TON', amount, targetAddress: address });
-    if (result && result.Success) { safeAlert(t('alert_withdraw_ok')); fetchServerData(); }
-    else if (result) safeAlert('Ошибка: ' + result.Error);
+    
+    if (btn) setLoading(btn, false);
+    
+    if (result && result.Success) { 
+        showTxResult(true, 'Успешно!', 'Средства успешно списаны. Отправка может занять 1-3 минуты.', '', () => {
+             document.getElementById('withdrawAmount').value = '';
+             document.getElementById('withdrawAddress').value = '';
+             fetchServerData();
+             if (typeof loadProfile === 'function') loadProfile();
+        });
+    } else {
+        showTxResult(false, 'Ошибка вывода', result ? result.Error : 'Неизвестная ошибка', '');
+    }
 }
 
 window.switchWalletTab = function(tabName, btn) {
@@ -1133,21 +1148,23 @@ window.apiWithdrawCustom = async function() {
         const amount = parseFloat(amountStr);
         if (isNaN(amount) || amount < 1) return safeAlert('Минимальная сумма вывода: 1 USDT');
         
-        const btn = document.querySelector('#walletWithdrawPanel .action-btn');
-        btn.disabled = true;
+        const btn = document.querySelector('#withdrawUsdtWrap .action-btn') || document.querySelector('#walletWithdrawPanel .action-btn');
+        if (btn) setLoading(btn, true);
         
         const result = await apiCall('/transactions/create/withdrawal', { telegramId, currency: 'USDT', amount: amount, targetAddress: address });
-        if (result && result.Success) {
-            safeAlert('Заявка создана! Ожидайте зачисления.');
-            document.getElementById('withdrawUsdtAmount').value = '';
-            document.getElementById('withdrawUsdtAddress').value = '';
-            fetchServerData();
-            if (typeof loadProfile === 'function') loadProfile();
-        } else {
-            safeAlert('Ошибка: ' + (result ? result.Error : 'Неизвестная ошибка'));
-        }
-        btn.disabled = false;
         
+        if (btn) setLoading(btn, false);
+        
+        if (result && result.Success) {
+            showTxResult(true, 'Успешно!', 'Перевод USDT отправлен в обработку. Ожидайте зачисления 1-3 минуты.', '', () => {
+                document.getElementById('withdrawUsdtAmount').value = '';
+                document.getElementById('withdrawUsdtAddress').value = '';
+                fetchServerData();
+                if (typeof loadProfile === 'function') loadProfile();
+            });
+        } else {
+            showTxResult(false, 'Ошибка вывода', result ? result.Error : 'Неизвестная ошибка', '');
+        }
     }
 };
 

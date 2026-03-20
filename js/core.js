@@ -1110,20 +1110,15 @@ window.selectWithdrawMethod = function(method, elem) {
     } else if (method === 'usdt') {
         iconSpan.textContent = '🟢';
         labelSpan.textContent = 'На USDT-кошелек';
-    } else if (method === 'stars') {
-        iconSpan.textContent = '⭐️';
-        labelSpan.textContent = 'Продать Stars';
     }
 
     elem.closest('.sort-dd-wrap').classList.remove('open');
     
     document.getElementById('withdrawTonWrap').style.display = method === 'ton' ? 'block' : 'none';
     document.getElementById('withdrawUsdtWrap').style.display = method === 'usdt' ? 'block' : 'none';
-    document.getElementById('withdrawStarsWrap').style.display = method === 'stars' ? 'block' : 'none';
     
     const btnLabel = document.getElementById('withdrawBtnLabel');
     if (method === 'ton' || method === 'usdt') btnLabel.textContent = 'Вывести средства';
-    else if (method === 'stars') btnLabel.textContent = 'Создать заявку';
 };
 
 window.apiWithdrawCustom = async function() {
@@ -1141,47 +1136,18 @@ window.apiWithdrawCustom = async function() {
         const btn = document.querySelector('#walletWithdrawPanel .action-btn');
         btn.disabled = true;
         
-        const res = await apiCall('/webapp/pay/crypto/sell', { currency: 'USDT', amount: amount, address: address }, 'POST');
-        if (res && res.Success) {
-            showModal('Заявка создана!', '<p style="color:var(--text-secondary); font-size:14px;">Ваша заявка отправлена в обработку. Ожидайте зачисления.</p>');
+        const result = await apiCall('/transactions/create/withdrawal', { telegramId, currency: 'USDT', amount: amount, targetAddress: address });
+        if (result && result.Success) {
+            safeAlert('Заявка создана! Ожидайте зачисления.');
             document.getElementById('withdrawUsdtAmount').value = '';
             document.getElementById('withdrawUsdtAddress').value = '';
+            fetchServerData();
             if (typeof loadProfile === 'function') loadProfile();
         } else {
-            safeAlert(res?.Error || 'Ошибка создания заявки');
+            safeAlert('Ошибка: ' + (result ? result.Error : 'Неизвестная ошибка'));
         }
         btn.disabled = false;
         
-    } else if (method === 'stars') {
-        const amountStr = document.getElementById('withdrawStarsAmount').value;
-        const address = document.getElementById('withdrawStarsAddress').value.trim();
-        if (!amountStr || !address) return safeAlert(t('alert_fill_fields'));
-        const amount = parseInt(amountStr);
-        if (isNaN(amount) || amount < 100) return safeAlert('Мин. количество Stars: 100');
-        
-        const btn = document.querySelector('#walletWithdrawPanel .action-btn');
-        btn.disabled = true;
-
-        const res = await apiCall('/webapp/pay/stars/create', {
-            product: 'sellstars',
-            details: `TON:${address}:${amount}`
-        }, 'POST');
-
-        if (res && res.Success && (res.InvoiceUrl || res.InvoiceLink || res.PayUrl)) {
-            const invUrl = res.InvoiceUrl || res.InvoiceLink || res.PayUrl;
-            tg.openInvoice(invUrl, (status) => {
-                if (status === 'paid') {
-                    showTxResult(true, 'Успешно!', 'Звезды оплачены. Ваша заявка на обмен создана и отправлена в обработку.');
-                    document.getElementById('withdrawStarsAmount').value = '';
-                    document.getElementById('withdrawStarsAddress').value = '';
-                } else if (status === 'failed') {
-                    showTxResult(false, 'Ошибка', 'Оплата отменена или не удалась.');
-                }
-            });
-        } else {
-            safeAlert(res?.Error || 'Ошибка создания заявки');
-        }
-        btn.disabled = false;
     }
 };
 

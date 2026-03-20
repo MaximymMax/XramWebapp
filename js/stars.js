@@ -12,6 +12,13 @@ function updateStarsBtn() {
     const priceStr = formatUsdPrice(count * RATES.USD.perStar);
     const createChequeLabel = window.currentLang === 'en' ? 'Create cheque' : 'Создать чек';
     const buyLabel = window.currentLang === 'en' ? 'Buy' : 'Купить';
+    
+    if (state.starsRecipientMode === 'self' && window.selfStatus && !window.selfStatus.StarsAvailable) {
+        btn.disabled = true;
+        btn.innerHTML = `${icon} Недоступно`;
+        return;
+    }
+
     btn.innerHTML = isCheque
         ? `${chequeIcon} ${createChequeLabel} · ${count} Stars · ${priceStr}`
         : `${icon} ${buyLabel} ${count} Stars · ${priceStr}`;

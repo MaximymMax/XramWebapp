@@ -1239,23 +1239,6 @@ async function init() {
     const testUsername = 'alwys_online';
     const reqUsername = user.username || testUsername;
 
-    if (window.selfStatus) {
-        ['premium', 'stars'].forEach(prod => {
-            const isAvail = prod === 'premium' ? window.selfStatus.PremiumAvailable : window.selfStatus.StarsAvailable;
-            if (!isAvail) {
-                const btnSelf = document.querySelector(`#${prod}RecipientTabs .rtab[data-mode="self"]`);
-                const btnOther = document.querySelector(`#${prod}RecipientTabs .rtab[data-mode="other"]`);
-                if (btnSelf && btnOther) {
-                    btnSelf.disabled = true;
-                    btnSelf.style.opacity = '0.4';
-                    if (state[`${prod}RecipientMode`] === 'self') {
-                        setRecipientMode(prod, 'other', btnOther);
-                    }
-                }
-            }
-        });
-    }
-
     try {
         const [initData] = await Promise.all([
             apiCall(`/webapp/init?username=${reqUsername}`).catch(e => null),
@@ -1270,6 +1253,21 @@ async function init() {
                 premium12: initData.FinalPricesUsd.Premium12
             };
             window.selfStatus = initData.User;
+            
+            ['premium', 'stars'].forEach(prod => {
+                const isAvail = prod === 'premium' ? window.selfStatus.PremiumAvailable : window.selfStatus.StarsAvailable;
+                if (!isAvail) {
+                    const btnSelf = document.querySelector(`#${prod}RecipientTabs .rtab[data-mode="self"]`);
+                    const btnOther = document.querySelector(`#${prod}RecipientTabs .rtab[data-mode="other"]`);
+                    if (btnSelf && btnOther) {
+                        btnSelf.disabled = true;
+                        btnSelf.style.opacity = '0.4';
+                        if (state[`${prod}RecipientMode`] === 'self') {
+                            setRecipientMode(prod, 'other', btnOther);
+                        }
+                    }
+                }
+            });
         }
     } catch (e) { console.error("Ошибка инициализации:", e); }
 

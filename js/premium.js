@@ -13,6 +13,13 @@ function updatePremiumBtn() {
     const createChequeLabel = window.currentLang === 'en' ? 'Create cheque' : 'Создать чек';
     const buyLabel = window.currentLang === 'en' ? 'Buy' : 'Купить';
     const moLabel = window.currentLang === 'en' ? 'mo' : 'мес';
+    
+    if (state.premiumRecipientMode === 'self' && window.selfStatus && !window.selfStatus.PremiumAvailable) {
+        btn.disabled = true;
+        btn.innerHTML = `${icon} Недоступно`;
+        return;
+    }
+
     btn.innerHTML = isCheque
         ? `${chequeIcon} ${createChequeLabel} · Premium ${m} ${moLabel} · ${priceStr}`
         : `${icon} ${buyLabel} Premium ${m} ${moLabel} · ${priceStr}`;

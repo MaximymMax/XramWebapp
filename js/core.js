@@ -30,7 +30,7 @@ window.selfStatus = { PremiumAvailable: true, StarsAvailable: true, Name: '', Us
 window.sysConfig = { isTestMode: false, receivingWallet: '', gasFeeTon: 0.06 }; 
 
 const state = {
-    stars: 50, starsCustom: false, premium: 3, currency: 'USD', topupAmount: 0, useCustomTopup: true,
+    stars: 50, starsCustom: false, premium: 3, currency: 'USDT', topupAmount: 0, useCustomTopup: true,
     target: 'self',
 
     rentCategory: 'gifts',
@@ -214,6 +214,7 @@ window.switchTab = function (tabId) {
     updatePageBanner(tabId);
     if (tabId === 'profile') loadProfile();
     updateAllPrices();
+    if (tabId === 'giveaways' && typeof updateGwCreatePrice === 'function') updateGwCreatePrice();
     window.scrollTo({ top: 0, behavior: 'instant' });
 }
 
@@ -1080,10 +1081,12 @@ async function apiWithdrawWallet() {
     if (isNaN(amount) || amount < 0.5) return safeAlert('Минимальная сумма вывода: 0.5 TON');
     
     const btn = document.querySelector('#withdrawTonWrap .action-btn') || document.querySelector('#walletWithdrawPanel .action-btn');
-    if (btn) setLoading(btn, true);
+    if (typeof showTxLoading === 'function') showTxLoading();
+    else if (btn) setLoading(btn, true);
     
     const result = await apiCall('/transactions/create/withdrawal', { telegramId, currency: 'TON', amount, targetAddress: address });
     
+    if (document.getElementById('txLoadingState')) document.getElementById('txLoadingState').style.display = 'none';
     if (btn) setLoading(btn, false);
     
     if (result && result.Success) { 
@@ -1149,10 +1152,12 @@ window.apiWithdrawCustom = async function() {
         if (isNaN(amount) || amount < 1) return safeAlert('Минимальная сумма вывода: 1 USDT');
         
         const btn = document.querySelector('#withdrawUsdtWrap .action-btn') || document.querySelector('#walletWithdrawPanel .action-btn');
-        if (btn) setLoading(btn, true);
+        if (typeof showTxLoading === 'function') showTxLoading();
+        else if (btn) setLoading(btn, true);
         
         const result = await apiCall('/transactions/create/withdrawal', { telegramId, currency: 'USDT', amount: amount, targetAddress: address });
         
+        if (document.getElementById('txLoadingState')) document.getElementById('txLoadingState').style.display = 'none';
         if (btn) setLoading(btn, false);
         
         if (result && result.Success) {

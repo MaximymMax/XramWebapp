@@ -790,6 +790,30 @@
             <button class="ptab active" onclick="switchProfileTab('cheques', this)" data-i18n="tab_my_cheques">Мои чеки</button>
             <button class="ptab" onclick="switchProfileTab('history', this)" data-i18n="tab_history">История</button>
             <button class="ptab" onclick="switchProfileTab('rentals', this)" data-i18n="tab_my_rentals">Моя аренда</button>
+            <button class="ptab" onclick="switchProfileTab('referrals', this)">Рефералы</button>
+        </div>
+
+        <div id="profileReferrals" class="profile-panel" style="display:none">
+            <div class="form-card" style="margin-bottom: 16px;">
+                <h3 style="margin-top:0; margin-bottom:12px; font-size: 16px; font-weight: 700;">Реферальная программа</h3>
+                
+                <div style="background: var(--surface-2); border-radius: 12px; padding: 12px; margin-bottom: 16px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="color: var(--text-secondary); font-size: 14px;">Приглашено:</span>
+                        <span style="font-weight: 700; color: var(--text);" id="refCountLabel">0 чел.</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--text-secondary); font-size: 14px;">Заработано (10%):</span>
+                        <span style="font-weight: 700; color: #2ecc71;" id="refEarningsLabel">$0.00</span>
+                    </div>
+                </div>
+
+                <label class="form-label" style="margin-top: 4px;">Ваша ссылка для приглашения</label>
+                <div class="cheque-link-wrap">
+                    <div class="cheque-link-input" style="font-size: 12px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;" id="refLinkInput">Загрузка...</div>
+                    <button class="cheque-copy-btn" onclick="navigator.clipboard.writeText(document.getElementById('refLinkInput').textContent); typeof safeAlert === 'function' ? safeAlert('Ссылка скопирована!') : alert('Скопировано');">Копировать</button>
+                </div>
+            </div>
         </div>
 
         <div id="profileCheques" class="profile-panel">

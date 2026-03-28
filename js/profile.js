@@ -443,6 +443,8 @@ window.switchProfileTab = function(tab, btn) {
     document.getElementById('profileHistory').style.display = 'none';
     document.getElementById('profileCheques').style.display = 'none';
     document.getElementById('profileRentals').style.display = 'none';
+    const refEl = document.getElementById('profileReferrals');
+    if (refEl) refEl.style.display = 'none';
 
     const panelId = 'profile' + tab.charAt(0).toUpperCase() + tab.slice(1);
     const activePanel = document.getElementById(panelId);

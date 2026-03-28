@@ -1242,6 +1242,13 @@ async function init() {
             };
             window.selfStatus = initData.User;
             
+            const refLinkInput = document.getElementById('refLinkInput');
+            const refCountLabel = document.getElementById('refCountLabel');
+            const refEarningsLabel = document.getElementById('refEarningsLabel');
+            if (refLinkInput) refLinkInput.textContent = window.selfStatus.ReferralLink || `https://t.me/XramMagazinBot?start=ref_${telegramId}`;
+            if (refCountLabel) refCountLabel.textContent = `${window.selfStatus.ReferralCount || 0} чел.`;
+            if (refEarningsLabel) refEarningsLabel.textContent = `$${(window.selfStatus.ReferralEarningsUsd || 0).toFixed(2)}`;
+
             ['premium', 'stars'].forEach(prod => {
                 const isAvail = prod === 'premium' ? window.selfStatus.PremiumAvailable : window.selfStatus.StarsAvailable;
                 if (!isAvail) {

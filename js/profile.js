@@ -168,6 +168,23 @@ window.openRentalModal = function(idx) {
                 ${r.IsPending ? 'Выдаётся' : isExpired ? 'Истекла' : 'Установить'}
             </button>
         </div>
+        <button class="action-btn outline-action-btn" style="width:100%; margin: 10px 0 0; border: none; color: var(--rent-primary); background: rgba(52, 199, 89, 0.1);" onclick="showRentInstructions()">ℹ️ Инструкция по установке</button>
+    `);
+};
+
+window.showRentInstructions = function() {
+    showModal('Инструкция по установке', `
+        <div style="text-align:center; font-size:40px; margin-bottom:10px;">📖</div>
+        <ol style="color:var(--text-secondary); font-size:14px; line-height:1.6; padding-left: 20px; text-align: left;">
+            <li style="margin-bottom: 8px;">Нажмите кнопку <b>"Установить"</b>. Откроется кошелек TON Space / Tonkeeper для привязки.</li>
+            <li style="margin-bottom: 8px;">Перейдите в свой <b>Telegram-профиль</b>.</li>
+            <li style="margin-bottom: 8px;">Нажмите на свою <b>аватарку</b> (или раздел О себе -> Подарки).</li>
+            <li style="margin-bottom: 8px;">Выберите арендованный подарок и нажмите <b>"Отображать в профиле"</b>.</li>
+        </ol>
+        <div style="margin-top:20px; text-align:center;">
+            <a href="https://t.me/xram_news/12" target="_blank" style="color:var(--rent-primary); font-weight:600; text-decoration:none;">Посмотреть видео-инструкцию в канале ↗</a>
+        </div>
+        <button class="action-btn outline-action-btn" style="width:100%; margin-top:20px;" onclick="closeModal()">Понятно</button>
     `);
 };
 

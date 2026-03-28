@@ -6,17 +6,19 @@ window.switchGiveawayTab = function(tab, btn) {
     document.getElementById('gwTabCreate').closest('.page').querySelectorAll('.ptab').forEach(t => t.classList.remove('active'));
     btn.classList.add('active');
     
+    document.getElementById('gwTabAll').style.display = tab === 'all' ? 'block' : 'none';
     document.getElementById('gwTabCreate').style.display = tab === 'create' ? 'block' : 'none';
     document.getElementById('gwTabParticipating').style.display = tab === 'participating' ? 'block' : 'none';
     document.getElementById('gwTabMy').style.display = tab === 'my' ? 'block' : 'none';
 
-    if (tab === 'participating' || tab === 'my') {
+    if (tab === 'participating' || tab === 'my' || tab === 'all') {
         loadGiveawaysList(tab, false);
     }
 }
 
 window.fetchAllGiveaways = async function() {
     await Promise.all([
+        loadGiveawaysList('all', false),
         loadGiveawaysList('participating', false),
         loadGiveawaysList('my', false)
     ]);
@@ -264,14 +266,14 @@ window.openGwPaymentModal = async function() {
 
 
 async function loadGiveawaysList(tab, showLoad = true) {
-    const list = document.getElementById(tab === 'my' ? 'gwMyList' : 'gwParticipatingList');
+    const list = document.getElementById(tab === 'my' ? 'gwMyList' : tab === 'all' ? 'gwAllList' : 'gwParticipatingList');
     if (showLoad) list.innerHTML = '<div class="profile-empty"><p>Загрузка...</p></div>';
 
     const res = await apiCall('/webapp/giveaways/list');
     if (res && res.Success) {
-        const items = tab === 'my' ? res.My : res.Participating;
+        const items = tab === 'my' ? res.My : tab === 'all' ? res.All : res.Participating;
 
-        if (tab === 'participating' && items) {
+        if ((tab === 'participating' || tab === 'all') && items) {
             const now = Date.now();
             for (let i = items.length - 1; i >= 0; i--) {
                 let endsAtStr = items[i].EndsAt;
@@ -283,7 +285,8 @@ async function loadGiveawaysList(tab, showLoad = true) {
         }
 
         if (!items || items.length === 0) {
-            list.innerHTML = `<div class="profile-empty"><p>${tab === 'my' ? 'У вас нет созданных розыгрышей' : 'Вы не участвуете в активных розыгрышах'}</p></div>`;
+            let emptyMsg = tab === 'my' ? 'У вас нет созданных розыгрышей' : tab === 'all' ? 'Нет активных розыгрышей' : 'Вы не участвуете в активных розыгрышах';
+            list.innerHTML = `<div class="profile-empty"><p>${emptyMsg}</p></div>`;
             return;
         }
 
@@ -375,6 +378,11 @@ window.showGiveawayInfo = async function(id) {
 
         if (!isEnded && res.IsCreator && res.ParticipantsCount === 0) {
             html += `<button class="action-btn outline-action-btn" style="width:100%; margin: 15px 0 0; border-color:#f07070; color:#f07070;" onclick="cancelGiveaway('${id}')">Отменить розыгрыш</button>`;
+        }
+
+        if (!isEnded && !res.IsJoined && !res.IsCreator) {
+            const joinUrl = res.InviteLink || `https://t.me/${window.BOT_USERNAME || 'xram_shop_bot'}?start=gw_${id}`;
+            html += `<button class="action-btn stars-action-btn" style="width:100%; margin: 15px 0 0;" onclick="tg.openTelegramLink('${joinUrl}')">Участвовать 🚀</button>`;
         }
 
         showModal('Детали розыгрыша', html);

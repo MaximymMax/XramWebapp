@@ -576,12 +576,17 @@
         </div>
 
         <div class="profile-tabs" style="margin-top: 16px">
-            <button class="ptab active" onclick="switchGiveawayTab('create', this)">Создать</button>
+            <button class="ptab active" onclick="switchGiveawayTab('all', this)">Все</button>
+            <button class="ptab" onclick="switchGiveawayTab('create', this)">Создать</button>
             <button class="ptab" onclick="switchGiveawayTab('participating', this)">Участвую</button>
             <button class="ptab" onclick="switchGiveawayTab('my', this)">Мои</button>
         </div>
 
-        <div id="gwTabCreate" class="profile-panel">
+        <div id="gwTabAll" class="profile-panel">
+            <div class="profile-list" id="gwAllList"></div>
+        </div>
+
+        <div id="gwTabCreate" class="profile-panel" style="display:none">
             <div class="form-card">
                 <label class="form-label" data-i18n="gw_prize_type">Что разыгрываем?</label>
                 

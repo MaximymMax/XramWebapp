@@ -113,8 +113,12 @@ window.updateGwCreatePrice = function() {
 
     if (type === 'TelegramStars') {
         const amount = parseFloat(document.getElementById('gwPrizeStars').value) || 0;
-        const baseStarUsd = window.RATES?.USD?.perStar || 0.014;
-        usdPricePerWinner = ((amount * baseStarUsd) * markupMult) + gasFeeUsd;
+        // ИСПРАВЛЕНИЕ БАГ 1: perStar (из RATES) = FinalPricesUsd.Star = 0.018 (уже с наценкой).
+        // Раньше мы умножали (amount * 0.018) * markupMult = двойная наценка → 0.92 TON.
+        // Теперь: берём fragment-base (0.014) * (1 + markup%) = одна наценка → соответствует бэкенду.
+        const fragmentBaseUsd = 0.014; // AppConfig.RateStarFragmentUsd
+        usdPricePerWinner = (amount * fragmentBaseUsd * markupMult) + gasFeeUsd;
+
         
     } else if (type === 'TonTransfer') {
         const amount = parseFloat(document.getElementById('gwPrizeTon').value) || 0;

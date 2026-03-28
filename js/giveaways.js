@@ -203,7 +203,7 @@ window.openGwPaymentModal = async function() {
     const now = new Date().getTime();
     const diffMinutes = Math.floor((selectedTime - now) / 60000);
 
-    if (diffMinutes < 60) return safeAlert("Минимальная длительность - 1 час (выберите время позже).");
+    if (diffMinutes < 1) return safeAlert("Минимальная длительность - 1 минута.");
 
     const channelInput = document.getElementById('gw-channel-input').value.trim();
     if (!channelInput) return safeAlert("Пожалуйста, укажите канал для проведения розыгрыша.");

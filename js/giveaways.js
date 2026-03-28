@@ -219,6 +219,28 @@ window.openGwPaymentModal = async function() {
     const btn = document.getElementById('gwSubmitBtn');
     setLoading(btn, true);
 
+    // === БАГ 1: Запрашиваем ТОЧНУЮ сумму с бэкенда перед созданием ===
+    const preview = await apiCall(`/webapp/giveaways/price-preview?type=${type}&amount=${amount}&winners=${winners}`);
+    setLoading(btn, false);
+
+    if (!preview || !preview.Success) {
+        return safeAlert(preview?.Error || "Не удалось рассчитать стоимость розыгрыша");
+    }
+
+    const exactTon = preview.FinalTon;
+
+    // Показываем подтверждение с ТОЧНОЙ суммой от бэкенда
+    const confirmed = await new Promise(resolve => {
+        tg.showConfirm(
+            `Точная стоимость розыгрыша: ${exactTon.toFixed(2)} TON\nСредства будут списаны с вашего TON-баланса.\n\nПродолжить?`,
+            resolve
+        );
+    });
+
+    if (!confirmed) return;
+    // =================================================================
+
+    setLoading(btn, true);
     const res = await apiCall('/transactions/create/giveaway' + `?type=${type}&amount=${amount}&winners=${winners}&hours=${hours}&giftId=${giftId}&channel=${encodeURIComponent(channelInput)}`);
     setLoading(btn, false);
 
@@ -228,6 +250,7 @@ window.openGwPaymentModal = async function() {
         safeAlert(res?.Error || "Ошибка создания розыгрыша");
     }
 }
+
 
 async function loadGiveawaysList(tab, showLoad = true) {
     const list = document.getElementById(tab === 'my' ? 'gwMyList' : 'gwParticipatingList');

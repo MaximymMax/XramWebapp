@@ -39,19 +39,14 @@ window.selectGwPrize = function(val, elem) {
 }
 
 window.selectGwPremium = function(val, elem) {
-    // Меняем скрытое значение
     document.getElementById('gwPrizePremium').value = val;
-    // Меняем текст на кнопке
     document.getElementById('gwPremLabel').textContent = elem.querySelector('.sort-item-label').textContent;
     
-    // Убираем класс active у других элементов и добавляем текущему
     elem.closest('.sort-dd-menu').querySelectorAll('.sort-dd-item').forEach(el => el.classList.remove('active'));
     elem.classList.add('active');
     
-    // Закрываем меню
     elem.closest('.sort-dd-menu').classList.remove('show');
     
-    // Пересчитываем итоговую цену!
     if (typeof window.updateGwCreatePrice === 'function') {
         window.updateGwCreatePrice();
     }
@@ -63,7 +58,6 @@ async function initGwGifts() {
     
     menu.innerHTML = '<div class="sort-dd-item"><span class="sort-item-label">Загрузка...</span></div>';
 
-    // ЗАМЕНИ /webapp/gifts/catalog на твой реальный эндпоинт, который отдает список подарков
     const res = await apiCall('/webapp/gifts/catalog'); 
     
     if (res && res.Success && res.Gifts) {
@@ -90,12 +84,10 @@ setTimeout(initGwGifts, 300);
 window.selectGwGift = function(id, name, priceStars, priceTon, priceUsd, elem) {
     document.getElementById('gwPrizeGiftId').value = id;
     
-    // Сохраняем значения для калькулятора
     const priceInput = document.getElementById('gwPrizeGiftPrice');
     priceInput.value = priceStars; 
-    priceInput.dataset.usd = priceUsd; // Сохраняем готовую цену в USD с бекенда
+    priceInput.dataset.usd = priceUsd; 
     
-    // Красиво оформляем текст на выбранной кнопке
     document.getElementById('gwGiftLabel').innerHTML = `
         <span style="color:var(--text);">${name}</span>
         <span style="color:var(--text-muted); font-size:13px; margin-left:6px;">${priceTon.toFixed(2)} TON</span>
@@ -115,25 +107,21 @@ window.updateGwCreatePrice = function() {
     const winners = parseInt(document.getElementById('gwWinnersCount').value) || 1;
     let usdPricePerWinner = 0;
     
-    // Получаем наценку (по умолчанию 20%) и комиссию сети в USD
     const markupPercentage = window.sysConfig?.globalMarkupPercentage || 20;
     const markupMult = 1 + (markupPercentage / 100);
     const gasFeeUsd = (window.sysConfig?.blockchainGasFeeTon || 0.06) * getTonUsdRate();
 
     if (type === 'TelegramStars') {
         const amount = parseFloat(document.getElementById('gwPrizeStars').value) || 0;
-        // Себестоимость * наценку + газ
         const baseStarUsd = window.RATES?.USD?.perStar || 0.014;
         usdPricePerWinner = ((amount * baseStarUsd) * markupMult) + gasFeeUsd;
         
     } else if (type === 'TonTransfer') {
         const amount = parseFloat(document.getElementById('gwPrizeTon').value) || 0;
-        // ЭТО ВНУТРЕННИЙ ПЕРЕВОД: БЕЗ НАЦЕНКИ И БЕЗ КОМИССИИ СЕТИ (ГАЗА)
         usdPricePerWinner = amount * getTonUsdRate();
         
     } else if (type === 'Premium') {
         const months = parseInt(document.getElementById('gwPrizePremium').value) || 3;
-        // Берем готовые цены с наценкой из конфига + добавляем газ
         let premUsd = window.sysConfig?.finalPricesUsd?.premium3 || (11.99 * markupMult);
         if (months === 12) premUsd = window.sysConfig?.finalPricesUsd?.premium12 || (35.99 * markupMult);
         else if (months === 6) premUsd = window.sysConfig?.finalPricesUsd?.premium6 || (15.99 * markupMult);
@@ -141,7 +129,6 @@ window.updateGwCreatePrice = function() {
         usdPricePerWinner = premUsd + gasFeeUsd;
         
     } else if (type === 'DefaultGift') {
-        // У подарков цена УЖЕ посчитана с наценкой и газом на бэкенде, просто берем её
         const giftUsd = parseFloat(document.getElementById('gwPrizeGiftPrice').dataset.usd) || 0;
         usdPricePerWinner = giftUsd;
     }
@@ -150,7 +137,6 @@ window.updateGwCreatePrice = function() {
     const totalTon = totalUsd / getTonUsdRate();
     const tonPerWinner = usdPricePerWinner / getTonUsdRate();
 
-    // ОБНОВЛЯЕМ ЭЛЕМЕНТЫ В ИНТЕРФЕЙСЕ
     const perWinnerEl = document.getElementById('gwPerWinnerInfo');
     const multiplierEl = document.getElementById('gwMultiplier');
     const usdEl = document.getElementById('gwTotalCostUsd');
@@ -168,12 +154,48 @@ window.updateGwCreatePrice = function() {
     }
 }
 
+// ── Валидация канала перед отправкой ────────────────────────
+window.validateGiveawayChannel = async function() {
+    const channelInput = document.getElementById('gw-channel-input');
+    const statusText = document.getElementById('gw-channel-status');
+    const channel = channelInput.value.trim();
+
+    if (!channel) {
+        statusText.innerText = '';
+        return false;
+    }
+
+    statusText.innerText = '⏳ Проверяем права в канале...';
+    statusText.style.color = 'var(--text-secondary)';
+
+    try {
+        const res = await apiCall(`/webapp/channel/check?channel=${encodeURIComponent(channel)}`);
+        
+        if (res && res.Success) {
+            statusText.innerText = '✅ ' + (res.Message || 'Канал успешно подключен!');
+            statusText.style.color = '#34c759'; // Зеленый цвет успеха
+            return true;
+        } else {
+            statusText.innerText = '❌ ' + (res?.Error || 'Ошибка проверки');
+            statusText.style.color = '#ff3b30'; // Красный цвет ошибки
+            return false;
+        }
+    } catch (e) {
+        statusText.innerText = '❌ Ошибка сети при проверке канала';
+        statusText.style.color = '#ff3b30';
+        return false;
+    }
+}
+
 window.openGwPaymentModal = async function() {
     const type = document.getElementById('gwPrizeType').value;
     const winners = parseInt(document.getElementById('gwWinnersCount').value) || 1;
     
     const hours = parseInt(document.getElementById('gwHoursCount').value) || 0;
     if (hours < 1) return safeAlert("Минимальная длительность - 1 час");
+
+    const channelInput = document.getElementById('gw-channel-input').value.trim();
+    if (!channelInput) return safeAlert("Пожалуйста, укажите канал для проведения розыгрыша.");
 
     let amount = 0;
     let giftId = "";
@@ -197,7 +219,7 @@ window.openGwPaymentModal = async function() {
     const btn = document.getElementById('gwSubmitBtn');
     setLoading(btn, true);
 
-    const res = await apiCall('/transactions/create/giveaway' + `?type=${type}&amount=${amount}&winners=${winners}&hours=${hours}&giftId=${giftId}`);
+    const res = await apiCall('/transactions/create/giveaway' + `?type=${type}&amount=${amount}&winners=${winners}&hours=${hours}&giftId=${giftId}&channel=${encodeURIComponent(channelInput)}`);
     setLoading(btn, false);
 
     if (res && res.Success) {
@@ -215,7 +237,6 @@ async function loadGiveawaysList(tab, showLoad = true) {
     if (res && res.Success) {
         const items = tab === 'my' ? res.My : res.Participating;
 
-        // Скрываем завершенные розыгрыши во вкладке "Участвую"
         if (tab === 'participating' && items) {
             const now = Date.now();
             for (let i = items.length - 1; i >= 0; i--) {
@@ -243,10 +264,8 @@ async function loadGiveawaysList(tab, showLoad = true) {
             let statusText = '';
 
             if (!gw.EndsAt) {
-                // Если время окончания еще не задано (0 участников)
                 statusText = `<span style="font-size:11px; margin-right:3px;">⏳</span>Ожидание участников`;
             } else {
-                // Если таймер запущен
                 let endsAtStr = gw.EndsAt;
                 if (!endsAtStr.endsWith('Z')) endsAtStr += 'Z';
                 const endsDate = new Date(endsAtStr);
@@ -383,11 +402,13 @@ window.checkGiveawayInvite = async function() {
 }
 setTimeout(checkGiveawayInvite, 1000);
 
+// ── Окно проверки капчи и подписки ────────────────────────
 window.submitCaptcha = async function(emoji) {
     const capDiv = document.getElementById('inlineCaptcha');
     capDiv.innerHTML = `<p style="color:var(--text-secondary); font-size:14px;">Проверка...</p>`;
     
-    const res = await apiCall(`/webapp/giveaways/${currentGiveawayId}/join?emoji=${encodeURIComponent(emoji)}`);
+    // Используем window.currentGiveawayId, заданный при инициализации модалки
+    const res = await apiCall(`/webapp/giveaways/${window.currentGiveawayId}/join?emoji=${encodeURIComponent(emoji)}`);
     if (res && res.Success) {
         closeModal();
         safeAlert(res.Message);
@@ -395,7 +416,8 @@ window.submitCaptcha = async function(emoji) {
             loadGiveawaysList('participating', false);
         }
     } else {
-        capDiv.innerHTML = `<p style="color:#ff453a; font-size:13px; margin-bottom:10px;">${res?.Error || 'Неверно'}</p>
+        // Если приходит кастомная ошибка (в т.ч. отсутствие подписки), выводим её красным текстом
+        capDiv.innerHTML = `<p style="color:#ff453a; font-size:13px; margin-bottom:10px; line-height: 1.4;">${res?.Error || res?.Message || 'Неверно'}</p>
                             <button class="action-btn outline-action-btn" onclick="closeModal()">Закрыть</button>`;
     }
 }

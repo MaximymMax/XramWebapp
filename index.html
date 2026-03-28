@@ -642,6 +642,12 @@
                     <input type="hidden" id="gwPrizeGiftPrice" value="0">
                 </div>
 
+                <div class="input-group" style="margin-bottom: 16px;">
+                    <label class="form-label" for="gw-channel-input">Канал для розыгрыша (Обязательно)</label>
+                    <input type="text" id="gw-channel-input" class="form-input" placeholder="@your_channel_name" onblur="validateGiveawayChannel()" style="margin-bottom: 0;">
+                    <small id="gw-channel-status" style="display: block; margin-top: 5px; font-size: 12px;"></small>
+                </div>
+
                 <label class="form-label" data-i18n="gw_winners">Количество победителей</label>
                 <input type="number" id="gwWinnersCount" class="form-input" placeholder="1" value="1" min="1" oninput="updateGwCreatePrice()">
 

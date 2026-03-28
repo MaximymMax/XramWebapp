@@ -652,8 +652,8 @@
                 <label class="form-label" data-i18n="gw_winners">Количество победителей</label>
                 <input type="number" id="gwWinnersCount" class="form-input" placeholder="1" value="1" min="1" oninput="updateGwCreatePrice()">
 
-                <label class="form-label">Длительность розыгрыша (в часах)</label>
-                <input type="number" id="gwHoursCount" class="form-input" placeholder="24" value="24" min="1" oninput="updateGwCreatePrice()">
+                <label class="form-label" data-i18n="gw_duration">Дата и время завершения розыгрыша</label>
+                <input type="datetime-local" id="gwDatetimePicker" class="form-input" onchange="updateGwCreatePrice()">
 
                 <div class="payment-breakdown" style="margin-top: 18px; margin-bottom: 12px;">
                     <div class="breakdown-row"><span>Цена за победителя:</span> <span id="gwPerWinnerInfo">0.00 TON</span></div>

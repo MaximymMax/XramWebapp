@@ -195,8 +195,14 @@ window.openGwPaymentModal = async function() {
     const type = document.getElementById('gwPrizeType').value;
     const winners = parseInt(document.getElementById('gwWinnersCount').value) || 1;
     
-    const hours = parseInt(document.getElementById('gwHoursCount').value) || 0;
-    if (hours < 1) return safeAlert("Минимальная длительность - 1 час");
+    const datetimeInput = document.getElementById('gwDatetimePicker').value;
+    if (!datetimeInput) return safeAlert("Пожалуйста, укажите дату и время окончания розыгрыша.");
+    
+    const selectedTime = new Date(datetimeInput).getTime();
+    const now = new Date().getTime();
+    const diffMinutes = Math.floor((selectedTime - now) / 60000);
+
+    if (diffMinutes < 60) return safeAlert("Минимальная длительность - 1 час (от текущего времени)");
 
     const channelInput = document.getElementById('gw-channel-input').value.trim();
     if (!channelInput) return safeAlert("Пожалуйста, укажите канал для проведения розыгрыша.");
@@ -245,7 +251,7 @@ window.openGwPaymentModal = async function() {
     // =================================================================
 
     setLoading(btn, true);
-    const res = await apiCall('/transactions/create/giveaway' + `?type=${type}&amount=${amount}&winners=${winners}&hours=${hours}&giftId=${giftId}&channel=${encodeURIComponent(channelInput)}`);
+    const res = await apiCall('/transactions/create/giveaway' + `?type=${type}&amount=${amount}&winners=${winners}&minutes=${diffMinutes}&giftId=${giftId}&channel=${encodeURIComponent(channelInput)}`);
     setLoading(btn, false);
 
     if (res && res.Success) {
@@ -389,3 +395,23 @@ window.cancelGiveaway = async function(id) {
         safeAlert(res?.Error || "Ошибка при отмене");
     }
 }
+
+
+// Инициализация пикера времени при загрузке скрипта
+(function initGwDatetimePicker() {
+    const picker = document.getElementById('gwDatetimePicker');
+    if (!picker) return;
+
+    // Устанавливаем минимальную дату + 1 час от текущего времени
+    const now = new Date();
+    now.setHours(now.getHours() + 1);
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    const minStr = now.toISOString().slice(0, 16);
+    picker.min = minStr;
+    
+    // По умолчанию предлагаем розыгрыш на 24 часа
+    const defaults = new Date();
+    defaults.setHours(defaults.getHours() + 24);
+    defaults.setMinutes(defaults.getMinutes() - defaults.getTimezoneOffset());
+    picker.value = defaults.toISOString().slice(0, 16);
+})();

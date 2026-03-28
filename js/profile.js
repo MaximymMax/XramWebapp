@@ -137,11 +137,15 @@ window.openRentalModal = function(idx) {
     const expStr = new Date(expiresStr).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
     const imgUrl = getFragmentNftImage(r);
     const cat = r.Category || '';
+    
+    let collectionClean = r.CollectionName ? r.CollectionName.split(' ').join('-').replace(/[^a-zA-Z0-9\-]/g, '') : '';
+    let numberClean = r.Name ? r.Name.replace(/[^0-9]/g, '') : '';
+    
     const fragmentLink = cat === 'usernames'
-        ? `https://fragment.com/username/${r.Name.replace('@', '')}`
+        ? `https://t.me/${r.Name.replace('@', '')}`
         : cat === 'numbers'
-            ? `https://fragment.com/number/${r.Name.replace(/[^0-9]/g, '')}`
-            : `https://fragment.com/nft/${r.NftAddress}`;
+            ? `https://t.me/+888${r.Name.replace(/[^0-9]/g, '')}`
+            : `https://t.me/nft/${collectionClean}-${numberClean}`;
 
     let visualContent;
     if (cat === 'usernames' || cat === 'numbers') {
@@ -158,33 +162,35 @@ window.openRentalModal = function(idx) {
     showModal('Детали аренды', `
         <div style="display:flex; flex-direction:column; align-items:center; margin-bottom:18px;">
             ${visualContent}
-            <h3 style="margin:10px 0 0; font-size:18px; color:var(--text); text-align:center;">${r.Name}</h3>
+            <h3 style="margin:10px 0 0; font-size:18px; color:var(--text); text-align:center; font-weight:600;">${r.Name}</h3>
+            ${r.CollectionName ? `<p style="margin:4px 0 0; font-size:12px; color:var(--rent-primary);">${r.CollectionName}</p>` : ''}
         </div>
         <div class="modal-info-row"><span class="modal-info-label">Статус</span><span class="modal-info-value">${statusText}</span></div>
         <div class="modal-info-row"><span class="modal-info-label">Действует до</span><span class="modal-info-value">${expStr}</span></div>
         <div style="display:flex; gap:10px; margin-top:18px;">
-            <a href="${fragmentLink}" target="_blank" class="action-btn outline-action-btn" style="flex:1; margin:0; padding:12px; font-size:14px; text-decoration:none; display:flex; justify-content:center; align-items:center;">🔗 Fragment</a>
+            <a href="${fragmentLink}" target="_blank" class="action-btn outline-action-btn" style="flex:1; margin:0; padding:12px; font-size:14px; text-decoration:none; display:flex; justify-content:center; align-items:center;">Предпросмотр</a>
             <button class="action-btn rent-action-btn" style="flex:1; margin:0; padding:12px; font-size:14px; opacity:${isExpired || r.IsPending ? 0.45 : 1}" onclick="${isExpired || r.IsPending ? '' : `openTonConnectModal('${r.NftAddress}')`}">
                 ${r.IsPending ? 'Выдаётся' : isExpired ? 'Истекла' : 'Установить'}
             </button>
         </div>
-        <button class="action-btn outline-action-btn" style="width:100%; margin: 10px 0 0; border: none; color: var(--rent-primary); background: rgba(52, 199, 89, 0.1);" onclick="showRentInstructions()">ℹ️ Инструкция по установке</button>
     `);
 };
 
 window.showRentInstructions = function() {
     showModal('Инструкция по установке', `
-        <div style="text-align:center; font-size:40px; margin-bottom:10px;">📖</div>
-        <ol style="color:var(--text-secondary); font-size:14px; line-height:1.6; padding-left: 20px; text-align: left;">
-            <li style="margin-bottom: 8px;">Нажмите кнопку <b>"Установить"</b>. Откроется кошелек TON Space / Tonkeeper для привязки.</li>
-            <li style="margin-bottom: 8px;">Перейдите в свой <b>Telegram-профиль</b>.</li>
-            <li style="margin-bottom: 8px;">Нажмите на свою <b>аватарку</b> (или раздел О себе -> Подарки).</li>
-            <li style="margin-bottom: 8px;">Выберите арендованный подарок и нажмите <b>"Отображать в профиле"</b>.</li>
-        </ol>
-        <div style="margin-top:20px; text-align:center;">
-            <a href="https://t.me/xram_news/12" target="_blank" style="color:var(--rent-primary); font-weight:600; text-decoration:none;">Посмотреть видео-инструкцию в канале ↗</a>
+        <div style="text-align:left; padding: 0 10px;">
+            <ol style="color:var(--text-secondary); font-size:14px; line-height:1.6; padding-left: 20px; margin: 0;">
+                <li style="margin-bottom: 8px;">Нажмите кнопку <b>"Установить"</b>. Откроется кошелек TON Space / Tonkeeper для привязки.</li>
+                <li style="margin-bottom: 8px;">Дождитесь подтверждения транзакции в кошельке.</li>
+                <li style="margin-bottom: 8px;">Перейдите в свой <b>Telegram-профиль</b>.</li>
+                <li style="margin-bottom: 8px;">Нажмите на свою <b>аватарку</b> (или раздел О себе -> Подарки).</li>
+                <li style="margin-bottom: 8px;">Выберите арендованный подарок и нажмите <b>"Отображать в профиле"</b>.</li>
+            </ol>
+            <div style="margin-top:24px; text-align:center;">
+                <a href="https://t.me/xram_news/12" target="_blank" style="display:inline-block; padding:8px 16px; background:rgba(52, 199, 89, 0.1); color:var(--rent-primary); border-radius:8px; font-weight:600; text-decoration:none;">Посмотреть видео ↗</a>
+            </div>
+            <button class="action-btn outline-action-btn" style="width:100%; margin-top:20px;" onclick="closeModal()">Понятно</button>
         </div>
-        <button class="action-btn outline-action-btn" style="width:100%; margin-top:20px;" onclick="closeModal()">Понятно</button>
     `);
 };
 

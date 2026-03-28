@@ -359,12 +359,28 @@ window.showGiveawayInfo = async function(id) {
         `;
 
         if (res.IsCreator && res.Participants && res.Participants.length > 0) {
-            html += `<div style="margin-top:15px; font-weight:600; font-size:14px; color:var(--text);">Участники:</div>`;
+            html += `<div style="margin-top:15px; font-weight:600; font-size:14px; color:var(--text); text-align:left;">Участники:</div>`;
             html += `<div style="max-height:150px; overflow-y:auto; margin-top:8px; background:var(--surface-3); padding:10px; border-radius:8px;">`;
             res.Participants.forEach(p => {
                 html += `<div style="font-size:13px; color:var(--text-secondary); margin-bottom:4px;">${p.Name} <span style="font-size:11px; opacity:0.7;">(${new Date(p.JoinedAt + 'Z').toLocaleString('ru-RU')})</span></div>`;
             });
             html += `</div>`;
+        }
+
+        if (isEnded && res.Winners && res.Winners.length > 0) {
+            html += `<div style="margin-top:15px; font-weight:600; font-size:14px; color:var(--text); text-align:left;">Победители:</div>`;
+            html += `<div style="max-height:150px; overflow-y:auto; margin-top:8px; background:var(--surface-3); padding:10px; border-radius:8px;">`;
+            res.Winners.forEach(w => {
+                 html += `<div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; color:var(--text); margin-bottom:6px; padding-bottom:6px; border-bottom:1px solid var(--border-light);">
+                              <span style="font-weight:600; color:var(--rent-primary);">${w.Name}</span>
+                              <span style="font-weight:bold;">${w.Prize}</span>
+                          </div>`;
+            });
+            html += `</div>`;
+        } else if (isEnded && res.Winners && res.Winners.length === 0) {
+            html += `<div style="margin-top:15px; padding:10px; border-radius:8px; background:rgba(255,59,48,0.1); color:#ff3b30; text-align:center; font-weight:600; font-size:13px;">
+                        Розыгрыш завершен без победителей (нет участников).
+                     </div>`;
         }
 
         if (res.IsCreator || res.InviteLink) {

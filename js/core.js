@@ -1193,6 +1193,9 @@ async function fetchServerData() {
         window.sysConfig.receivingWallet = config.ReceivingWalletAddress;
         
         window.sysConfig.gasFeeTon = config.BlockchainGasFeeTon || 0.06;
+        window.sysConfig.globalMarkupPercentage = config.GlobalMarkupPercentage || 20;
+        window.sysConfig.markupStarsPercentage = config.MarkupStarsPercentage || 20;
+        window.sysConfig.markupPremiumPercentage = config.MarkupPremiumPercentage || 20;
 
         RATES.USD.tonUsd = config.Rates.TonUsd;
         RATES.USD.starDeposit = config.Rates.StarDepositUsd; 

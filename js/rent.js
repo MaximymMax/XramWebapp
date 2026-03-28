@@ -598,11 +598,10 @@ window.apiRentGift = async function () {
 // ── TonConnect (установка NFT) ────────────────────────────────
 window.openTonConnectModal = function (nftAddress) {
     showModal('Установка NFT', `
-        <p style="color:var(--text-secondary);font-size:13px;margin-bottom:14px">
-            1. Откройте настройки Telegram → Ваш Профиль → Подарки.<br>
-            2. Выберите эту модель и нажмите «Выставить в профиль».<br>
-            3. Скопируйте ссылку Ton Connect (начинается с <b>tc://</b>) и вставьте её в поле ниже.
+        <p style="color:var(--text-secondary);font-size:13px;margin-bottom:14px;text-align:center;">
+            Вставьте ссылку Ton Connect (tc://) от арендованного подарка.
         </p>
+        <button class="action-btn outline-action-btn" onclick="showRentInstructions()" style="width:100%; margin-bottom:14px; font-size:13px; padding:10px;">ℹ️ Инструкция по установке</button>
         <input type="text" id="tcUriInput" class="form-input" placeholder="tc://..." style="margin-bottom: 14px">
         <button class="action-btn rent-action-btn" onclick="submitTonConnectUri('${nftAddress}')" style="width:100%; margin:0">Подключить</button>
     `);

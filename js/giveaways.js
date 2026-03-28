@@ -109,7 +109,10 @@ window.updateGwCreatePrice = function() {
     const winners = parseInt(document.getElementById('gwWinnersCount').value) || 1;
     let usdPricePerWinner = 0;
     
-    const markupPercentage = window.sysConfig?.globalMarkupPercentage || 20;
+    let markupPercentage = window.sysConfig?.globalMarkupPercentage || 20;
+    if (type === 'TelegramStars') markupPercentage = window.sysConfig?.markupStarsPercentage || markupPercentage;
+    else if (type === 'Premium') markupPercentage = window.sysConfig?.markupPremiumPercentage || markupPercentage;
+    
     const markupMult = 1 + (markupPercentage / 100);
     const gasFeeUsd = (window.sysConfig?.blockchainGasFeeTon || 0.06) * getTonUsdRate();
 

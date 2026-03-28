@@ -258,7 +258,13 @@ window.openGwPaymentModal = async function() {
     setLoading(btn, false);
 
     if (res && res.Success) {
-        tg.openTelegramLink(res.InviteLink);
+        if (typeof safeAlert === 'function') safeAlert("Розыгрыш успешно создан!");
+        else alert("Розыгрыш успешно создан!");
+        if (typeof window.fetchAllGiveaways === 'function') window.fetchAllGiveaways();
+        if (typeof window.switchGiveawayTab === 'function') {
+            const myBtn = document.getElementById('gwTabMyBtn');
+            if (myBtn) window.switchGiveawayTab('my', myBtn);
+        }
     } else {
         safeAlert(res?.Error || "Ошибка создания розыгрыша");
     }

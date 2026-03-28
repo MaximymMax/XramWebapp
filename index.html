@@ -652,8 +652,44 @@
                 <label class="form-label" data-i18n="gw_winners">Количество победителей</label>
                 <input type="number" id="gwWinnersCount" class="form-input" placeholder="1" value="1" min="1" oninput="updateGwCreatePrice()">
 
-                <label class="form-label" data-i18n="gw_duration">Дата и время завершения розыгрыша</label>
-                <input type="datetime-local" id="gwDatetimePicker" class="form-input" onchange="updateGwCreatePrice()">
+                <label class="form-label" data-i18n="gw_duration">Дата и время завершения (Ваше время)</label>
+                <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+                    <!-- Date Picker -->
+                    <div class="sort-dd-wrap" id="gwDateDropdown" style="flex: 2;">
+                        <div class="sort-dd-trigger" style="justify-content: space-between; padding: 12px 14px; border: 1px solid var(--border-strong); border-radius: 12px; background: var(--surface-2);" onclick="toggleSortDropdown(event)">
+                            <span class="sort-dd-label" id="gwDateLabel" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Загрузка...</span>
+                            <svg class="sort-dd-arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0"><polyline points="6 9 12 15 18 9" /></svg>
+                        </div>
+                        <div class="sort-dd-menu" id="gwDateMenu" style="width: 100%; max-height: 200px; overflow-y: auto;">
+                            <!-- populated by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Hour Picker -->
+                    <div class="sort-dd-wrap" id="gwHourDropdown" style="flex: 1;">
+                        <div class="sort-dd-trigger" style="justify-content: space-between; padding: 12px 14px; border: 1px solid var(--border-strong); border-radius: 12px; background: var(--surface-2);" onclick="toggleSortDropdown(event)">
+                            <span class="sort-dd-label" id="gwHourLabel" style="white-space:nowrap;">12</span>
+                            <svg class="sort-dd-arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0"><polyline points="6 9 12 15 18 9" /></svg>
+                        </div>
+                        <div class="sort-dd-menu" id="gwHourMenu" style="width: 100%; max-height: 200px; overflow-y: auto; min-width: 60px;">
+                            <!-- populated by JS -->
+                        </div>
+                    </div>
+
+                    <div style="display: flex; align-items: center; justify-content: center; font-weight: bold; color: var(--text-secondary); margin-top: -6px;">:</div>
+
+                    <!-- Minute Picker -->
+                    <div class="sort-dd-wrap" id="gwMinuteDropdown" style="flex: 1;">
+                        <div class="sort-dd-trigger" style="justify-content: space-between; padding: 12px 14px; border: 1px solid var(--border-strong); border-radius: 12px; background: var(--surface-2);" onclick="toggleSortDropdown(event)">
+                            <span class="sort-dd-label" id="gwMinuteLabel" style="white-space:nowrap;">00</span>
+                            <svg class="sort-dd-arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0"><polyline points="6 9 12 15 18 9" /></svg>
+                        </div>
+                        <div class="sort-dd-menu" id="gwMinuteMenu" style="width: 100%; max-height: 200px; overflow-y: auto; min-width: 60px;">
+                            <!-- populated by JS -->
+                        </div>
+                    </div>
+                </div>
+                <input type="hidden" id="gwDatetimePicker" value="">
 
                 <div class="payment-breakdown" style="margin-top: 18px; margin-bottom: 12px;">
                     <div class="breakdown-row"><span>Цена за победителя:</span> <span id="gwPerWinnerInfo">0.00 TON</span></div>

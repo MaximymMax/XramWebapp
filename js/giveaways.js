@@ -198,11 +198,12 @@ window.openGwPaymentModal = async function() {
     const datetimeInput = document.getElementById('gwDatetimePicker').value;
     if (!datetimeInput) return safeAlert("Пожалуйста, укажите дату и время окончания розыгрыша.");
     
-    const selectedTime = new Date(datetimeInput).getTime();
+    // Теперь datetimeInput хранит timestamp в миллисекундах от кастомных селекторов
+    const selectedTime = parseInt(datetimeInput);
     const now = new Date().getTime();
     const diffMinutes = Math.floor((selectedTime - now) / 60000);
 
-    if (diffMinutes < 60) return safeAlert("Минимальная длительность - 1 час (от текущего времени)");
+    if (diffMinutes < 60) return safeAlert("Минимальная длительность - 1 час (выберите время позже).");
 
     const channelInput = document.getElementById('gw-channel-input').value.trim();
     if (!channelInput) return safeAlert("Пожалуйста, укажите канал для проведения розыгрыша.");
@@ -396,22 +397,109 @@ window.cancelGiveaway = async function(id) {
     }
 }
 
+// Инициализация красивых кастомных дропдаунов даты/времени
+window.initGwDatetimePicker = function() {
+    const dateMenu = document.getElementById('gwDateMenu');
+    const hourMenu = document.getElementById('gwHourMenu');
+    const minMenu = document.getElementById('gwMinuteMenu');
+    if (!dateMenu || !hourMenu || !minMenu) return;
 
-// Инициализация пикера времени при загрузке скрипта
-(function initGwDatetimePicker() {
-    const picker = document.getElementById('gwDatetimePicker');
-    if (!picker) return;
-
-    // Устанавливаем минимальную дату + 1 час от текущего времени
-    const now = new Date();
-    now.setHours(now.getHours() + 1);
-    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-    const minStr = now.toISOString().slice(0, 16);
-    picker.min = minStr;
+    // По умолчанию ставим "Завтра" (через 24 часа)
+    let selectedDateOffset = 1; 
+    let selectedHour = new Date().getHours();
     
-    // По умолчанию предлагаем розыгрыш на 24 часа
-    const defaults = new Date();
-    defaults.setHours(defaults.getHours() + 24);
-    defaults.setMinutes(defaults.getMinutes() - defaults.getTimezoneOffset());
-    picker.value = defaults.toISOString().slice(0, 16);
-})();
+    // Округляем минуты до ближайших 5
+    let currentMin = new Date().getMinutes();
+    let selectedMin = Math.ceil(currentMin / 5) * 5;
+    if (selectedMin >= 60) {
+        selectedMin = 0;
+        selectedHour = (selectedHour + 1) % 24;
+    }
+
+    function updateHiddenInput() {
+        const d = new Date();
+        d.setDate(d.getDate() + selectedDateOffset);
+        d.setHours(selectedHour, selectedMin, 0, 0);
+        document.getElementById('gwDatetimePicker').value = d.getTime();
+    }
+
+    function renderDates() {
+        let html = '';
+        const months = ['Янв','Фев','Мар','Апр','Мая','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'];
+        const days = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+        for (let i = 0; i < 30; i++) {
+            const d = new Date();
+            d.setDate(d.getDate() + i);
+            let labelText = `${d.getDate()} ${months[d.getMonth()]}`;
+            if (i === 0) labelText = "Сегодня, " + labelText;
+            else if (i === 1) labelText = "Завтра, " + labelText;
+            else labelText = `${days[d.getDay()]}, ` + labelText;
+            
+            const isSelected = i === selectedDateOffset;
+            html += `<div class="sort-dd-item ${isSelected ? 'selected' : ''}" onclick="selectGwDate(${i}, '${labelText}', this)">
+                        <span class="sort-item-label">${labelText}</span>
+                     </div>`;
+            if (isSelected) document.getElementById('gwDateLabel').innerText = labelText;
+        }
+        dateMenu.innerHTML = html;
+    }
+
+    function renderHours() {
+        let html = '';
+        for (let i = 0; i < 24; i++) {
+            const hStr = i.toString().padStart(2, '0');
+            const isSelected = i === selectedHour;
+            html += `<div class="sort-dd-item ${isSelected ? 'selected' : ''}" onclick="selectGwHour(${i}, '${hStr}', this)">
+                        <span class="sort-item-label">${hStr}</span>
+                     </div>`;
+            if (isSelected) document.getElementById('gwHourLabel').innerText = hStr;
+        }
+        hourMenu.innerHTML = html;
+    }
+
+    function renderMinutes() {
+        let html = '';
+        for (let i = 0; i < 60; i += 5) {
+            const mStr = i.toString().padStart(2, '0');
+            const isSelected = i === selectedMin;
+            html += `<div class="sort-dd-item ${isSelected ? 'selected' : ''}" onclick="selectGwMinute(${i}, '${mStr}', this)">
+                        <span class="sort-item-label">${mStr}</span>
+                     </div>`;
+            if (isSelected) document.getElementById('gwMinuteLabel').innerText = mStr;
+        }
+        minMenu.innerHTML = html;
+    }
+
+    window.selectGwDate = function(offset, label, el) {
+        selectedDateOffset = offset;
+        document.getElementById('gwDateLabel').innerText = label;
+        updateSelectOptions('gwDateMenu', el);
+        updateHiddenInput();
+    };
+    window.selectGwHour = function(h, label, el) {
+        selectedHour = h;
+        document.getElementById('gwHourLabel').innerText = label;
+        updateSelectOptions('gwHourMenu', el);
+        updateHiddenInput();
+    };
+    window.selectGwMinute = function(m, label, el) {
+        selectedMin = m;
+        document.getElementById('gwMinuteLabel').innerText = label;
+        updateSelectOptions('gwMinuteMenu', el);
+        updateHiddenInput();
+    };
+
+    function updateSelectOptions(menuId, selectedEl) {
+        const menu = document.getElementById(menuId);
+        if(!menu) return;
+        menu.querySelectorAll('.sort-dd-item').forEach(item => item.classList.remove('selected'));
+        if (selectedEl) selectedEl.classList.add('selected');
+    }
+
+    renderDates();
+    renderHours();
+    renderMinutes();
+    updateHiddenInput();
+};
+
+window.initGwDatetimePicker();

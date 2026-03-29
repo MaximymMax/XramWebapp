@@ -466,18 +466,10 @@ window.switchProfileTab = function(tab, btn) {
     document.getElementById('profileHistory').style.display = 'none';
     document.getElementById('profileCheques').style.display = 'none';
     document.getElementById('profileRentals').style.display = 'none';
-    const refEl = document.getElementById('profileReferrals');
-    if (refEl) refEl.style.display = 'none';
-    const apiEl = document.getElementById('profileApi');
-    if (apiEl) apiEl.style.display = 'none';
 
     const panelId = 'profile' + tab.charAt(0).toUpperCase() + tab.slice(1);
     const activePanel = document.getElementById(panelId);
     if (activePanel) activePanel.style.display = 'block';
-
-    if (tab === 'api') {
-        window.loadApiKey();
-    }
 };
 
 window.loadApiKey = async function() {
@@ -487,38 +479,39 @@ window.loadApiKey = async function() {
     try {
         const data = await apiCall(`/users/${userId}/apikey`);
         if (data && data.ApiKey) {
-            document.getElementById('apiKeyInput').textContent = data.ApiKey;
-        } else {
-            document.getElementById('apiKeyInput').textContent = 'Ошибка загрузки';
+            const homeEl = document.getElementById('homeApiKeyInput');
+            if (homeEl) homeEl.textContent = data.ApiKey;
         }
-    } catch(e) {
-        document.getElementById('apiKeyInput').textContent = 'Ошибка';
-    }
+    } catch(e) {}
 };
 
-window.resetApiKey = async function() {
+window.homeResetApiKey = async function() {
     const userId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id || window.telegramId;
     if (!userId) return;
 
-    safeConfirm('Вы уверены, что хотите сбросить API-ключ? Старый ключ перестанет работать.', async (confirmed) => {
+    safeConfirm(t('api_reset_confirm'), async (confirmed) => {
         if (!confirmed) return;
-        
-        document.getElementById('apiKeyInput').textContent = 'Сброс...';
-        
+
+        const homeEl = document.getElementById('homeApiKeyInput');
+        if (homeEl) homeEl.textContent = t('loading');
+
         try {
             const data = await apiCall(`/users/${userId}/apikey/reset`, {}, 'POST');
             if (data && data.Success && data.ApiKey) {
-                document.getElementById('apiKeyInput').textContent = data.ApiKey;
-                safeAlert('API-ключ успешно сброшен!');
+                if (homeEl) homeEl.textContent = data.ApiKey;
+                safeAlert(t('api_reset_ok'));
             } else {
-                safeAlert('Ошибка сброса: ' + (data?.Error || 'Неизвестная ошибка'));
+                safeAlert(t('api_reset_err') + ': ' + (data?.Error || ''));
                 window.loadApiKey();
             }
         } catch(e) {
-            safeAlert('Ошибка выполнения запроса');
+            safeAlert(t('api_reset_err'));
             window.loadApiKey();
         }
     });
 };
+
+// Legacy function for profile tab (kept for compatibility)
+window.resetApiKey = window.homeResetApiKey;
 
 if (document.getElementById('historyList')) loadProfile();

@@ -1252,6 +1252,17 @@ async function init() {
             if (refCountLabel) refCountLabel.textContent = `${window.selfStatus.ReferralCount || 0} чел.`;
             if (refEarningsLabel) refEarningsLabel.textContent = `$${(window.selfStatus.ReferralEarningsUsd || 0).toFixed(2)}`;
 
+            // Заполняем блок рефералов на главной странице
+            const homeRefLink = document.getElementById('homeRefLink');
+            const homeRefCount = document.getElementById('homeRefCount');
+            const homeRefEarned = document.getElementById('homeRefEarned');
+            if (homeRefLink) homeRefLink.textContent = window.selfStatus.ReferralLink || `https://t.me/XramMagazinBot?start=ref_${telegramId}`;
+            if (homeRefCount) homeRefCount.textContent = `${window.selfStatus.ReferralCount || 0}`;
+            if (homeRefEarned) homeRefEarned.textContent = `$${(window.selfStatus.ReferralEarningsUsd || 0).toFixed(2)}`;
+
+            // Загружаем API-ключ на главной
+            if (typeof window.loadApiKey === 'function') window.loadApiKey();
+
             ['premium', 'stars'].forEach(prod => {
                 const isAvail = prod === 'premium' ? window.selfStatus.PremiumAvailable : window.selfStatus.StarsAvailable;
                 if (!isAvail) {

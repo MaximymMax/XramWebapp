@@ -4,7 +4,7 @@
 
 async function loadProfile() {
     const list = document.getElementById('historyList');
-    if (list) list.innerHTML = '<div class="profile-empty"><p>Загрузка...</p></div>';
+    if (list) list.innerHTML = '<div class="profile-empty"><p data-i18n="loading">Загрузка...</p></div>';
 
     const data = await apiCall('/webapp/user/history');
     if (data && data.Success) {
@@ -73,7 +73,7 @@ function renderServerRentals(rentals) {
     // ----------------------------------------------------------------------------------------
 
     if (!rentals.length) {
-        list.innerHTML = `<div class="profile-empty"><p>Нет активной аренды</p></div>`;
+        list.innerHTML = `<div class="profile-empty"><p data-i18n="empty_no_rentals">Нет активной аренды</p></div>`;
         return;
     }
 
@@ -198,7 +198,7 @@ window.showRentInstructions = function() {
 function renderServerCheques(cheques) {
     const list = document.getElementById('chequesList');
     if (!list) return;
-    if (!cheques.length) { list.innerHTML = `<div class="profile-empty"><p>Нет активных чеков</p></div>`; return; }
+    if (!cheques.length) { list.innerHTML = `<div class="profile-empty"><p data-i18n="empty_no_cheques">Нет активных чеков</p></div>`; return; }
 
     list.innerHTML = cheques.map(c => {
         let endsAtStr = c.ChequeExpiresAt;
@@ -229,7 +229,7 @@ function renderServerCheques(cheques) {
 function renderServerHistory(history) {
     const list = document.getElementById('historyList');
     if (!list) return;
-    if (!history.length) { list.innerHTML = `<div class="profile-empty"><p>История пуста</p></div>`; return; }
+    if (!history.length) { list.innerHTML = `<div class="profile-empty"><p data-i18n="empty_history">История пуста</p></div>`; return; }
 
     window.currentHistory = history;
 
@@ -468,10 +468,57 @@ window.switchProfileTab = function(tab, btn) {
     document.getElementById('profileRentals').style.display = 'none';
     const refEl = document.getElementById('profileReferrals');
     if (refEl) refEl.style.display = 'none';
+    const apiEl = document.getElementById('profileApi');
+    if (apiEl) apiEl.style.display = 'none';
 
     const panelId = 'profile' + tab.charAt(0).toUpperCase() + tab.slice(1);
     const activePanel = document.getElementById(panelId);
     if (activePanel) activePanel.style.display = 'block';
+
+    if (tab === 'api') {
+        window.loadApiKey();
+    }
+};
+
+window.loadApiKey = async function() {
+    const userId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id || window.telegramId;
+    if (!userId) return;
+
+    try {
+        const data = await apiCall(`/users/${userId}/apikey`);
+        if (data && data.ApiKey) {
+            document.getElementById('apiKeyInput').textContent = data.ApiKey;
+        } else {
+            document.getElementById('apiKeyInput').textContent = 'Ошибка загрузки';
+        }
+    } catch(e) {
+        document.getElementById('apiKeyInput').textContent = 'Ошибка';
+    }
+};
+
+window.resetApiKey = async function() {
+    const userId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id || window.telegramId;
+    if (!userId) return;
+
+    safeConfirm('Вы уверены, что хотите сбросить API-ключ? Старый ключ перестанет работать.', async (confirmed) => {
+        if (!confirmed) return;
+        
+        document.getElementById('apiKeyInput').textContent = 'Сброс...';
+        
+        try {
+            const data = await apiCall(`/users/${userId}/apikey/reset`, {}, 'POST');
+            if (data && data.Success && data.ApiKey) {
+                document.getElementById('apiKeyInput').textContent = data.ApiKey;
+                safeAlert('API-ключ успешно сброшен!');
+            } else {
+                safeAlert('Ошибка сброса: ' + (data?.Error || 'Неизвестная ошибка'));
+                window.loadApiKey();
+            }
+        } catch(e) {
+            safeAlert('Ошибка выполнения запроса');
+            window.loadApiKey();
+        }
+    });
 };
 
 if (document.getElementById('historyList')) loadProfile();

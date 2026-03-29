@@ -66,12 +66,15 @@ const translations = {
         // Profile
         tab_my_cheques: 'Мои чеки',
         tab_history: 'История',
-        tab_my_rentals: 'Моя аренда',
+        loading: 'Загрузка...',
         empty_no_cheques: 'Нет активных чеков',
         empty_cheques_hint: 'Создайте чек при покупке Stars или Premium',
         empty_history: 'История пуста',
         empty_history_hint: 'Здесь будут отображаться ваши покупки',
         empty_no_rentals: 'Нет активной аренды',
+        empty_gw_my: 'У вас нет созданных розыгрышей',
+        empty_gw_all: 'Нет активных розыгрышей',
+        empty_gw_part: 'Вы не участвуете в активных розыгрышах',
 
         // Modal / Payment
         modal_order: 'Оформление заказа',
@@ -160,6 +163,22 @@ const translations = {
         gw_btn_pay: 'Оплатить и запустить',
         gw_topup: 'Пополнить баланс',
         gw_min_duration_err: 'Минимальная длительность - 1 день (24ч)',
+
+        // Referrals
+        tab_referrals: 'Рефералы',
+        ref_title: 'Реферальная программа',
+        ref_desc: 'Приглашайте друзей по вашей ссылке и получайте <b>10% от чистой прибыли</b> сервиса с каждой их покупки! Деньги моментально зачисляются на ваш TON-баланс.',
+        ref_invited: 'Приглашено:',
+        ref_earned: 'Заработано (10%):',
+        ref_link_label: 'Ваша ссылка для приглашения',
+        
+        // API
+        tab_api: 'API',
+        api_title: 'API для разработчиков',
+        api_desc: 'Используйте API-ключ для интеграции с вашими сервисами. Храните ключ в секрете.',
+        api_key_label: 'Ваш API-ключ',
+        api_reset_btn: 'Сбросить ключ',
+        api_docs_title: 'Документация',
     },
     en: {
         // Navigation
@@ -228,12 +247,15 @@ const translations = {
         // Profile
         tab_my_cheques: 'My Cheques',
         tab_history: 'History',
-        tab_my_rentals: 'My Rentals',
+        loading: 'Loading...',
         empty_no_cheques: 'No active cheques',
-        empty_cheques_hint: 'Create a cheque when purchasing Stars or Premium',
+        empty_cheques_hint: 'Create a cheque when buying Stars or Premium',
         empty_history: 'History is empty',
-        empty_history_hint: 'Your purchases will appear here',
+        empty_history_hint: 'Your purchases will be displayed here',
         empty_no_rentals: 'No active rentals',
+        empty_gw_my: 'You have not created any giveaways',
+        empty_gw_all: 'No active giveaways',
+        empty_gw_part: 'You are not participating in any active giveaways',
 
         // Modal / Payment
         modal_order: 'Place Order',
@@ -322,6 +344,22 @@ const translations = {
         gw_btn_pay: 'Pay and start',
         gw_topup: 'Top up balance',
         gw_min_duration_err: 'Minimum duration is 1 day (24h)',
+
+        // Referrals
+        tab_referrals: 'Referrals',
+        ref_title: 'Referral Program',
+        ref_desc: 'Invite friends using your link and get <b>10% of net profit</b> from each of their purchases! Money is instantly credited to your TON balance.',
+        ref_invited: 'Invited:',
+        ref_earned: 'Earned (10%):',
+        ref_link_label: 'Your referral link',
+        
+        // API
+        tab_api: 'API',
+        api_title: 'Developer API',
+        api_desc: 'Use the API key to integrate with your services. Keep the key secret.',
+        api_key_label: 'Your API key',
+        api_reset_btn: 'Reset key',
+        api_docs_title: 'Documentation',
     }
 };
 
@@ -363,18 +401,21 @@ window.switchLang = function (lang) {
             if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
                 el.placeholder = translations[lang][key];
             } else {
-                // Find and replace text node without breaking HTML tags inside
-                let foundTextNode = false;
-                for (let i = 0; i < el.childNodes.length; i++) {
-                    const child = el.childNodes[i];
-                    if (child.nodeType === Node.TEXT_NODE && child.textContent.trim() !== '') {
-                        child.textContent = translations[lang][key];
-                        foundTextNode = true;
-                        break;
+                if (translations[lang][key].includes('<')) {
+                    el.innerHTML = translations[lang][key];
+                } else {
+                    let foundTextNode = false;
+                    for (let i = 0; i < el.childNodes.length; i++) {
+                        const child = el.childNodes[i];
+                        if (child.nodeType === Node.TEXT_NODE && child.textContent.trim() !== '') {
+                            child.textContent = translations[lang][key];
+                            foundTextNode = true;
+                            break;
+                        }
                     }
-                }
-                if (!foundTextNode) {
-                    el.textContent = translations[lang][key];
+                    if (!foundTextNode) {
+                        el.textContent = translations[lang][key];
+                    }
                 }
             }
         }
@@ -393,13 +434,54 @@ window.switchLang = function (lang) {
 try {
     const savedLang = localStorage.getItem('xram_lang');
     const tgLang = window.Telegram?.WebApp?.initDataUnsafe?.user?.language_code;
-    if (savedLang && translations[savedLang]) {
-        window.currentLang = savedLang;
-    } else if (tgLang && translations[tgLang]) {
-        window.currentLang = tgLang;
-    }
+    const finalLang = savedLang || (tgLang === 'ru' ? 'ru' : 'en');
+    
+    // Call switchLang directly instead of placing in DOMContentLoaded
+    // so it executes immediately on script load
+    switchLang(finalLang);
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        switchLang(finalLang);
+    });
 } catch (e) { }
 
-document.addEventListener('DOMContentLoaded', () => {
-    switchLang(window.currentLang);
+// Automatically translate dynamically added elements
+const observer = new MutationObserver((mutations) => {
+    let shouldTranslate = false;
+    for (const mutation of mutations) {
+        if (mutation.addedNodes.length > 0) {
+            shouldTranslate = true;
+            break;
+        }
+    }
+    if (shouldTranslate && window.currentLang) {
+        const lang = window.currentLang;
+        document.querySelectorAll('[data-i18n]:not([data-i18n-applied])').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            if (translations[lang] && translations[lang][key]) {
+                if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+                    el.placeholder = translations[lang][key];
+                } else {
+                    if (translations[lang][key].includes('<')) {
+                        el.innerHTML = translations[lang][key];
+                    } else {
+                        let foundTextNode = false;
+                        for (let i = 0; i < el.childNodes.length; i++) {
+                            const child = el.childNodes[i];
+                            if (child.nodeType === Node.TEXT_NODE && child.textContent.trim() !== '') {
+                                child.textContent = translations[lang][key];
+                                foundTextNode = true;
+                                break;
+                            }
+                        }
+                        if (!foundTextNode) {
+                            el.textContent = translations[lang][key];
+                        }
+                    }
+                }
+                el.setAttribute('data-i18n-applied', lang);
+            }
+        });
+    }
 });
+observer.observe(document.body, { childList: true, subtree: true });

@@ -795,32 +795,60 @@
             <button class="ptab active" onclick="switchProfileTab('cheques', this)" data-i18n="tab_my_cheques">Мои чеки</button>
             <button class="ptab" onclick="switchProfileTab('history', this)" data-i18n="tab_history">История</button>
             <button class="ptab" onclick="switchProfileTab('rentals', this)" data-i18n="tab_my_rentals">Моя аренда</button>
-            <button class="ptab" onclick="switchProfileTab('referrals', this)">Рефералы</button>
+            <button class="ptab" onclick="switchProfileTab('referrals', this)" data-i18n="tab_referrals">Рефералы</button>
+            <button class="ptab" onclick="switchProfileTab('api', this)" data-i18n="tab_api">API</button>
         </div>
 
         <div id="profileReferrals" class="profile-panel" style="display:none">
             <div class="form-card" style="margin-bottom: 16px;">
-                <h3 style="margin-top:0; margin-bottom:12px; font-size: 16px; font-weight: 700;">Реферальная программа</h3>
+                <h3 style="margin-top:0; margin-bottom:12px; font-size: 16px; font-weight: 700;" data-i18n="ref_title">Реферальная программа</h3>
                 
-                <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 16px;">
+                <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 16px;" data-i18n="ref_desc">
                     Приглашайте друзей по вашей ссылке и получайте <b>10% от чистой прибыли</b> сервиса с каждой их покупки! Деньги моментально зачисляются на ваш TON-баланс.
                 </p>
                 
                 <div style="background: var(--surface-2); border-radius: 12px; padding: 12px; margin-bottom: 16px;">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                        <span style="color: var(--text-secondary); font-size: 14px;">Приглашено:</span>
+                        <span style="color: var(--text-secondary); font-size: 14px;" data-i18n="ref_invited">Приглашено:</span>
                         <span style="font-weight: 700; color: var(--text);" id="refCountLabel">0 чел.</span>
                     </div>
                     <div style="display: flex; justify-content: space-between;">
-                        <span style="color: var(--text-secondary); font-size: 14px;">Заработано (10%):</span>
+                        <span style="color: var(--text-secondary); font-size: 14px;" data-i18n="ref_earned">Заработано (10%):</span>
                         <span style="font-weight: 700; color: #2ecc71;" id="refEarningsLabel">$0.00</span>
                     </div>
                 </div>
 
-                <label class="form-label" style="margin-top: 4px;">Ваша ссылка для приглашения</label>
+                <label class="form-label" style="margin-top: 4px;" data-i18n="ref_link_label">Ваша ссылка для приглашения</label>
                 <div class="cheque-link-wrap">
-                    <div class="cheque-link-input" style="font-size: 12px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;" id="refLinkInput">Загрузка...</div>
-                    <button class="cheque-copy-btn" onclick="navigator.clipboard.writeText(document.getElementById('refLinkInput').textContent); typeof safeAlert === 'function' ? safeAlert('Ссылка скопирована!') : alert('Скопировано');">Копировать</button>
+                    <div class="cheque-link-input" style="font-size: 12px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;" id="refLinkInput" data-i18n="loading">Загрузка...</div>
+                    <button class="cheque-copy-btn" onclick="navigator.clipboard.writeText(document.getElementById('refLinkInput').textContent); typeof safeAlert === 'function' ? safeAlert(t('crypto_code_copied')) : alert('Скопировано');" data-i18n="cheque_copy">Копировать</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="profileApi" class="profile-panel" style="display:none">
+            <div class="form-card" style="margin-bottom: 16px;">
+                <h3 style="margin-top:0; margin-bottom:12px; font-size: 16px; font-weight: 700;" data-i18n="api_title">API для разработчиков</h3>
+                
+                <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 16px;" data-i18n="api_desc">
+                    Используйте API-ключ для интеграции с вашими сервисами. Храните ключ в секрете.
+                </p>
+                
+                <label class="form-label" style="margin-top: 4px;" data-i18n="api_key_label">Ваш API-ключ</label>
+                <div class="cheque-link-wrap" style="margin-bottom: 16px;">
+                    <div class="cheque-link-input" style="font-size: 12px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; user-select: all;" id="apiKeyInput" data-i18n="loading">Загрузка...</div>
+                    <button class="cheque-copy-btn" onclick="navigator.clipboard.writeText(document.getElementById('apiKeyInput').textContent); typeof safeAlert === 'function' ? safeAlert(t('crypto_code_copied')) : alert('Скопировано');" data-i18n="cheque_copy">Копировать</button>
+                </div>
+
+                <button class="action-btn outline-action-btn" onclick="resetApiKey()" style="width: 100%; margin: 0 0 16px;" data-i18n="api_reset_btn">
+                    Сбросить ключ
+                </button>
+
+                <h4 style="margin-top:0; margin-bottom:8px; font-size: 14px; font-weight: 600;" data-i18n="api_docs_title">Документация</h4>
+                <div style="background: var(--surface-2); border-radius: 8px; padding: 10px; font-size: 12px; color: var(--text-secondary); line-height: 1.6; user-select: text;">
+                    <b>GET</b> /api/users/{telegramId}/transactions<br>
+                    <b>GET</b> /api/users/{telegramId}/apikey<br>
+                    <b>POST</b> /api/users/{telegramId}/apikey/reset
                 </div>
             </div>
         </div>

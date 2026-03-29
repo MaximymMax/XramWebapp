@@ -276,7 +276,7 @@ window.openGwPaymentModal = async function() {
 
 async function loadGiveawaysList(tab, showLoad = true) {
     const list = document.getElementById(tab === 'my' ? 'gwMyList' : tab === 'all' ? 'gwAllList' : 'gwParticipatingList');
-    if (showLoad) list.innerHTML = '<div class="profile-empty"><p>Загрузка...</p></div>';
+    if (showLoad) list.innerHTML = '<div class="profile-empty"><p data-i18n="loading">Загрузка...</p></div>';
 
     const res = await apiCall('/webapp/giveaways/list');
     if (res && res.Success) {
@@ -294,8 +294,9 @@ async function loadGiveawaysList(tab, showLoad = true) {
         }
 
         if (!items || items.length === 0) {
+            let emptyKey = tab === 'my' ? 'empty_gw_my' : tab === 'all' ? 'empty_gw_all' : 'empty_gw_part';
             let emptyMsg = tab === 'my' ? 'У вас нет созданных розыгрышей' : tab === 'all' ? 'Нет активных розыгрышей' : 'Вы не участвуете в активных розыгрышах';
-            list.innerHTML = `<div class="profile-empty"><p>${emptyMsg}</p></div>`;
+            list.innerHTML = `<div class="profile-empty"><p data-i18n="${emptyKey}">${emptyMsg}</p></div>`;
             return;
         }
 

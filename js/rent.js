@@ -105,8 +105,8 @@ async function switchRentCategory(category, btn) {
 
         const res = await apiCall('/webapp/rent/collections', { category });
         if (res && res.Success && res.Collections.length > 0) {
-            let html = `<div class="dd-item" onclick="onCollectionSelected('', 'Все коллекции', 0, '')">
-                            <span class="dd-item-name">Все коллекции</span>
+            let html = `<div class="dd-item" onclick="onCollectionSelected('', '${t('rent_all_collections')}', 0, '')">
+                            <span class="dd-item-name">${t('rent_all_collections')}</span>
                         </div>`;
             res.Collections.forEach(c => {
                 const colId = getCollectionIdByName(c.Name);
@@ -137,7 +137,8 @@ window.onCollectionSelected = async function (address, name, rentFloor, imgSrc) 
     // Если выбрали "Лучшие предложения" НЕ через кнопку, а программно - не синхронизируем UI кнопки. 
     // Но для безопасности закроем dropdown
     document.getElementById('collectionDropdown').classList.remove('open');
-    document.getElementById('colTriggerName').textContent = name;
+    const displayTitle = (address === 'best_deals') ? t('rent_best_deals') : name;
+    document.getElementById('colTriggerName').textContent = displayTitle;
 
     const priceEl = document.getElementById('colTriggerPrice');
     if (rentFloor > 0) { priceEl.textContent = `от ${formatTonPrice(rentFloor)}/дн`; priceEl.style.display = 'block'; }
@@ -161,8 +162,8 @@ window.onCollectionSelected = async function (address, name, rentFloor, imgSrc) 
 
         const modelsRes = await apiCall('/webapp/rent/models', { collectionAddress: address });
 
-        let mHtml = `<div class="dd-item" onclick="onModelSelected('', 'Все модели', 0, '')">
-                        <span class="dd-item-name">Все модели</span>
+        let mHtml = `<div class="dd-item" onclick="onModelSelected('', '${t('rent_all_models')}', 0, '')">
+                        <span class="dd-item-name">${t('rent_all_models')}</span>
                      </div>`;
         if (modelsRes && modelsRes.Success && modelsRes.Models) {
             const baseName = getBaseCollectionName(name);
@@ -195,16 +196,16 @@ window.toggleBestDeals = function () {
     const btn = document.getElementById('bestDealsBtn');
     if (state.currentCollection !== 'best_deals') {
         document.getElementById('rentCollectionWrap').style.display = 'none';
-        btn.innerHTML = '← Назад к обычным предложениям';
+        btn.innerHTML = t('rent_back_to_regular');
         btn.style.background = 'linear-gradient(135deg, #ff9800, #ff5722)';
         btn.style.color = '#fff';
-        onCollectionSelected('best_deals', 'Лучшие предложения', 0, '');
+        onCollectionSelected('best_deals', t('rent_best_deals'), 0, '');
     } else {
         document.getElementById('rentCollectionWrap').style.display = 'block';
-        btn.innerHTML = '🔥 Смотреть лучшие предложения';
+        btn.innerHTML = t('rent_show_best_deals');
         btn.style.background = 'rgba(255, 152, 0, 0.08)';
         btn.style.color = '#ff9800';
-        onCollectionSelected('', 'Все коллекции', 0, '');
+        onCollectionSelected('', t('rent_all_collections'), 0, '');
     }
 };
 
@@ -285,11 +286,11 @@ async function loadRentOffers(category, collectionAddress, model, reset = true) 
     if (reset) {
         state.nextCursor = null;
         window.currentRentOffers = [];
-        document.getElementById('rentCardsContainer').innerHTML = '<div class="rent-cards-empty">⏳ Загрузка...</div>';
+        document.getElementById('rentCardsContainer').innerHTML = `<div class="rent-cards-empty">${t('rent_loading')}</div>`;
         if (btn) btn.style.display = 'none';
         if (_rentImgObserver) _rentImgObserver.disconnect();
     } else {
-        if (btn) { btn.textContent = 'Загружаем...'; btn.disabled = true; }
+        if (btn) { btn.textContent = t('rent_loading_more'); btn.disabled = true; }
     }
 
     const sortBy = document.getElementById('rentSort')?.value || 'recently_touch';
@@ -361,10 +362,10 @@ async function loadRentOffers(category, collectionAddress, model, reset = true) 
         } else if (reset) {
             const countEl = document.getElementById('rentCardsCount');
             if (countEl) countEl.textContent = '(0)';
-            document.getElementById('rentCardsContainer').innerHTML = '<div class="rent-cards-empty">Нет предложений</div>';
+            document.getElementById('rentCardsContainer').innerHTML = `<div class="rent-cards-empty">${t('rent_empty')}</div>`;
         }
     } else if (reset) {
-        document.getElementById('rentCardsContainer').innerHTML = '<div class="rent-cards-empty">Ошибка загрузки</div>';
+        document.getElementById('rentCardsContainer').innerHTML = `<div class="rent-cards-empty">${t('rent_error')}</div>`;
     }
 }
 
@@ -413,41 +414,41 @@ window.openRentModal = function (address) {
     <div class="modal-balance-top" style="margin-top:10px;">
         <div class="mbt-left">
             <svg viewBox="0 0 56 56" fill="none" width="22" height="22"><path d="M28 4L4 18V38L28 52L52 38V18L28 4Z" fill="#0098EA"/><path d="M28 4L4 18L28 32L52 18L28 4Z" fill="#5BC3F5"/><path d="M28 32V52L52 38V18L28 32Z" fill="#A8DBF7"/><path d="M4 18V38L28 52V32L4 18Z" fill="#A8DBF7"/></svg>
-            <span style="font-size: 13.5px; font-weight: 600; color: var(--text-secondary);">Ваш баланс:</span>
+            <span style="font-size: 13.5px; font-weight: 600; color: var(--text-secondary);">${t('modal_balance')}</span>
         </div>
         <span style="font-size: 16px; font-weight: 800; color: var(--text);">${balNum.toFixed(2)} TON</span>
     </div>`;
 
     const gasFeeTon = window.sysConfig?.blockchainGasFeeTon || 0.06;
 
-    showModal('Аренда NFT', `
+    showModal(t('rent_modal_title'), `
         ${balIndicatorHtml}
         <div style="display:flex; gap:14px; margin-bottom:16px; align-items:center; margin-top:10px" class="page-rent-theme">
             ${imgHtml}
             <div style="min-width:0; flex:1">
                 <div style="font-weight:800; font-size:16px; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis">${offer.Name}</div>
-                <a href="${offer.TelegramUrl}" target="_blank" style="color:var(--rent-primary); font-size:12px; font-weight:600; text-decoration:none;">🔗 Открыть в Telegram</a>
+                <a href="${offer.TelegramUrl}" target="_blank" style="color:var(--rent-primary); font-size:12px; font-weight:600; text-decoration:none;">${t('rent_open_in_telegram')}</a>
             </div>
         </div>
 
-        <label class="form-label">Срок аренды (от ${offer.MinDays} до ${offer.MaxDays} дней)</label>
+        <label class="form-label">${t('rent_label_duration', { min: offer.MinDays, max: offer.MaxDays })}</label>
         <input type="number" id="modalRentDays" class="form-input" value="${state.rentDays}" min="${offer.MinDays}" max="${offer.MaxDays}" oninput="updateRentModalPrice()">
         <div id="modalRentError" class="rent-error-msg"></div>
 
         <div id="paymentBreakdown" class="payment-breakdown" style="margin-top: 14px; margin-bottom: 16px;">
-            <div class="breakdown-row"><span>Аренда:</span> <span id="bdProductPrice">0 TON</span></div>
-            <div class="breakdown-row" id="bdGasRow"><span>Комиссия сети (Gas):</span> <span id="bdGasFee">~${gasFeeTon} TON</span></div>
+            <div class="breakdown-row"><span>${t('rent_price')}</span> <span id="bdProductPrice">0 TON</span></div>
+            <div class="breakdown-row" id="bdGasRow"><span>${t('rent_gas_fee')}</span> <span id="bdGasFee">~${gasFeeTon} TON</span></div>
             <div class="breakdown-divider"></div>
-            <div class="breakdown-row total"><span>Итого:</span> <span id="bdTotal">0 TON</span></div>
+            <div class="breakdown-row total"><span>${t('rent_total')}</span> <span id="bdTotal">0 TON</span></div>
         </div>
 
-        <label class="form-label">Способ оплаты</label>
+        <label class="form-label">${t('rent_label_pay_method')}</label>
         <div class="payment-methods page-rent-theme" style="display:flex; gap:8px; margin-bottom:8px;">
             <div class="pay-method ${balClass}" style="flex:1; padding: 14px 10px; font-size: 13.5px; display:flex; flex-direction:column; gap:2px; ${balStyle}" data-method="InternalWallet" data-currency="TON" onclick="selectPayMethod('rent', this)">
-                <span>Оплатить со счета</span>
+                <span>${t('rent_pay_internal')}</span>
             </div>
             <div class="pay-method" style="flexShrink:0; width:110px; display:flex; align-items:center; justify-content:center; gap:6px; background:var(--wallet-dim); border-color:var(--wallet-primary); color:var(--wallet-primary); padding:13px 10px; font-size:12.5px;" onclick="closeModal(); switchTab('wallet');">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Пополнить
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> ${t('modal_pay_topup')}
             </div>
         </div>
         <div class="payment-methods page-rent-theme">
@@ -470,7 +471,7 @@ window.updateRentModalPrice = function () {
     state.rentDays = days;
 
     if (days < state.rentMinDays || days > state.rentMaxDays) {
-        errorMsg.textContent = `Укажите от ${state.rentMinDays} до ${state.rentMaxDays} дней`;
+        errorMsg.textContent = t('rent_error_duration', { min: state.rentMinDays, max: state.rentMaxDays });
         errorMsg.style.display = 'block'; btn.disabled = true; btn.style.opacity = '0.5';
     } else {
         errorMsg.style.display = 'none'; btn.disabled = false; btn.style.opacity = '1';
@@ -579,14 +580,14 @@ window.apiRentGift = async function () {
     if (pm === 'InternalWallet') {
         if (result && result.Success) {
             window.pendingRental = fakePendingRental;
-            showTxResult(true, "Аренда оформлена!", `Вы успешно арендовали NFT на ${days} дн.`, `<div style="text-align:center">Нажмите «Закрыть», чтобы перейти к установке NFT.</div>`, () => {
+            showTxResult(true, t('rent_success_title'), t('rent_success_msg_ton', { days }), `<div style="text-align:center">${t('rent_success_hint')}</div>`, () => {
                 switchTab('profile');
                 fetchServerData();
                 loadProfile();
                 setTimeout(() => switchProfileTab('rentals', document.querySelectorAll('#page-profile .ptab')[2]), 50);
             });
         } else {
-            showTxResult(false, "Сбой аренды", result?.Error || "Ошибка списания средств", "");
+            showTxResult(false, t('rent_error'), result?.Error || "Error processing request", "");
         }
     } else {
         setLoading(btn, false);
@@ -597,13 +598,12 @@ window.apiRentGift = async function () {
 
 // ── TonConnect (установка NFT) ────────────────────────────────
 window.openTonConnectModal = function (nftAddress) {
-    showModal('Установка NFT', `
-        <p style="color:var(--text-secondary);font-size:13px;margin-bottom:14px;text-align:center;">
-            Вставьте ссылку Ton Connect (tc://) от арендованного подарка.
-        </p>
-        <button class="action-btn outline-action-btn" onclick="showRentInstructions()" style="width:100%; margin-bottom:14px; font-size:13px; padding:10px;">ℹ️ Инструкция по установке</button>
-        <input type="text" id="tcUriInput" class="form-input" placeholder="tc://..." style="margin-bottom: 14px">
-        <button class="action-btn rent-action-btn" onclick="submitTonConnectUri('${nftAddress}')" style="width:100%; margin:0">Подключить</button>
+    showModal(t('rent_install_title'), `
+        <div style="display:flex; gap:8px; margin-bottom:14px;">
+            <input type="text" id="tcUriInput" class="form-input" placeholder="${t('rent_install_placeholder')}" style="margin-bottom:0; flex:1">
+            <button class="action-btn outline-action-btn" onclick="window.open('https://t.me/xram_news/12', '_blank')" style="width:auto; margin:0; padding:10px 14px; font-size:13px; font-weight:600; flex-shrink:0;">${t('rent_instruction_btn')}</button>
+        </div>
+        <button class="action-btn rent-action-btn" onclick="submitTonConnectUri('${nftAddress}')" style="width:100%; margin:0">${t('rent_install_btn')}</button>
     `);
 };
 
@@ -628,7 +628,7 @@ window.submitTonConnectUri = async function (nftAddress) {
 
         if (res && res.Success) {
             closeModal();
-            showModal('\u0423\u0441\u043f\u0435\u0448\u043d\u043e!', '<p style="color:var(--rent-primary); text-align:center; font-size:15px; padding:10px 0;">\u041a\u043e\u0448\u0435\u043b\u0451\u043a \u043f\u043e\u0434\u043a\u043b\u044e\u0447\u0451\u043d. NFT \u0441\u043a\u043e\u0440\u043e \u043e\u0431\u043d\u043e\u0432\u0438\u0442 \u0441\u0442\u0430\u0442\u0443\u0441 \u0432 \u043f\u0440\u043e\u0444\u0438\u043b\u0435.</p><button class="action-btn rent-action-btn" onclick="closeModal()" style="width:100%;margin:0">\u041e\u0442\u043b\u0438\u0447\u043d\u043e</button>');
+            showModal(t('rent_install_success'), `<p style="color:var(--rent-primary); text-align:center; font-size:15px; padding:10px 0;">${t('rent_install_success_msg')}</p><button class="action-btn rent-action-btn" onclick="closeModal()" style="width:100%;margin:0">${t('cheque_copy')}</button>`);
             if (typeof loadProfile === 'function') loadProfile();
         } else {
             let errorMsg = res?.Error || JSON.stringify(res);

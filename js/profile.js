@@ -98,11 +98,11 @@ function renderServerRentals(rentals) {
 
         let statusBadge = '';
         if (r.IsPending) {
-            statusBadge = `<span class="rental-badge rental-badge-pending">⏳ Выдаётся</span>`;
+            statusBadge = `<span class="rental-badge rental-badge-pending">⏳ ${t('loading')}</span>`;
         } else if (r.IsConnected) {
-            statusBadge = `<span class="rental-badge rental-badge-active">✅ Активен</span>`;
+            statusBadge = `<span class="rental-badge rental-badge-active">✅ Active</span>`;
         } else if (isExpired) {
-            statusBadge = `<span class="rental-badge rental-badge-expired">Истёк</span>`;
+            statusBadge = `<span class="rental-badge rental-badge-expired">Expired</span>`;
         }
 
         return `
@@ -118,8 +118,8 @@ function renderServerRentals(rentals) {
                     <a href="https://t.me/nft/${r.NftAddress}" target="_blank" class="action-btn outline-action-btn rental-btn">🔗</a>
                     <button class="action-btn rent-action-btn rental-btn"
                         style="opacity:${isExpired || r.IsPending ? 0.45 : 1}"
-                        onclick="event.stopPropagation(); ${isExpired || r.IsPending ? "safeAlert('NFT ещё отправляется. Подождите и обновите профиль.')" : `openTonConnectModal('${r.NftAddress}')`}">
-                        ${r.IsPending ? 'Выдаётся' : 'Установить'}
+                        onclick="event.stopPropagation(); ${isExpired || r.IsPending ? "safeAlert('NFT is still being issued. Please wait.')" : `openTonConnectModal('${r.NftAddress}')`}">
+                        ${r.IsPending ? t('loading') : t('rent_install_btn')}
                     </button>
                 </div>
             </div>
